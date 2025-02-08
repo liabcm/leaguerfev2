@@ -1,14 +1,65 @@
-import { useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import styled from 'styled-components';
-import getUser from '../api/leagueApi';
+import { useEffect, useState } from 'react';
+import { useLeagueApi } from '../api/useLeagueApi';
+import { League } from '../models/League';
 
-interface League {
-  sport: string;
-  name: string;
-  isPublic: boolean;
-  isCompetitive: boolean;
-}
+const LeaguesList = () => {
+  const navigate = useNavigate();
+
+  const [leagues, setLeagues] = useState<League[]>([]);
+  const leagueApi = useLeagueApi();
+
+useEffect(() => {
+  const fetchLeagues = async () => {
+    try {
+      const result = await leagueApi.getAllLeagues();
+      setLeagues(result);
+    } catch (error) {
+      console.error('Failed to fetch leagues:', error);
+    }
+  };
+
+  fetchLeagues();
+}, []);
+  
+  const handleBack = () => {
+    navigate(-1); // Go back one page in history
+  };
+  // Static list of 10 leagues (same as before)
+
+  return (
+    <StyledLeaguesList>
+      <BackButton onClick={handleBack}>← Back</BackButton>
+      <HeaderContainer>
+        <StyledHeading>List of Leagues</StyledHeading>
+      </HeaderContainer>
+      
+      <ListContainer>
+        {leagues.map((league, index) => (
+          <LeagueItem key={index}>
+            <FlexContainer>
+              <div>
+                <LeagueName>{league.name}</LeagueName>
+                <SportName>{league.sport}</SportName>
+              </div>
+              <div>
+                <Badge variant={league.isPublic ? 'public' : 'private'}>
+                  {league.isPublic ? 'Public' : 'Private'}
+                </Badge>
+                <Badge variant={league.isCompetitive ? 'competitive' : 'casual'}>
+                  {league.isCompetitive ? 'Competitive' : 'Casual'}
+                </Badge>
+              </div>
+            </FlexContainer>
+          </LeagueItem>
+        ))}
+      </ListContainer>
+    </StyledLeaguesList>
+  );
+};
+
+export default LeaguesList;
 
 const StyledLeaguesList = styled.div`
   max-width: 800px;
@@ -100,110 +151,3 @@ const Badge = styled.span<{ variant: 'public' | 'private' | 'competitive' | 'cas
     }
   }}
 `;
-
-const LeaguesList = () => {
-  const navigate = useNavigate();
-
-  useEffect(()=> {
-    getUser();
-  },[])
-  
-  const handleBack = () => {
-    navigate(-1); // Go back one page in history
-  };
-  // Static list of 10 leagues (same as before)
-  const leagues: League[] = [
-    {
-      sport: 'Football',
-      name: 'Premier League',
-      isPublic: true,
-      isCompetitive: true
-    },
-    {
-      sport: 'Basketball',
-      name: 'NBA',
-      isPublic: false,
-      isCompetitive: true
-    },
-    {
-      sport: 'Soccer',
-      name: 'Champions League',
-      isPublic: true,
-      isCompetitive: false
-    },
-    {
-      sport: 'Tennis',
-      name: 'Wimbledon League',
-      isPublic: true,
-      isCompetitive: true
-    },
-    {
-      sport: 'Baseball',
-      name: 'MLB',
-      isPublic: false,
-      isCompetitive: true
-    },
-    {
-      sport: 'Hockey',
-      name: 'NHL',
-      isPublic: true,
-      isCompetitive: false
-    },
-    {
-      sport: 'Cricket',
-      name: 'IPL',
-      isPublic: true,
-      isCompetitive: true
-    },
-    {
-      sport: 'Rugby',
-      name: 'Super League',
-      isPublic: false,
-      isCompetitive: true
-    },
-    {
-      sport: 'Volleyball',
-      name: 'FIVB World League',
-      isPublic: true,
-      isCompetitive: false
-    },
-    {
-      sport: 'Esports',
-      name: 'League of Legends Championship',
-      isPublic: true,
-      isCompetitive: true
-    }
-  ];
-
-  return (
-    <StyledLeaguesList>
-      <BackButton onClick={handleBack}>← Back</BackButton>
-      <HeaderContainer>
-        <StyledHeading>List of Leagues</StyledHeading>
-      </HeaderContainer>
-      
-      <ListContainer>
-        {leagues.map((league, index) => (
-          <LeagueItem key={index}>
-            <FlexContainer>
-              <div>
-                <LeagueName>{league.name}</LeagueName>
-                <SportName>{league.sport}</SportName>
-              </div>
-              <div>
-                <Badge variant={league.isPublic ? 'public' : 'private'}>
-                  {league.isPublic ? 'Public' : 'Private'}
-                </Badge>
-                <Badge variant={league.isCompetitive ? 'competitive' : 'casual'}>
-                  {league.isCompetitive ? 'Competitive' : 'Casual'}
-                </Badge>
-              </div>
-            </FlexContainer>
-          </LeagueItem>
-        ))}
-      </ListContainer>
-    </StyledLeaguesList>
-  );
-};
-
-export default LeaguesList;

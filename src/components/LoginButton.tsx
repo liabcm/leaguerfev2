@@ -1,28 +1,9 @@
-// src/LoginButton.tsx
-import { useMsal } from "@azure/msal-react";
-import { apiScopes } from "../authConfig";
+import { useAuth0 } from "@auth0/auth0-react";
 
-export const LoginButton = () => {
-  const { instance } = useMsal();
+const LoginButton = () => {
+  const { loginWithRedirect } = useAuth0();
 
-  // LoginButton.tsx
-const handleLogin = () => {
-    // Clear any existing state
-    sessionStorage.clear();
-    
-    instance.loginRedirect({
-      scopes: apiScopes,
-      prompt: 'login',
-      redirectStartPage: window.location.origin + "/redirect",
-      onRedirectNavigate: (url) => {
-        // Force full redirect
-        window.location.href = url;
-        return false;
-      }
-    }).catch(error => {
-      console.error('Login failed:', error);
-    });
-  }
-
-  return <button onClick={handleLogin}>Sign In</button>
+  return <button onClick={() => loginWithRedirect()}>Log In</button>;
 };
+
+export default LoginButton;

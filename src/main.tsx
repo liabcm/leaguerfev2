@@ -1,18 +1,20 @@
 import { StrictMode } from 'react'
 import { createRoot } from 'react-dom/client'
-import { PublicClientApplication } from '@azure/msal-browser'
-import { MsalProvider } from '@azure/msal-react'
-import { b2cConfig } from './authConfig' // Your existing config file
 import './index.css'
 import App from './App.tsx'
-
-// Create MSAL instance
-const msalInstance = new PublicClientApplication(b2cConfig)
+import { Auth0Provider } from '@auth0/auth0-react'
 
 createRoot(document.getElementById('root')!).render(
-  <StrictMode>
-    <MsalProvider instance={msalInstance}>
+  <Auth0Provider
+    domain="dev-17vjnirqr7rdq6n1.us.auth0.com"
+    clientId="qScLc4V8Q3MoXIe17X9Q8W1wgdUBN3Pt"
+    authorizationParams={{
+      redirect_uri: window.location.origin
+    }}
+  >
+    <StrictMode>
       <App />
-    </MsalProvider>
-  </StrictMode>
+    </StrictMode>
+  </Auth0Provider>
+
 )

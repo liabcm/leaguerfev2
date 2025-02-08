@@ -1,7 +1,6 @@
-import React from 'react';
 import { useNavigate } from 'react-router-dom';
-import { LoginButton } from './LoginButton';
-import { LogoutButton } from './LogoutButton';
+import LoginButton from './LoginButton';
+import LogoutButton from './LogoutButton';
 
 const LeagueActions: React.FC = () => {
   const navigate = useNavigate();
@@ -21,6 +20,9 @@ const LeagueActions: React.FC = () => {
       </button>
       <button onClick={handleJoinLeague}>
         Join a League
+      </button>
+      <button onClick={()=>navigate('profile')}>
+        navigate
       </button>
       <LoginButton/>
       <LogoutButton/>

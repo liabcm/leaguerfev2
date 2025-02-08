@@ -3,26 +3,9 @@ import { BrowserRouter, Route, Routes } from 'react-router-dom'
 import GetStarted from './components/GetStarted'
 import CreateLeagueForm from './components/CreateLeagueForm'
 import LeaguesList from './components/LeagueList'
-import { useMsal } from '@azure/msal-react'
-import { useEffect } from 'react'
-import { apiScopes } from './authConfig'
-import { RedirectHandler } from './components/RedirectHandler'
+import Profile from './components/Profile'
 
 function App() {
-  const { instance } = useMsal();
-
-  useEffect(() => {
-    instance.handleRedirectPromise()
-      .then((tokenResponse) => {
-        if (!tokenResponse) {
-          // No existing token found
-          instance.loginRedirect({ scopes: apiScopes })
-        }
-      })
-      .catch(error => {
-        console.error('Authentication error:', error)
-      })
-  }, [instance])
 
   return (
     <BrowserRouter>
@@ -30,7 +13,7 @@ function App() {
       <Route path="/" element={<GetStarted/>}/>
       <Route path="/league" element={<CreateLeagueForm/>}/>
       <Route path="/leagues" element={<LeaguesList/>}/>
-      <Route path="/redirect" element={<RedirectHandler />} />
+      <Route path="/profile" element={<Profile/>}/>
     </Routes>
     </BrowserRouter>
   )
