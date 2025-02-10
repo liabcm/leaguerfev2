@@ -1,9 +1,20 @@
-import { useAuth0 } from "@auth0/auth0-react";
+import { useAuth0 } from '@auth0/auth0-react';
 
 const LoginButton = () => {
   const { loginWithRedirect } = useAuth0();
 
-  return <button onClick={() => loginWithRedirect()}>Log In</button>;
+  const handleLogin = () => {
+    loginWithRedirect({
+      authorizationParams: {
+        redirect_uri: window.location.origin + '/', // Explicit redirect
+      },
+      appState: {
+        returnTo: '/', // Where to land after login
+      },
+    });
+  };
+
+  return <button onClick={handleLogin}>Log In</button>;
 };
 
 export default LoginButton;

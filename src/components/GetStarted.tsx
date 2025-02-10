@@ -1,31 +1,23 @@
 import { useNavigate } from 'react-router-dom';
-import LoginButton from './LoginButton';
 import LogoutButton from './LogoutButton';
 
 const LeagueActions: React.FC = () => {
   const navigate = useNavigate();
 
   const handleCreateLeague = () => {
-    navigate('/league')
+    navigate('/league');
   };
 
   const handleJoinLeague = () => {
-    navigate('/leagues')
+    navigate('/leagues');
   };
 
   return (
     <div>
-      <button onClick={handleCreateLeague}>
-        Create League
-      </button>
-      <button onClick={handleJoinLeague}>
-        Join a League
-      </button>
-      <button onClick={()=>navigate('profile')}>
-        navigate
-      </button>
-      <LoginButton/>
-      <LogoutButton/>
+      <button onClick={handleCreateLeague}>Create League</button>
+      <button onClick={handleJoinLeague}>Join a League</button>
+      <button onClick={() => navigate('profile')}>navigate</button>
+      <LogoutButton />
     </div>
   );
 };

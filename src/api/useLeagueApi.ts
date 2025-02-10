@@ -5,44 +5,43 @@ import { League } from '../models/League';
 const API_BASE_URL = 'https://localhost:44378/api';
 
 export const useLeagueApi = () => {
-  const { getAccessTokenSilently, loginWithPopup } = useAuth0();
+  const { getAccessTokenSilently, loginWithPopup, user } = useAuth0();
 
   const getAuthHeader = async () => {
     let token;
     try {
-            // Attempt to get token silently first
-             token = await getAccessTokenSilently({
-              authorizationParams: {
-                audience: "leaguerapi",
-                scope: "api-access"
-              }
-            });
-            
-          } catch (error : any) {
-            if (error.error === "consent_required") {
-              // If consent is needed, show login popup
-              try {
-                await loginWithPopup({
-                  authorizationParams: {
-                    audience: "leaguerapi",
-                    scope: "api-access"
-                  }
-                });
-                
-                // After consent, try to get token again
-                token = await getAccessTokenSilently({
-                  authorizationParams: {
-                    audience: "leaguerapi",
-                    scope: "api-access"
-                  }
-                });
-              } catch (popupError) {
-                        console.error("Popup login error:", popupError);
-                      }
-                    } else {
-                      console.error("Other error:", error);
-                    }
-                  }
+      // Attempt to get token silently first
+      token = await getAccessTokenSilently({
+        authorizationParams: {
+          audience: 'leaguerapi',
+          scope: 'api-access',
+        },
+      });
+    } catch (error: any) {
+      if (error.error === 'consent_required') {
+        // If consent is needed, show login popup
+        try {
+          await loginWithPopup({
+            authorizationParams: {
+              audience: 'leaguerapi',
+              scope: 'api-access',
+            },
+          });
+
+          // After consent, try to get token again
+          token = await getAccessTokenSilently({
+            authorizationParams: {
+              audience: 'leaguerapi',
+              scope: 'api-access',
+            },
+          });
+        } catch (popupError) {
+          console.error('Popup login error:', popupError);
+        }
+      } else {
+        console.error('Other error:', error);
+      }
+    }
     return {
       'Content-Type': 'application/json',
       Authorization: `Bearer ${token}`,
@@ -51,14 +50,29 @@ export const useLeagueApi = () => {
 
   return {
     createLeague: async (leagueData: Omit<League, 'id'>): Promise<League> => {
+      //console.log(user);
       const response = await fetch(`${API_BASE_URL}/league`, {
         method: 'POST',
+        headers: await getAuthHeader(),
+        body: JSON.stringify({
+          ...leagueData,
+          createdBy: user?.internal_token,
+        }),
+      });
+
+      if (!response.ok) throw new Error('Failed to create league');
+      return response.json();
+    },
+
+    editLeague: async (leagueData: League): Promise<void> => {
+      const response = await fetch(`${API_BASE_URL}/league`, {
+        method: 'PUT',
         headers: await getAuthHeader(),
         body: JSON.stringify(leagueData),
       });
 
       if (!response.ok) throw new Error('Failed to create league');
-      return response.json();
+      return;
     },
 
     getLeagueById: async (id: string): Promise<League> => {

@@ -3,41 +3,72 @@ import styled from 'styled-components';
 import { useEffect, useState } from 'react';
 import { useLeagueApi } from '../api/useLeagueApi';
 import { League } from '../models/League';
+import BackButton from './General/BackButton';
+import {
+  StyledLoadingContainer,
+  StyledSpinner,
+  StyledErrorMessage,
+} from './SharedStyles';
 
-const LeaguesList = () => {
+const LeagueList = () => {
   const navigate = useNavigate();
-
   const [leagues, setLeagues] = useState<League[]>([]);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState<string | null>(null);
   const leagueApi = useLeagueApi();
 
-useEffect(() => {
-  const fetchLeagues = async () => {
-    try {
-      const result = await leagueApi.getAllLeagues();
-      setLeagues(result);
-    } catch (error) {
-      console.error('Failed to fetch leagues:', error);
-    }
-  };
+  useEffect(() => {
+    const fetchLeagues = async () => {
+      try {
+        setLoading(true);
+        setError(null);
+        const result = await leagueApi.getAllLeagues();
+        setLeagues(result);
+      } catch (err) {
+        setError(
+          err instanceof Error ? err.message : 'Failed to fetch leagues'
+        );
+      } finally {
+        setLoading(false);
+      }
+    };
 
-  fetchLeagues();
-}, []);
-  
-  const handleBack = () => {
-    navigate(-1); // Go back one page in history
-  };
-  // Static list of 10 leagues (same as before)
+    fetchLeagues();
+  }, []);
+
+  if (loading) {
+    return (
+      <StyledLeaguesList>
+        <BackButton />
+        <StyledLoadingContainer>
+          <StyledSpinner />
+        </StyledLoadingContainer>
+      </StyledLeaguesList>
+    );
+  }
+
+  if (error) {
+    return (
+      <StyledLeaguesList>
+        <BackButton />
+        <StyledErrorMessage>{error}</StyledErrorMessage>
+      </StyledLeaguesList>
+    );
+  }
 
   return (
     <StyledLeaguesList>
-      <BackButton onClick={handleBack}>← Back</BackButton>
+      <BackButton />
       <HeaderContainer>
         <StyledHeading>List of Leagues</StyledHeading>
       </HeaderContainer>
-      
+
       <ListContainer>
         {leagues.map((league, index) => (
-          <LeagueItem key={index}>
+          <LeagueItem
+            key={index}
+            onClick={() => navigate(`/league/${league.id}`)}
+          >
             <FlexContainer>
               <div>
                 <LeagueName>{league.name}</LeagueName>
@@ -47,7 +78,9 @@ useEffect(() => {
                 <Badge variant={league.isPublic ? 'public' : 'private'}>
                   {league.isPublic ? 'Public' : 'Private'}
                 </Badge>
-                <Badge variant={league.isCompetitive ? 'competitive' : 'casual'}>
+                <Badge
+                  variant={league.isCompetitive ? 'competitive' : 'casual'}
+                >
                   {league.isCompetitive ? 'Competitive' : 'Casual'}
                 </Badge>
               </div>
@@ -59,33 +92,14 @@ useEffect(() => {
   );
 };
 
-export default LeaguesList;
+export default LeagueList;
 
 const StyledLeaguesList = styled.div`
   max-width: 800px;
   margin: 20px auto;
-  position: relative;
-  padding-top: 50px; // Add padding to prevent content overlap
+  padding-top: 50px;
 `;
 
-const BackButton = styled.button`
-  position: absolute;
-  top: 20px;
-  left: 20px;
-  padding: 8px 16px;
-  background-color: #f0f0f0;
-  border: 1px solid #d0d0d0;
-  border-radius: 4px;
-  cursor: pointer;
-  transition: background-color 0.2s;
-  z-index: 1;
-
-  &:hover {
-    background-color: #e0e0e0;
-  }
-`;
-
-// Update HeaderContainer to center the title
 const HeaderContainer = styled.div`
   text-align: center;
   margin-bottom: 20px;
@@ -97,10 +111,11 @@ const LeagueItem = styled.div`
   margin-bottom: 10px;
   padding: 15px;
   transition: all 0.2s ease;
+  cursor: pointer;
 
   &:hover {
     background-color: #f8f9fa;
-    box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+    box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
     transform: translateY(-2px);
   }
 `;
@@ -131,7 +146,9 @@ const SportName = styled.div`
   margin-bottom: 8px;
 `;
 
-const Badge = styled.span<{ variant: 'public' | 'private' | 'competitive' | 'casual' }>`
+const Badge = styled.span<{
+  variant: 'public' | 'private' | 'competitive' | 'casual';
+}>`
   display: inline-block;
   padding: 4px 8px;
   border-radius: 12px;
@@ -139,7 +156,7 @@ const Badge = styled.span<{ variant: 'public' | 'private' | 'competitive' | 'cas
   margin-right: 8px;
 
   ${({ variant }) => {
-    switch(variant) {
+    switch (variant) {
       case 'public':
         return `background-color: #e6f4ea; color: #137333;`;
       case 'private':
