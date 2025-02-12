@@ -11,7 +11,7 @@ const LeagueCard = () => {
   const [league, setLeague] = useState<League | null>(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
-  const { getLeagueById } = useLeagueApi();
+  const { getLeagueById, joinLeague } = useLeagueApi();
 
   useEffect(() => {
     const fetchLeague = async () => {
@@ -33,9 +33,22 @@ const LeagueCard = () => {
     fetchLeague();
   }, [id]); // Re-fetch when id changes
 
-  const handleJoin = () => {
+  const handleJoin = async () => {
     if (league) {
-      console.log(`Joining league: ${league.name}`);
+      try {
+        setLoading(true);
+        setError(null);
+        if (!id) {
+          throw new Error('No league ID provided');
+        }
+        await joinLeague(id);
+        const data = await getLeagueById(id);
+        setLeague(data);
+      } catch (err) {
+        setError(err instanceof Error ? err.message : 'Failed to fetch league');
+      } finally {
+        setLoading(false);
+      }
     }
   };
 
@@ -79,6 +92,18 @@ const LeagueCard = () => {
         </StyledInfoContainer>
 
         <StyledButton onClick={handleJoin}>Join League</StyledButton>
+
+        <StyledMembersSection>
+          <StyledMembersHeader>
+            <h3>Members</h3>
+            <StyledMemberCount>{league.leagueUsers.length}</StyledMemberCount>
+          </StyledMembersHeader>
+          <StyledMembersList>
+            {league.leagueUsers.map((member) => (
+              <StyledMemberItem key={member.id}>{member.name}</StyledMemberItem>
+            ))}
+          </StyledMembersList>
+        </StyledMembersSection>
       </StyledCard>
     </StyledContainer>
   );
@@ -188,4 +213,63 @@ const StyledErrorMessage = styled.div`
   text-align: center;
   color: #ef4444;
   padding: 1rem;
+`;
+
+const StyledMembersSection = styled.div`
+  margin-bottom: 1.5rem;
+  border-top: 1px solid #e5e7eb;
+  padding-top: 1.5rem;
+`;
+
+const StyledMembersHeader = styled.div`
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 1rem;
+
+  h3 {
+    font-size: 1.125rem;
+    font-weight: 600;
+    color: #374151;
+  }
+`;
+
+const StyledMemberCount = styled.span`
+  background-color: #e5e7eb;
+  color: #4b5563;
+  padding: 0.25rem 0.75rem;
+  border-radius: 9999px;
+  font-size: 0.875rem;
+  font-weight: 500;
+`;
+
+const StyledMembersList = styled.div`
+  display: flex;
+  flex-direction: column;
+  gap: 0.5rem;
+  max-height: 12rem;
+  overflow-y: auto;
+  padding-right: 0.5rem;
+
+  &::-webkit-scrollbar {
+    width: 0.25rem;
+  }
+
+  &::-webkit-scrollbar-track {
+    background: #f3f4f6;
+  }
+
+  &::-webkit-scrollbar-thumb {
+    background: #d1d5db;
+    border-radius: 0.125rem;
+  }
+`;
+
+const StyledMemberItem = styled.div`
+  padding: 0.5rem;
+  background-color: #f3f4f6;
+  border-radius: 0.375rem;
+  color: #4b5563;
+  font-size: 0.875rem;
+  font-weight: 500;
 `;

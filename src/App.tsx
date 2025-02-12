@@ -7,10 +7,12 @@ import Profile from './components/Profile';
 import LeagueCard from './components/LeagueCard';
 import LoginButton from './components/LoginButton';
 import ProtectedRoute from './components/ProtectedRoute';
+import NavBar from './components/NavBar';
 
 function App() {
   return (
     <BrowserRouter>
+      <NavBar />
       <Routes>
         {/* Public route */}
         <Route path='/login' element={<LoginButton />} />

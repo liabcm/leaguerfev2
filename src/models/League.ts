@@ -1,7 +1,10 @@
+import { User } from './User';
+
 export interface League {
-    id: string;
-    name: string;
-    sport: string;
-    isCompetitive: boolean;
-    isPublic: boolean;
-  }
+  id: string;
+  name: string;
+  sport: string;
+  isCompetitive: boolean;
+  isPublic: boolean;
+  leagueUsers: User[];
+}

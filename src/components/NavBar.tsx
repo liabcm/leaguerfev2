@@ -1,0 +1,164 @@
+// Navbar.tsx
+import React, { useState, useRef, useEffect } from 'react';
+import styled from 'styled-components';
+import { useNavigate } from 'react-router-dom';
+import { useAuth0 } from '@auth0/auth0-react';
+
+interface PopupMenuProps {
+  isOffScreen: boolean;
+}
+
+const Navbar: React.FC = () => {
+  const [isMenuOpen, setIsMenuOpen] = useState(false);
+  const [isOffScreen, setIsOffScreen] = useState(false);
+  const navigate = useNavigate();
+  const { logout } = useAuth0();
+  const popupMenuRef = useRef<HTMLDivElement>(null); // Ref for PopupMenu
+
+  const handleHomeClick = () => {
+    console.log('go home');
+    navigate('/');
+  };
+
+  const handleProfileClick = () => {
+    navigate('/profile');
+    setIsMenuOpen(false);
+  };
+
+  const handleLogout = () => {
+    logout({ logoutParams: { returnTo: window.location.origin } });
+    console.log('logout clicked');
+    setIsMenuOpen(false);
+  };
+
+  const handleAvatarClick = () => {
+    setIsMenuOpen(!isMenuOpen);
+  };
+
+  useEffect(() => {
+    if (isMenuOpen) {
+      const checkOffScreen = () => {
+        if (popupMenuRef.current) {
+          const rect = popupMenuRef.current.getBoundingClientRect();
+          const screenWidth = window.innerWidth;
+          setIsOffScreen(rect.right > screenWidth);
+        }
+      };
+      // Check immediately when menu opens and on window resize
+      checkOffScreen();
+      window.addEventListener('resize', checkOffScreen);
+      return () => window.removeEventListener('resize', checkOffScreen); // Cleanup on unmount and menu close
+    } else {
+      setIsOffScreen(false); // Reset isOffScreen when menu closes
+    }
+  }, [isMenuOpen]);
+
+  return (
+    <NavbarContainer>
+      <HomeButton onClick={handleHomeClick}>Home</HomeButton>
+      <AvatarContainer>
+        <Avatar onClick={handleAvatarClick} />
+        {isMenuOpen && (
+          <PopupMenu isOffScreen={isOffScreen} ref={popupMenuRef}>
+            {' '}
+            {/* Attach ref here */}
+            <MenuItem onClick={handleProfileClick}>Profile</MenuItem>
+            <MenuItem onClick={handleLogout}>Logout</MenuItem>
+          </PopupMenu>
+        )}
+      </AvatarContainer>
+    </NavbarContainer>
+  );
+};
+
+export default Navbar;
+
+const NavbarContainer = styled.nav`
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 1rem 2rem;
+  background-color: #ffffff;
+  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+  position: fixed;
+  top: 0;
+  left: 0;
+  right: 0;
+  z-index: 1000;
+
+  @media (max-width: 768px) {
+    padding: 1rem;
+  }
+`;
+
+const HomeButton = styled.button`
+  background: none;
+  border: none;
+  font-size: 1rem;
+  cursor: pointer;
+  padding: 0.5rem 1rem;
+  color: #333;
+
+  &:hover {
+    color: #666;
+  }
+
+  @media (max-width: 768px) {
+    padding: 0.5rem;
+  }
+`;
+
+const AvatarContainer = styled.div`
+  position: relative;
+`;
+
+const Avatar = styled.div`
+  width: 40px;
+  height: 40px;
+  border-radius: 50%;
+  background-color: #ddd;
+  cursor: pointer;
+
+  @media (max-width: 768px) {
+    width: 35px;
+    height: 35px;
+  }
+`;
+
+const PopupMenu = styled.div<PopupMenuProps>`
+  position: absolute;
+  top: 100%;
+  right: 0;
+  margin-top: 0.5rem;
+  background-color: white;
+  border-radius: 4px;
+  box-shadow: 0 2px 10px rgba(0, 0, 0, 0.1);
+  min-width: 150px;
+  z-index: 1000;
+
+  @media (max-width: 768px) {
+    right: -5px;
+    min-width: 130px;
+
+    ${({ isOffScreen }) =>
+      isOffScreen &&
+      `
+        right: auto;
+        left: -5px;
+      `}
+  }
+`;
+
+const MenuItem = styled.div`
+  padding: 0.75rem 1rem;
+  cursor: pointer;
+  white-space: nowrap;
+
+  &:hover {
+    background-color: #f5f5f5;
+  }
+
+  @media (max-width: 768px) {
+    padding: 0.75rem;
+  }
+`;

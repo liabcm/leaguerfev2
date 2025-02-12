@@ -10,7 +10,7 @@ createRoot(document.getElementById('root')!).render(
     clientId='qScLc4V8Q3MoXIe17X9Q8W1wgdUBN3Pt'
     authorizationParams={{
       redirect_uri: window.location.origin + '/',
-      scope: 'read:app_metadata',
+      scope: 'openid profile email',
     }}
   >
     <StrictMode>
