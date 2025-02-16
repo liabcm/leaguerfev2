@@ -15,15 +15,35 @@ const LeagueList = () => {
   const [leagues, setLeagues] = useState<League[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
+  const [searchTerm, setSearchTerm] = useState('');
+  const [debouncedSearchTerm, setDebouncedSearchTerm] = useState('');
+  const [pageNumber, setPageNumber] = useState(1);
+  const [pageSize] = useState(10);
+  const [totalPages, setTotalPages] = useState(0);
   const leagueApi = useLeagueApi();
 
+  // Debounce search term
+  useEffect(() => {
+    const timer = setTimeout(() => {
+      setDebouncedSearchTerm(searchTerm);
+      setPageNumber(1); // Reset to first page on search
+    }, 500);
+    return () => clearTimeout(timer);
+  }, [searchTerm]);
+
+  // Fetch leagues when debounced term or page changes
   useEffect(() => {
     const fetchLeagues = async () => {
       try {
         setLoading(true);
         setError(null);
-        const result = await leagueApi.getAllLeagues();
-        setLeagues(result);
+        const result = await leagueApi.getAllLeagues(
+          debouncedSearchTerm,
+          pageNumber,
+          pageSize
+        );
+        setLeagues(result.items);
+        setTotalPages(Math.ceil(result.totalCount / pageSize));
       } catch (err) {
         setError(
           err instanceof Error ? err.message : 'Failed to fetch leagues'
@@ -34,74 +54,142 @@ const LeagueList = () => {
     };
 
     fetchLeagues();
-  }, []);
-
-  if (loading) {
-    return (
-      <StyledLeaguesList>
-        <BackButton />
-        <StyledLoadingContainer>
-          <StyledSpinner />
-        </StyledLoadingContainer>
-      </StyledLeaguesList>
-    );
-  }
-
-  if (error) {
-    return (
-      <StyledLeaguesList>
-        <BackButton />
-        <StyledErrorMessage>{error}</StyledErrorMessage>
-      </StyledLeaguesList>
-    );
-  }
+  }, [debouncedSearchTerm, pageNumber]);
 
   return (
-    <StyledLeaguesList>
-      <BackButton />
-      <HeaderContainer>
-        <StyledHeading>List of Leagues</StyledHeading>
-      </HeaderContainer>
+    <PageContainer>
+      <FixedHeader>
+        <BackButtonContainer>
+          <BackButton />
+        </BackButtonContainer>
+        <HeaderContent>
+          <StyledHeading>List of Leagues</StyledHeading>
+          <StyledSearchInput
+            type='text'
+            placeholder='Search leagues...'
+            value={searchTerm}
+            onChange={(e) => setSearchTerm(e.target.value)}
+          />
+        </HeaderContent>
+      </FixedHeader>
 
-      <ListContainer>
-        {leagues.map((league, index) => (
-          <LeagueItem
-            key={index}
-            onClick={() => navigate(`/league/${league.id}`)}
-          >
-            <FlexContainer>
-              <div>
-                <LeagueName>{league.name}</LeagueName>
-                <SportName>{league.sport}</SportName>
-              </div>
-              <div>
-                <Badge variant={league.isPublic ? 'public' : 'private'}>
-                  {league.isPublic ? 'Public' : 'Private'}
-                </Badge>
-                <Badge
-                  variant={league.isCompetitive ? 'competitive' : 'casual'}
+      <ScrollableContent>
+        <ListContainer>
+          {error ? (
+            <StyledErrorMessage>{error}</StyledErrorMessage>
+          ) : loading ? (
+            <StyledLoadingContainer>
+              <StyledSpinner />
+            </StyledLoadingContainer>
+          ) : (
+            <>
+              {leagues.map((league) => (
+                <LeagueItem
+                  key={league.id}
+                  onClick={() => navigate(`/league/${league.id}`)}
                 >
-                  {league.isCompetitive ? 'Competitive' : 'Casual'}
-                </Badge>
-              </div>
-            </FlexContainer>
-          </LeagueItem>
-        ))}
-      </ListContainer>
-    </StyledLeaguesList>
+                  <FlexContainer>
+                    <div>
+                      <LeagueName>{league.name}</LeagueName>
+                      <SportName>{league.sport}</SportName>
+                    </div>
+                    <div>
+                      <Badge variant={league.isPublic ? 'public' : 'private'}>
+                        {league.isPublic ? 'Public' : 'Private'}
+                      </Badge>
+                      <Badge
+                        variant={
+                          league.isCompetitive ? 'competitive' : 'casual'
+                        }
+                      >
+                        {league.isCompetitive ? 'Competitive' : 'Casual'}
+                      </Badge>
+                    </div>
+                  </FlexContainer>
+                </LeagueItem>
+              ))}
+            </>
+          )}
+        </ListContainer>
+
+        {totalPages > 0 && (
+          <PaginationContainer>
+            <PaginationButton
+              onClick={() => setPageNumber((p) => Math.max(1, p - 1))}
+              disabled={pageNumber === 1}
+            >
+              Previous
+            </PaginationButton>
+            <PageInfo>
+              Page {pageNumber} of {totalPages}
+            </PageInfo>
+            <PaginationButton
+              onClick={() => setPageNumber((p) => Math.min(totalPages, p + 1))}
+              disabled={pageNumber >= totalPages}
+            >
+              Next
+            </PaginationButton>
+          </PaginationContainer>
+        )}
+      </ScrollableContent>
+    </PageContainer>
   );
 };
 
 export default LeagueList;
 
-const StyledLeaguesList = styled.div`
+// Styled Components
+const PageContainer = styled.div`
+  height: 100vh;
+  display: flex;
+  flex-direction: column;
   max-width: 800px;
-  margin: 20px auto;
-  padding-top: 50px;
+  margin: 0 auto;
 `;
 
-const HeaderContainer = styled.div`
+const FixedHeader = styled.div`
+  position: fixed;
+  top: 0;
+  left: 50%;
+  transform: translateX(-50%);
+  width: 100%;
+  max-width: 800px;
+  background-color: white;
+  z-index: 10;
+  padding: 20px;
+  border-bottom: 1px solid #e0e0e0;
+`;
+
+const BackButtonContainer = styled.div`
+  margin-bottom: 20px;
+`;
+
+const HeaderContent = styled.div`
   text-align: center;
+`;
+
+const ScrollableContent = styled.div`
+  margin-top: 200px; // Adjust this value based on your header height
+  flex: 1;
+  overflow-y: auto;
+  padding: 0 20px 20px 20px;
+`;
+
+const StyledSearchInput = styled.input`
+  width: 80%;
+  padding: 10px;
+  margin-bottom: 20px;
+  border: 1px solid #e0e0e0;
+  border-radius: 4px;
+  font-size: 16px;
+`;
+
+const ListContainer = styled.div`
+  padding: 0 15px;
+`;
+
+const StyledHeading = styled.h1`
+  font-size: 24px;
   margin-bottom: 20px;
 `;
 
@@ -112,6 +200,7 @@ const LeagueItem = styled.div`
   padding: 15px;
   transition: all 0.2s ease;
   cursor: pointer;
+  background-color: white;
 
   &:hover {
     background-color: #f8f9fa;
@@ -126,15 +215,6 @@ const FlexContainer = styled.div`
   align-items: center;
 `;
 
-const StyledHeading = styled.h1`
-  font-size: 24px;
-  margin-bottom: 20px;
-`;
-
-const ListContainer = styled.div`
-  padding: 0 15px;
-`;
-
 const LeagueName = styled.div`
   font-size: 18px;
   font-weight: 600;
@@ -144,6 +224,34 @@ const LeagueName = styled.div`
 const SportName = styled.div`
   color: #666;
   margin-bottom: 8px;
+`;
+
+const PaginationContainer = styled.div`
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  gap: 20px;
+  margin-top: 20px;
+  padding: 20px 0;
+  background-color: white;
+`;
+
+const PaginationButton = styled.button<{ disabled: boolean }>`
+  padding: 8px 16px;
+  border: 1px solid #e0e0e0;
+  border-radius: 4px;
+  background-color: white;
+  cursor: ${(props) => (props.disabled ? 'not-allowed' : 'pointer')};
+  opacity: ${(props) => (props.disabled ? 0.6 : 1)};
+
+  &:hover:not(:disabled) {
+    background-color: #f8f9fa;
+  }
+`;
+
+const PageInfo = styled.span`
+  font-size: 14px;
+  color: #666;
 `;
 
 const Badge = styled.span<{

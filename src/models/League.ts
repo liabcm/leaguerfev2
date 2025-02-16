@@ -1,3 +1,4 @@
+import { Team } from './Team';
 import { User } from './User';
 
 export interface League {
@@ -7,4 +8,6 @@ export interface League {
   isCompetitive: boolean;
   isPublic: boolean;
   leagueUsers: User[];
+  isTeamLeague: boolean;
+  teams: Team[];
 }

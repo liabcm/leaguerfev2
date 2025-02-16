@@ -25,6 +25,11 @@ const Navbar: React.FC = () => {
     setIsMenuOpen(false);
   };
 
+  const handleManageLeaguesClick = () => {
+    navigate('/manager');
+    setIsMenuOpen(false);
+  };
+
   const handleLogout = () => {
     logout({ logoutParams: { returnTo: window.location.origin } });
     console.log('logout clicked');
@@ -63,6 +68,9 @@ const Navbar: React.FC = () => {
             {' '}
             {/* Attach ref here */}
             <MenuItem onClick={handleProfileClick}>Profile</MenuItem>
+            <MenuItem onClick={handleManageLeaguesClick}>
+              Manage Leagues
+            </MenuItem>
             <MenuItem onClick={handleLogout}>Logout</MenuItem>
           </PopupMenu>
         )}

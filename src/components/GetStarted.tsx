@@ -35,10 +35,15 @@ const LeagueActions: React.FC = () => {
     navigate('/leagues');
   };
 
+  const handleMyLeagues = () => {
+    navigate('/league/joined');
+  };
+
   return (
     <div>
       <button onClick={handleCreateLeague}>Create League</button>
       <button onClick={handleJoinLeague}>Join a League</button>
+      <button onClick={handleMyLeagues}>My Leagues</button>
     </div>
   );
 };

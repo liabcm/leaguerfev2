@@ -27,3 +27,22 @@ export const StyledErrorMessage = styled.div`
   padding: 1rem;
   margin-top: 20px;
 `;
+
+export const StyledButton = styled.button`
+  position: absolute;
+  left: 1.25rem;
+  top: 1.25rem;
+  padding: 0.5rem 1rem;
+  background-color: #f3f4f6;
+  border: 1px solid #d1d5db;
+  border-radius: 0.25rem;
+  z-index: 10;
+
+  &:hover {
+    background-color: #e5e7eb;
+  }
+
+  transition-property: color, background-color, border-color;
+  transition-timing-function: cubic-bezier(0.4, 0, 0.2, 1);
+  transition-duration: 150ms;
+`;

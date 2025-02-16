@@ -8,6 +8,9 @@ import LeagueCard from './components/LeagueCard';
 import LoginButton from './components/LoginButton';
 import ProtectedRoute from './components/ProtectedRoute';
 import NavBar from './components/NavBar';
+import ManageLeagues from './components/ManageLeagues';
+import EventForm from './components/EventForm';
+import MyLeagues from './components/MyLeagues';
 
 function App() {
   return (
@@ -24,6 +27,9 @@ function App() {
           <Route path='/leagues' element={<LeagueList />} />
           <Route path='/profile' element={<Profile />} />
           <Route path='league/:id' element={<LeagueCard />} />
+          <Route path='manager' element={<ManageLeagues />} />
+          <Route path='event/:leagueId' element={<EventForm />} />
+          <Route path='league/joined' element={<MyLeagues />} />
         </Route>
       </Routes>
     </BrowserRouter>

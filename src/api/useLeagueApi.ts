@@ -2,9 +2,10 @@
 import { useAuth0 } from '@auth0/auth0-react';
 import { League } from '../models/League';
 import { User } from '../models/User';
+import { PagedResult } from '../models/PagedResult';
+import { Event } from '../models/Event';
 
-const API_BASE_URL =
-  'https://leaguerapi-e3ekc8h6crcsd8ea.canadacentral-01.azurewebsites.net/api';
+const API_BASE_URL = 'https://localhost:44378/api';
 
 export const useLeagueApi = () => {
   const { getAccessTokenSilently, loginWithPopup, user } = useAuth0();
@@ -54,6 +55,7 @@ export const useLeagueApi = () => {
   };
 
   return {
+    //leagues
     createLeague: async (leagueData: Omit<League, 'id'>): Promise<League> => {
       //console.log(user);
       const response = await fetch(`${API_BASE_URL}/league`, {
@@ -61,7 +63,6 @@ export const useLeagueApi = () => {
         headers: await getAuthHeader(),
         body: JSON.stringify({
           ...leagueData,
-          createdBy: user?.internal_id,
         }),
       });
 
@@ -89,8 +90,45 @@ export const useLeagueApi = () => {
       return response.json();
     },
 
-    getAllLeagues: async (): Promise<League[]> => {
-      const response = await fetch(`${API_BASE_URL}/league`, {
+    getMyLeagues: async (): Promise<League[]> => {
+      const response = await fetch(`${API_BASE_URL}/league/my-leagues`, {
+        headers: await getAuthHeader(),
+      });
+
+      if (!response.ok) throw new Error('Failed to fetch league');
+      return response.json();
+    },
+
+    getJoinedLeagues: async (): Promise<League[]> => {
+      const response = await fetch(`${API_BASE_URL}/league/joined`, {
+        headers: await getAuthHeader(),
+      });
+
+      if (!response.ok) throw new Error('Failed to fetch league');
+      return response.json();
+    },
+
+    getAllLeagues: async (
+      searchTerm: string,
+      page: number,
+      pageSize: number
+    ): Promise<PagedResult> => {
+      let url = `${API_BASE_URL}/league`;
+      const params = new URLSearchParams();
+      if (searchTerm) {
+        params.append('searchTerm', searchTerm);
+      }
+      if (page) {
+        params.append('page', page.toString());
+      }
+      if (pageSize) {
+        params.append('pageSize', pageSize.toString());
+      }
+
+      if (params.toString()) {
+        url += `?${params.toString()}`;
+      }
+      const response = await fetch(url, {
         headers: await getAuthHeader(),
       });
 
@@ -105,6 +143,32 @@ export const useLeagueApi = () => {
       });
 
       if (!response.ok) throw new Error('Failed to join league');
+      return response.json();
+    },
+
+    leaveLeague: async (leagueId: string): Promise<boolean> => {
+      const response = await fetch(`${API_BASE_URL}/league/${leagueId}/leave`, {
+        method: 'POST',
+        headers: await getAuthHeader(),
+      });
+
+      if (!response.ok) throw new Error('Failed to leave league');
+      return response.json();
+    },
+
+    //events
+    createEvent: async (
+      eventData: Omit<Event, 'id' | 'createdBy'>
+    ): Promise<Event> => {
+      const response = await fetch(`${API_BASE_URL}/event`, {
+        method: 'POST',
+        headers: await getAuthHeader(),
+        body: JSON.stringify({
+          ...eventData,
+        }),
+      });
+
+      if (!response.ok) throw new Error('Failed to create league');
       return response.json();
     },
 

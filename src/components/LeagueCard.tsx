@@ -5,13 +5,16 @@ import { useState, useEffect } from 'react';
 import { useParams } from 'react-router-dom';
 import BackButton from './General/BackButton';
 import styled, { keyframes } from 'styled-components';
+import { useAuth0 } from '@auth0/auth0-react';
 
 const LeagueCard = () => {
   const { id } = useParams<{ id: string }>();
   const [league, setLeague] = useState<League | null>(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
-  const { getLeagueById, joinLeague } = useLeagueApi();
+  const [joined, setJoined] = useState<boolean>(false);
+  const { getLeagueById, joinLeague, leaveLeague } = useLeagueApi();
+  const { user } = useAuth0();
 
   useEffect(() => {
     const fetchLeague = async () => {
@@ -23,6 +26,10 @@ const LeagueCard = () => {
         }
         const data = await getLeagueById(id);
         setLeague(data);
+        const userInLeague = data.leagueUsers.find(
+          (u) => u.id === user?.internal_id
+        );
+        setJoined(!!userInLeague);
       } catch (err) {
         setError(err instanceof Error ? err.message : 'Failed to fetch league');
       } finally {
@@ -43,6 +50,33 @@ const LeagueCard = () => {
         }
         await joinLeague(id);
         const data = await getLeagueById(id);
+        const userInLeague = data.leagueUsers.find(
+          (u) => u.id === user?.internal_id
+        );
+        setJoined(!!userInLeague);
+        setLeague(data);
+      } catch (err) {
+        setError(err instanceof Error ? err.message : 'Failed to fetch league');
+      } finally {
+        setLoading(false);
+      }
+    }
+  };
+
+  const handleLeave = async () => {
+    if (league) {
+      try {
+        setLoading(true);
+        setError(null);
+        if (!id) {
+          throw new Error('No league ID provided');
+        }
+        await leaveLeague(id);
+        const data = await getLeagueById(id);
+        const userInLeague = data.leagueUsers.find(
+          (u) => u.id === user?.internal_id
+        );
+        setJoined(!!userInLeague);
         setLeague(data);
       } catch (err) {
         setError(err instanceof Error ? err.message : 'Failed to fetch league');
@@ -91,7 +125,13 @@ const LeagueCard = () => {
           </StyledInfoItem>
         </StyledInfoContainer>
 
-        <StyledButton onClick={handleJoin}>Join League</StyledButton>
+        {!!!joined ? (
+          <StyledButton onClick={handleJoin}>Join League</StyledButton>
+        ) : (
+          <StyledButton color='red' onClick={handleLeave}>
+            Leave League
+          </StyledButton>
+        )}
 
         <StyledMembersSection>
           <StyledMembersHeader>
@@ -169,7 +209,8 @@ const StyledInfoItem = styled.div`
 const StyledButton = styled.button`
   width: 100%;
   padding: 0.75rem 1.5rem;
-  background-color: #3b82f6;
+  background-color: ${(props) =>
+    props.color === 'red' ? '#ef4444' : '#3b82f6'};
   color: white;
   border: none;
   border-radius: 0.375rem;
@@ -178,13 +219,18 @@ const StyledButton = styled.button`
   transition: background-color 0.2s;
 
   &:hover {
-    background-color: #2563eb;
+    background-color: ${(props) =>
+      props.color === 'red' ? '#dc2626' : '#2563eb'};
   }
 
   &:focus {
     outline: 2px solid transparent;
     outline-offset: 2px;
-    box-shadow: 0 0 0 2px rgba(59, 130, 246, 0.5);
+    box-shadow: 0 0 0 2px
+      ${(props) =>
+        props.color === 'red'
+          ? 'rgba(239, 68, 68, 0.5)'
+          : 'rgba(59, 130, 246, 0.5)'};
   }
 `;
 
