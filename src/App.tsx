@@ -1,16 +1,16 @@
 import './App.css';
 import { BrowserRouter, Route, Routes } from 'react-router-dom';
 import GetStarted from './components/GetStarted';
-import LeagueForm from './components/LeagueForm';
-import LeagueList from './components/LeagueList';
+import LeagueForm from './components/League/LeagueForm';
+import LeagueList from './components/League/LeagueList';
 import Profile from './components/Profile';
-import LeagueCard from './components/LeagueCard';
+import LeagueCard from './components/League/LeagueCard';
 import LoginButton from './components/LoginButton';
 import ProtectedRoute from './components/ProtectedRoute';
 import NavBar from './components/NavBar';
-import ManageLeagues from './components/ManageLeagues';
-import EventForm from './components/EventForm';
-import MyLeagues from './components/MyLeagues';
+import ManageLeagues from './components/League/ManageLeagues';
+import EventForm from './components/Events/EventForm';
+import MyLeagues from './components/League/MyLeagues';
 
 function App() {
   return (

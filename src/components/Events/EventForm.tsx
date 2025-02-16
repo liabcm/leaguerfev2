@@ -1,12 +1,12 @@
 import React, { useState, useEffect } from 'react';
 import styled from 'styled-components';
-import { useLeagueApi } from '../api/useLeagueApi';
-import { League } from '../models/League';
+import { useLeagueApi } from '../../api/useLeagueApi';
+import { League } from '../../models/League';
 import { useParams, useNavigate } from 'react-router-dom';
 import moment from 'moment'; // For date/time formatting and handling
 import Select from 'react-select';
-import BackButton from './General/BackButton';
-import { Event } from '../models/Event';
+import BackButton from '../General/BackButton';
+import { Event } from '../../models/Event';
 
 const EventForm = () => {
   const { leagueId } = useParams<{ leagueId: string }>();
@@ -42,7 +42,7 @@ const EventForm = () => {
     console.log(league);
     if (!league) return;
 
-    const eventData: Omit<Event, 'id' | 'createdBy'> = {
+    const eventData: Omit<Event, 'id' | 'createdBy' | 'users'> = {
       eventTime: moment(eventTime).toISOString(), // Send in ISO format
       leagueId: league.id,
       location: location,

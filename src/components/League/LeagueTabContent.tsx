@@ -1,5 +1,5 @@
 import { Trophy, Users } from 'lucide-react';
-import { League } from '../models/League';
+import { League } from '../../models/League';
 import styled from 'styled-components';
 
 export const LeagueTabContent = ({

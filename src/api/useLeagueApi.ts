@@ -158,7 +158,7 @@ export const useLeagueApi = () => {
 
     //events
     createEvent: async (
-      eventData: Omit<Event, 'id' | 'createdBy'>
+      eventData: Omit<Event, 'id' | 'createdBy' | 'users'>
     ): Promise<Event> => {
       const response = await fetch(`${API_BASE_URL}/event`, {
         method: 'POST',

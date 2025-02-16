@@ -14,6 +14,9 @@ const Navbar: React.FC = () => {
   const navigate = useNavigate();
   const { logout } = useAuth0();
   const popupMenuRef = useRef<HTMLDivElement>(null); // Ref for PopupMenu
+  const [avatarUrl, setAvatarUrl] = useState('');
+  const { user, isAuthenticated } = useAuth0();
+  const defaultAvatar = '';
 
   const handleHomeClick = () => {
     console.log('go home');
@@ -41,6 +44,12 @@ const Navbar: React.FC = () => {
   };
 
   useEffect(() => {
+    setAvatarUrl(
+      isAuthenticated && user?.picture ? user.picture : defaultAvatar
+    );
+  }, [isAuthenticated]);
+
+  useEffect(() => {
     if (isMenuOpen) {
       const checkOffScreen = () => {
         if (popupMenuRef.current) {
@@ -62,7 +71,10 @@ const Navbar: React.FC = () => {
     <NavbarContainer>
       <HomeButton onClick={handleHomeClick}>Home</HomeButton>
       <AvatarContainer>
-        <Avatar onClick={handleAvatarClick} />
+        <Avatar
+          onClick={handleAvatarClick}
+          style={{ backgroundImage: `url(${avatarUrl})` }}
+        />
         {isMenuOpen && (
           <PopupMenu isOffScreen={isOffScreen} ref={popupMenuRef}>
             {' '}
@@ -85,7 +97,7 @@ const NavbarContainer = styled.nav`
   display: flex;
   justify-content: space-between;
   align-items: center;
-  padding: 1rem 2rem;
+  padding: 1rem 2rem 0.5rem;
   background-color: #ffffff;
   box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
   position: fixed;
@@ -124,7 +136,9 @@ const Avatar = styled.div`
   width: 40px;
   height: 40px;
   border-radius: 50%;
-  background-color: #ddd;
+  background-color: #ddd; // Fallback if no image
+  background-size: cover; // Ensure image covers the circle
+  background-position: center; // Center the image
   cursor: pointer;
 
   @media (max-width: 768px) {

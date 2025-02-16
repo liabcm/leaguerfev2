@@ -1,9 +1,9 @@
 import React, { useEffect, useState } from 'react';
 import { useForm } from 'react-hook-form';
 import { useSearchParams } from 'react-router-dom';
-import { League } from '../models/League';
-import { useLeagueApi } from '../api/useLeagueApi';
-import BackButton from './General/BackButton';
+import { League } from '../../models/League';
+import { useLeagueApi } from '../../api/useLeagueApi';
+import BackButton from '../General/BackButton';
 import styled from 'styled-components';
 
 const LeagueForm = () => {

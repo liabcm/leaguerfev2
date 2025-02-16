@@ -1,5 +1,6 @@
 import { Team } from './Team';
 import { User } from './User';
+import { Event } from './Event';
 
 export interface League {
   id: string;
@@ -10,4 +11,5 @@ export interface League {
   leagueUsers: User[];
   isTeamLeague: boolean;
   teams: Team[];
+  events: Event[];
 }

@@ -1,8 +1,11 @@
+import { User } from './User';
+
 export interface Event {
   id: string;
   location: string;
   leagueId: string;
   eventTime: string;
   createdBy: string;
-  opponentIds: string[];
+  users: User[];
+  opponentIds?: string[] | null;
 }
