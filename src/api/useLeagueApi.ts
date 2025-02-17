@@ -8,7 +8,8 @@ import { PagedResult } from '../models/PagedResult';
 import { Sport } from '../models/Sport';
 import { User } from '../models/User';
 
-const API_BASE_URL = 'https://localhost:44378/api';
+const API_BASE_URL =
+  'leaguerapi-e3ekc8h6crcsd8ea.canadacentral-01.azurewebsites.net/api';
 
 export const useLeagueApi = () => {
   const { instance } = useMsal();
