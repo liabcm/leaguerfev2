@@ -1,9 +1,10 @@
 {
-    "routes": [
-      {
-        "route": "/*",
-        "serve": "/dist/*",
-        "statusCode": 200
-      }
+  "navigationFallback": {
+    "rewrite": "/index.html",
+    "exclude": [
+      "/assets/*.{png,jpg,jpeg,gif,svg,css,js}",
+      "/static/*",
+      "/robots.txt"
     ]
   }
+}
