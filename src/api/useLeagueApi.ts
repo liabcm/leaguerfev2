@@ -1,16 +1,14 @@
 // src/hooks/useLeaguerApi.ts
-import { League } from '../models/League';
-import { User } from '../models/User';
-import { PagedResult } from '../models/PagedResult';
-import { Event } from '../models/Event';
+import { InteractionRequiredAuthError } from '@azure/msal-browser';
 import { useMsal } from '@azure/msal-react';
-import { AccountInfo, InteractionRequiredAuthError } from '@azure/msal-browser';
-import { useState, useEffect } from 'react';
 import { apiScopes } from '../authConfig';
+import { Event } from '../models/Event';
+import { League } from '../models/League';
+import { PagedResult } from '../models/PagedResult';
 import { Sport } from '../models/Sport';
+import { User } from '../models/User';
 
-const API_BASE_URL =
-  'leaguerapi-e3ekc8h6crcsd8ea.canadacentral-01.azurewebsites.net/api';
+const API_BASE_URL = 'https://localhost:44378/api';
 
 export const useLeagueApi = () => {
   const { instance } = useMsal();

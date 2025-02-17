@@ -1,11 +1,11 @@
 // components/League/LeagueDetails.tsx
-import { Trophy, Users, Calendar, User as UserIcon } from 'lucide-react';
-import styled from 'styled-components';
-import EventList from '../Events/EventList';
-import { League } from '../../models/League';
-import { User } from '../../models/User';
+import { Calendar, Trophy, User as UserIcon, Users } from 'lucide-react';
 import { useState } from 'react';
+import styled from 'styled-components';
+import { League } from '../../models/League';
 import { Team } from '../../models/Team';
+import { User } from '../../models/User';
+import EventList from '../Events/EventList';
 
 interface LeagueDetailsProps {
   league: League;

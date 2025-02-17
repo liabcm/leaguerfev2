@@ -1,10 +1,10 @@
 // components/ManageLeagues.tsx
-import { useState, useEffect } from 'react';
+import { useEffect, useState } from 'react';
+import { useNavigate, useSearchParams } from 'react-router-dom';
 import styled from 'styled-components';
 import { useLeagueApi } from '../../api/useLeagueApi';
-import { useNavigate, useSearchParams } from 'react-router-dom';
-import LeagueDetails from './LeagueDetails';
 import { League } from '../../models/League';
+import LeagueDetails from './LeagueDetails';
 
 const ManageLeagues = () => {
   const [leagues, setLeagues] = useState<League[]>([]);

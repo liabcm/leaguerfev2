@@ -1,20 +1,19 @@
 // Pages.tsx
-import { Route, Routes } from 'react-router-dom';
-import { useState, useEffect } from 'react';
 import { useMsal } from '@azure/msal-react';
+import { useEffect } from 'react';
+import { Route, Routes } from 'react-router-dom';
 import { useLeagueApi } from '../api/useLeagueApi';
 
 // Components
+import EventForm from './Events/EventForm';
 import GetStarted from './GetStarted';
+import LeagueCard from './League/LeagueCard';
 import LeagueForm from './League/LeagueForm';
 import LeagueList from './League/LeagueList';
-import Profile from './Profile';
-import LeagueCard from './League/LeagueCard';
-import LoginButton from './LoginButton';
-import ProtectedRoute from './ProtectedRoute';
 import ManageLeagues from './League/ManageLeagues';
-import EventForm from './Events/EventForm';
 import MyLeagues from './League/MyLeagues';
+import Profile from './Profile';
+import ProtectedRoute from './ProtectedRoute';
 import SportForm from './Sport/SportForm';
 
 function Pages() {

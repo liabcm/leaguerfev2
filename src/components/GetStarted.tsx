@@ -1,6 +1,4 @@
 import { useNavigate } from 'react-router-dom';
-import { useLeagueApi } from '../api/useLeagueApi';
-import { useEffect, useState } from 'react';
 
 const LeagueActions = () => {
   const navigate = useNavigate();

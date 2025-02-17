@@ -1,8 +1,7 @@
-import React, { useState, useRef, useEffect } from 'react';
-import styled from 'styled-components';
-import { useNavigate } from 'react-router-dom';
 import { useMsal } from '@azure/msal-react';
-import { InteractionType } from '@azure/msal-browser';
+import { useEffect, useRef, useState } from 'react';
+import { useNavigate } from 'react-router-dom';
+import styled from 'styled-components';
 
 interface PopupMenuProps {
   isOffScreen: boolean;
@@ -12,10 +11,9 @@ const Navbar = () => {
   const [isMenuOpen, setIsMenuOpen] = useState(false);
   const [isOffScreen, setIsOffScreen] = useState(false);
   const navigate = useNavigate();
-  const { instance, accounts } = useMsal();
+  const { instance } = useMsal();
   const popupMenuRef = useRef<HTMLDivElement>(null);
-  const [avatarUrl, setAvatarUrl] = useState('');
-  const defaultAvatar = '';
+  const [avatarUrl] = useState('');
 
   const handleHomeClick = () => {
     console.log('go home');

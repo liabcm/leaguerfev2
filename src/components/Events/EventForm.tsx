@@ -1,16 +1,15 @@
-import React, { useState, useEffect } from 'react';
+import moment from 'moment'; // For date/time formatting and handling
+import { useEffect, useState } from 'react';
+import { useParams } from 'react-router-dom';
+import Select from 'react-select';
 import styled from 'styled-components';
 import { useLeagueApi } from '../../api/useLeagueApi';
-import { League } from '../../models/League';
-import { useParams, useNavigate } from 'react-router-dom';
-import moment from 'moment'; // For date/time formatting and handling
-import Select from 'react-select';
-import BackButton from '../General/BackButton';
 import { Event } from '../../models/Event';
+import { League } from '../../models/League';
+import BackButton from '../General/BackButton';
 
 const EventForm = () => {
   const { leagueId } = useParams<{ leagueId: string }>();
-  const navigate = useNavigate();
   const { getLeagueById, createEvent } = useLeagueApi();
   const [league, setLeague] = useState<League | null>(null);
   const [loading, setLoading] = useState(true);
@@ -68,21 +67,21 @@ const EventForm = () => {
     }
   };
 
-  const handleTeamSelect = (event: React.ChangeEvent<HTMLSelectElement>) => {
-    const selectedOptions = Array.from(
-      event.target.selectedOptions,
-      (option) => option.value
-    );
-    setSelectedTeams(selectedOptions);
-  };
+  // const handleTeamSelect = (event: React.ChangeEvent<HTMLSelectElement>) => {
+  //   const selectedOptions = Array.from(
+  //     event.target.selectedOptions,
+  //     (option) => option.value
+  //   );
+  //   setSelectedTeams(selectedOptions);
+  // };
 
-  const handleUserSelect = (event: React.ChangeEvent<HTMLSelectElement>) => {
-    const selectedOptions = Array.from(
-      event.target.selectedOptions,
-      (option) => option.value
-    );
-    setSelectedUsers(selectedOptions);
-  };
+  // const handleUserSelect = (event: React.ChangeEvent<HTMLSelectElement>) => {
+  //   const selectedOptions = Array.from(
+  //     event.target.selectedOptions,
+  //     (option) => option.value
+  //   );
+  //   setSelectedUsers(selectedOptions);
+  // };
 
   if (loading || !league) {
     return <Container>Loading...</Container>;

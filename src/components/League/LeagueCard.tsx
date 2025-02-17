@@ -1,13 +1,13 @@
 // components/League/LeagueCard.tsx
-import { useState, useEffect } from 'react';
+import { useMsal } from '@azure/msal-react';
+import { useEffect, useState } from 'react';
 import { useParams } from 'react-router-dom';
 import styled from 'styled-components';
-import BackButton from '../General/BackButton';
 import { useLeagueApi } from '../../api/useLeagueApi';
-import LeagueDetails from './LeagueDetails';
 import { League } from '../../models/League';
 import { User } from '../../models/User';
-import { useMsal } from '@azure/msal-react';
+import BackButton from '../General/BackButton';
+import LeagueDetails from './LeagueDetails';
 
 const LeagueCard = () => {
   const { id } = useParams<{ id: string }>();

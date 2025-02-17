@@ -1,4 +1,4 @@
-import { useState, useEffect } from 'react';
+import { useEffect, useState } from 'react';
 import { useLeagueApi } from '../../api/useLeagueApi';
 import { Sport } from '../../models/Sport';
 

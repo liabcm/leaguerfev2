@@ -1,6 +1,6 @@
 // components/EventList.tsx
-import { Event } from '../../models/Event';
 import styled from 'styled-components';
+import { Event } from '../../models/Event';
 
 interface EventListProps {
   events: Event[];

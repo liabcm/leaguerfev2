@@ -1,13 +1,13 @@
+import { useEffect, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import styled from 'styled-components';
-import { useEffect, useState } from 'react';
 import { useLeagueApi } from '../../api/useLeagueApi';
 import { League } from '../../models/League';
 import BackButton from '../General/BackButton';
 import {
+  StyledErrorMessage,
   StyledLoadingContainer,
   StyledSpinner,
-  StyledErrorMessage,
 } from '../SharedStyles';
 
 const MyLeagues = () => {
