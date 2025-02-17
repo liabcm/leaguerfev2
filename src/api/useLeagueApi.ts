@@ -9,7 +9,8 @@ import { useState, useEffect } from 'react';
 import { apiScopes } from '../authConfig';
 import { Sport } from '../models/Sport';
 
-const API_BASE_URL = 'https://localhost:44378/api';
+const API_BASE_URL =
+  'leaguerapi-e3ekc8h6crcsd8ea.canadacentral-01.azurewebsites.net/api';
 
 export const useLeagueApi = () => {
   const { instance } = useMsal();
