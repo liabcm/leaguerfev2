@@ -125,7 +125,7 @@ const EventForm = () => {
               isMulti
               closeMenuOnSelect={false}
               name='teams'
-              options={league.teams.map((team) => ({
+              options={league.teams?.map((team) => ({
                 value: team.id,
                 label: team.name,
               }))}

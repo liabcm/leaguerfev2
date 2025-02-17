@@ -55,7 +55,7 @@ const MyLeagues = () => {
             <StyledLoadingContainer>
               <StyledSpinner />
             </StyledLoadingContainer>
-          ) : (
+          ) : leagues.length > 0 ? (
             leagues.map((league) => (
               <LeagueItem
                 key={league.id}
@@ -79,6 +79,13 @@ const MyLeagues = () => {
                 </FlexContainer>
               </LeagueItem>
             ))
+          ) : (
+            <div>
+              <p>no leagues to display...</p>
+              <button onClick={() => navigate('/leagues')}>
+                find a league
+              </button>
+            </div>
           )}
         </ListContainer>
       </ScrollableContent>

@@ -1,21 +1,20 @@
-// Navbar.tsx
 import React, { useState, useRef, useEffect } from 'react';
 import styled from 'styled-components';
 import { useNavigate } from 'react-router-dom';
-import { useAuth0 } from '@auth0/auth0-react';
+import { useMsal } from '@azure/msal-react';
+import { InteractionType } from '@azure/msal-browser';
 
 interface PopupMenuProps {
   isOffScreen: boolean;
 }
 
-const Navbar: React.FC = () => {
+const Navbar = () => {
   const [isMenuOpen, setIsMenuOpen] = useState(false);
   const [isOffScreen, setIsOffScreen] = useState(false);
   const navigate = useNavigate();
-  const { logout } = useAuth0();
-  const popupMenuRef = useRef<HTMLDivElement>(null); // Ref for PopupMenu
+  const { instance, accounts } = useMsal();
+  const popupMenuRef = useRef<HTMLDivElement>(null);
   const [avatarUrl, setAvatarUrl] = useState('');
-  const { user, isAuthenticated } = useAuth0();
   const defaultAvatar = '';
 
   const handleHomeClick = () => {
@@ -33,21 +32,20 @@ const Navbar: React.FC = () => {
     setIsMenuOpen(false);
   };
 
-  const handleLogout = () => {
-    logout({ logoutParams: { returnTo: window.location.origin } });
-    console.log('logout clicked');
+  const handleLogout = async () => {
+    try {
+      await instance.logoutRedirect({
+        postLogoutRedirectUri: window.location.origin,
+      });
+    } catch (error) {
+      console.error('Logout Error:', error);
+    }
     setIsMenuOpen(false);
   };
 
   const handleAvatarClick = () => {
     setIsMenuOpen(!isMenuOpen);
   };
-
-  useEffect(() => {
-    setAvatarUrl(
-      isAuthenticated && user?.picture ? user.picture : defaultAvatar
-    );
-  }, [isAuthenticated]);
 
   useEffect(() => {
     if (isMenuOpen) {
@@ -58,12 +56,11 @@ const Navbar: React.FC = () => {
           setIsOffScreen(rect.right > screenWidth);
         }
       };
-      // Check immediately when menu opens and on window resize
       checkOffScreen();
       window.addEventListener('resize', checkOffScreen);
-      return () => window.removeEventListener('resize', checkOffScreen); // Cleanup on unmount and menu close
+      return () => window.removeEventListener('resize', checkOffScreen);
     } else {
-      setIsOffScreen(false); // Reset isOffScreen when menu closes
+      setIsOffScreen(false);
     }
   }, [isMenuOpen]);
 
@@ -77,8 +74,6 @@ const Navbar: React.FC = () => {
         />
         {isMenuOpen && (
           <PopupMenu isOffScreen={isOffScreen} ref={popupMenuRef}>
-            {' '}
-            {/* Attach ref here */}
             <MenuItem onClick={handleProfileClick}>Profile</MenuItem>
             <MenuItem onClick={handleManageLeaguesClick}>
               Manage Leagues
@@ -136,9 +131,9 @@ const Avatar = styled.div`
   width: 40px;
   height: 40px;
   border-radius: 50%;
-  background-color: #ddd; // Fallback if no image
-  background-size: cover; // Ensure image covers the circle
-  background-position: center; // Center the image
+  background-color: #ddd;
+  background-size: cover;
+  background-position: center;
   cursor: pointer;
 
   @media (max-width: 768px) {

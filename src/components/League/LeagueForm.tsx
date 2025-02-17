@@ -2,6 +2,7 @@ import React, { useEffect, useState } from 'react';
 import { useForm } from 'react-hook-form';
 import { useSearchParams } from 'react-router-dom';
 import { League } from '../../models/League';
+import { Sport } from '../../models/Sport'; // Add Sport type import
 import { useLeagueApi } from '../../api/useLeagueApi';
 import BackButton from '../General/BackButton';
 import styled from 'styled-components';
@@ -21,38 +22,42 @@ const LeagueForm = () => {
 
   const [isEditing, setIsEditing] = useState<boolean>(true);
   const [id, setId] = useState<string | null>('');
-  const leagueApi = useLeagueApi();
+  const [sports, setSports] = useState<Sport[]>([]); // State for sports
+  const { getAllSports, editLeague, createLeague } = useLeagueApi();
   const [searchParams] = useSearchParams();
 
   useEffect(() => {
-    // Access the 'id' parameter
     const id = searchParams.get('id');
     setId(id);
+    fetchSports(); // Fetch sports when component mounts
   }, [searchParams]);
 
-  const sportsOptions = [
-    'Basketball',
-    'Football',
-    'Soccer',
-    'Baseball',
-    'Tennis',
-    'Volleyball',
-  ];
+  const fetchSports = async () => {
+    try {
+      const sportsData = await getAllSports();
+      setSports(sportsData);
+    } catch (error) {
+      console.error('Error fetching sports:', error);
+      // Handle error (maybe show a toast/message to user)
+    }
+  };
 
   const onSubmit = async (data: League) => {
     try {
+      const sport = sports.find((s) => s.name === data.sport);
       if (id) {
         data.id = id;
-        await leagueApi.editLeague(data);
+        data.isTeamLeague = sport?.isTeamSport!;
+        await editLeague(data);
         setIsEditing(false);
       } else {
-        const createdLeague = await leagueApi.createLeague(data);
+        data.isTeamLeague = sport?.isTeamSport!;
+        const createdLeague = await createLeague(data);
         setId(createdLeague.id);
         setIsEditing(false);
       }
     } catch (error) {
       console.error('Failed to create league:', error);
-      // You might want to show an error message to the user here
     }
   };
 
@@ -78,14 +83,15 @@ const LeagueForm = () => {
               id='sport'
               {...register('sport')}
             >
-              {sportsOptions.map((option) => (
-                <option key={option} value={option}>
-                  {option}
+              {sports.map((sport) => (
+                <option key={sport.id} value={sport.name}>
+                  {sport.name}
                 </option>
               ))}
             </StyledSelect>
           </div>
 
+          {/* Rest of the form remains the same */}
           <div>
             <StyledLabel htmlFor='name'>League Name</StyledLabel>
             <StyledInput

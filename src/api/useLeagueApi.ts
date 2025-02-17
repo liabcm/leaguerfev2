@@ -1,57 +1,47 @@
 // src/hooks/useLeaguerApi.ts
-import { useAuth0 } from '@auth0/auth0-react';
 import { League } from '../models/League';
 import { User } from '../models/User';
 import { PagedResult } from '../models/PagedResult';
 import { Event } from '../models/Event';
+import { useMsal } from '@azure/msal-react';
+import { AccountInfo, InteractionRequiredAuthError } from '@azure/msal-browser';
+import { useState, useEffect } from 'react';
+import { apiScopes } from '../authConfig';
+import { Sport } from '../models/Sport';
 
 const API_BASE_URL = 'https://localhost:44378/api';
 
 export const useLeagueApi = () => {
-  const { getAccessTokenSilently, loginWithPopup, user } = useAuth0();
-
+  const { instance } = useMsal();
   const getAuthHeader = async () => {
-    let token;
-    try {
-      // Attempt to get token silently first
-      token = await getAccessTokenSilently({
-        authorizationParams: {
-          audience: 'leaguerapi',
-          scope: 'api-access',
-          prompt: 'consent',
-        },
-      });
-    } catch (error: any) {
-      if (error.error === 'consent_required') {
-        console.log('maybe');
-        // If consent is needed, show login popup
-        try {
-          await loginWithPopup({
-            authorizationParams: {
-              audience: 'leaguerapi',
-              scope: 'api-access',
-            },
-          });
-          console.log('are we here');
-
-          // After consent, try to get token again
-          token = await getAccessTokenSilently({
-            authorizationParams: {
-              audience: 'leaguerapi',
-              scope: 'api-access',
-            },
-          });
-        } catch (popupError) {
-          console.error('Popup login error:', popupError);
-        }
-      } else {
-        console.error('Other error:', error);
-      }
+    // Get fresh account reference each time
+    const account = instance.getActiveAccount();
+    if (!account) {
+      throw new Error('No active account available');
     }
-    return {
-      'Content-Type': 'application/json',
-      Authorization: `Bearer ${token}`,
+
+    const request = {
+      scopes: apiScopes.scopes,
+      account: account,
     };
+
+    try {
+      const tokenResponse = await instance.acquireTokenSilent(request);
+      return {
+        'Content-Type': 'application/json',
+        Authorization: `Bearer ${tokenResponse.accessToken}`,
+      };
+    } catch (error) {
+      console.error('Token acquisition failed:', error);
+      if (error instanceof InteractionRequiredAuthError) {
+        const tokenResponse = await instance.acquireTokenPopup(request);
+        return {
+          'Content-Type': 'application/json',
+          Authorization: `Bearer ${tokenResponse.accessToken}`,
+        };
+      }
+      throw error;
+    }
   };
 
   return {
@@ -172,11 +162,33 @@ export const useLeagueApi = () => {
       return response.json();
     },
 
+    //Sport
+    createSport: async (sportData: Omit<Sport, 'id'>): Promise<Sport> => {
+      const response = await fetch(`${API_BASE_URL}/sport`, {
+        method: 'POST',
+        headers: await getAuthHeader(),
+        body: JSON.stringify(sportData),
+      });
+
+      if (!response.ok) throw new Error('Failed to create sport');
+      return response.json();
+    },
+
+    getAllSports: async (): Promise<Sport[]> => {
+      const response = await fetch(`${API_BASE_URL}/sport`, {
+        headers: await getAuthHeader(),
+      });
+
+      if (!response.ok) throw new Error('Failed to fetch sports');
+      return response.json();
+    },
+
     //USER SECTION
     getCurrentUser: async (): Promise<User> => {
-      console.log(user);
+      const user = instance.getActiveAccount();
+
       const response = await fetch(
-        `${API_BASE_URL}/user/${user?.internal_id}`,
+        `${API_BASE_URL}/user/${user?.localAccountId}`,
         {
           headers: await getAuthHeader(),
         }
@@ -187,14 +199,14 @@ export const useLeagueApi = () => {
     },
 
     createUser: async (): Promise<User> => {
-      //console.log(user);
+      const user = instance.getActiveAccount();
       const response = await fetch(`${API_BASE_URL}/user`, {
         method: 'POST',
         headers: await getAuthHeader(),
         body: JSON.stringify({
-          id: user?.internal_id,
+          id: user?.idTokenClaims?.sub,
           name: user?.name,
-          email: user?.email,
+          email: user?.username,
         }),
       });
 

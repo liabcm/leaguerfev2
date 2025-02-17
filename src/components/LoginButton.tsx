@@ -1,16 +1,12 @@
-import { useAuth0 } from '@auth0/auth0-react';
+import { useMsal } from '@azure/msal-react';
+import { loginRequest } from '../authConfig'; // We'll add this to authConfig.ts
 
 const LoginButton = () => {
-  const { loginWithRedirect } = useAuth0();
+  const { instance } = useMsal();
 
   const handleLogin = () => {
-    loginWithRedirect({
-      authorizationParams: {
-        redirect_uri: window.location.origin + '/', // Explicit redirect
-      },
-      appState: {
-        returnTo: '/', // Where to land after login
-      },
+    instance.loginRedirect(loginRequest).catch((error) => {
+      console.error('Login failed:', error);
     });
   };
 

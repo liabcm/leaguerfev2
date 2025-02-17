@@ -1,12 +1,24 @@
-import { Navigate, Outlet } from 'react-router-dom';
-import { useAuth0 } from '@auth0/auth0-react';
+import { Outlet } from 'react-router-dom';
+import { useMsalAuthentication, useIsAuthenticated } from '@azure/msal-react';
+import { InteractionType } from '@azure/msal-browser';
 
 const ProtectedRoute = () => {
-  const { isAuthenticated, isLoading } = useAuth0();
+  // Automatically trigger redirect when unauthenticated
+  const { error } = useMsalAuthentication(InteractionType.Redirect);
+  const isAuthenticated = useIsAuthenticated();
 
-  if (isLoading) return <div>Loading...</div>;
+  // Show error if authentication failed
+  if (error) {
+    return <div>Authentication Error: {error.message}</div>;
+  }
 
-  // Redirect to home after successful login
-  return isAuthenticated ? <Outlet /> : <Navigate to='/login' replace />;
+  // Render protected content if authenticated
+  if (isAuthenticated) {
+    return <Outlet />;
+  }
+
+  // Show loading state while redirect is in progress
+  return <div>Redirecting to Azure login...</div>;
 };
+
 export default ProtectedRoute;
