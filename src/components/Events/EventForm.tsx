@@ -221,18 +221,6 @@ const Input = styled.input`
   }
 `;
 
-// const Select = styled.select`
-//   width: 100%;
-//   padding: 10px;
-//   border: 1px solid #ddd;
-//   border-radius: 4px;
-//   font-size: 16px;
-//   multiple &:focus {
-//     outline: none;
-//     border-color: #0066cc;
-//   }
-// `;
-
 export const StyledButton = styled.button<{ color?: string }>`
   width: 100%;
   padding: 0.75rem 1.5rem;

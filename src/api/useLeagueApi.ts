@@ -213,5 +213,38 @@ export const useLeagueApi = () => {
       if (!response.ok) throw new Error('Failed to create user');
       return response.json();
     },
+
+    searchUsers: async (
+      leagueId: string,
+      searchTerm: string,
+      page: number = 1,
+      pageSize: number = 10
+    ): Promise<PagedResult> => {
+      let url = `${API_BASE_URL}/user/search`;
+      const params = new URLSearchParams();
+      params.append('leagueId', leagueId);
+
+      if (searchTerm) {
+        params.append('q', searchTerm);
+      }
+      if (page) {
+        params.append('page', page.toString());
+      }
+      if (pageSize) {
+        params.append('pageSize', pageSize.toString());
+      }
+
+      if (params.toString()) {
+        url += `?${params.toString()}`;
+      }
+      console.log(url);
+
+      const response = await fetch(url, {
+        headers: await getAuthHeader(),
+      });
+
+      if (!response.ok) throw new Error('Failed to search users');
+      return response.json();
+    },
   };
 };

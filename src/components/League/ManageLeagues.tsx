@@ -5,6 +5,7 @@ import styled from 'styled-components';
 import { useLeagueApi } from '../../api/useLeagueApi';
 import { League } from '../../models/League';
 import LeagueDetails from './LeagueDetails';
+import SearchUsersModal from './SearchUsersModal';
 
 const ManageLeagues = () => {
   const [leagues, setLeagues] = useState<League[]>([]);
@@ -13,6 +14,7 @@ const ManageLeagues = () => {
   const { getMyLeagues } = useLeagueApi();
   const navigate = useNavigate();
   const [searchParams, setSearchParams] = useSearchParams();
+  const [showSearchUsersModal, setShowSearchUsersModal] = useState(false);
 
   useEffect(() => {
     const fetchLeagues = async () => {
@@ -41,6 +43,44 @@ const ManageLeagues = () => {
     setSelectedLeague(leagues.find((l) => l.id === leagueId) || null);
   };
 
+  const handleInviteUser = async (userId: string) => {
+    try {
+      // Replace with your actual API call
+      console.log(userId);
+      // Handle success (e.g., show a toast notification)
+    } catch (error) {
+      console.error('Error inviting user:', error);
+      // Handle error
+    }
+  };
+
+  const handleRemoveMember = async (leagueId: string, memberId: string) => {
+    try {
+      // Add your API call here to remove the member
+      //await leagueApi.removeMember(leagueId, memberId);
+
+      // Update the leagues state to reflect the removal
+      setLeagues(
+        leagues.map((league) => {
+          if (league.id === leagueId) {
+            return {
+              ...league,
+              leagueUsers: league.leagueUsers.filter(
+                (user) => user.id !== memberId
+              ),
+            };
+          }
+          return league;
+        })
+      );
+
+      // Optionally show a success notification
+    } catch (error) {
+      console.error('Error removing member:', error);
+      // Handle error (show error notification)
+    }
+  };
+
   return (
     <Container>
       <Select onChange={handleLeagueSelect}>
@@ -60,6 +100,25 @@ const ManageLeagues = () => {
           eventsHeaderAction={
             <Button onClick={handleCreateEvent}>Create New Event</Button>
           }
+          detailsHeaderAction={
+            selectedLeague?.isTeamLeague ? (
+              <Button onClick={() => console.log('team')}>Add Team</Button>
+            ) : (
+              <Button onClick={() => setShowSearchUsersModal(true)}>
+                Search Users
+              </Button>
+            )
+          }
+          isManaged={true}
+          onRemoveMember={handleRemoveMember}
+        />
+      )}
+      {showSearchUsersModal && (
+        <SearchUsersModal
+          isOpen={showSearchUsersModal}
+          onClose={() => setShowSearchUsersModal(false)}
+          onInviteUser={handleInviteUser}
+          leagueId={selectedLeague?.id!}
         />
       )}
     </Container>
@@ -71,7 +130,7 @@ export default ManageLeagues;
 
 // Styled components
 const Container = styled.div`
-  max-width: 768px;
+  min-width: 25rem;
   margin: 0 auto;
   padding: 3rem 1rem;
 `;

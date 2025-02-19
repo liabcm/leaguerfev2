@@ -3,9 +3,8 @@ import { Calendar, Trophy, User as UserIcon, Users } from 'lucide-react';
 import { useState } from 'react';
 import styled from 'styled-components';
 import { League } from '../../models/League';
-import { Team } from '../../models/Team';
-import { User } from '../../models/User';
 import EventList from '../Events/EventList';
+import MemberRow from './MemberRow';
 
 interface LeagueDetailsProps {
   league: League;
@@ -17,6 +16,9 @@ interface LeagueDetailsProps {
   detailsContent?: React.ReactNode;
   activeTab?: 'details' | 'events';
   onTabChange?: (tab: 'details' | 'events') => void;
+  detailsHeaderAction?: React.ReactNode;
+  isManaged?: boolean;
+  onRemoveMember?: (leagueId: string, memberId: string) => Promise<void>;
 }
 
 const LeagueDetails = ({
@@ -29,6 +31,9 @@ const LeagueDetails = ({
   detailsContent,
   activeTab: propActiveTab,
   onTabChange: propOnTabChange,
+  detailsHeaderAction,
+  isManaged = false,
+  onRemoveMember,
 }: LeagueDetailsProps) => {
   const [internalActiveTab, setInternalActiveTab] = useState<
     'details' | 'events'
@@ -52,6 +57,12 @@ const LeagueDetails = ({
       joined ? await onLeave() : await onJoin();
     } finally {
       setActionLoading(false);
+    }
+  };
+
+  const handleRemoveMember = async (memberId: string) => {
+    if (onRemoveMember) {
+      await onRemoveMember(league.id, memberId);
     }
   };
 
@@ -114,15 +125,25 @@ const LeagueDetails = ({
           <MembersSection>
             <MembersHeader>
               {league.isTeamLeague ? <h3>Teams</h3> : <h3>Members</h3>}
-              <Count>{league.leagueUsers.length}</Count>
+              <Count>
+                {league.isTeamLeague
+                  ? league.teams?.length || 0
+                  : league.leagueUsers?.length || 0}
+              </Count>
+              <ActionContainer>{detailsHeaderAction}</ActionContainer>
             </MembersHeader>
             <MembersList>
               {league.isTeamLeague
-                ? league.teams?.map((team: Team) => (
+                ? league.teams?.map((team) => (
                     <Member key={team.id}>{team.name}</Member>
                   ))
-                : league.leagueUsers?.map((member: User) => (
-                    <Member key={member.id}>{member.name}</Member>
+                : league.leagueUsers?.map((member) => (
+                    <MemberRow
+                      key={member.id}
+                      member={member}
+                      isManaged={isManaged}
+                      onRemove={handleRemoveMember}
+                    />
                   ))}
             </MembersList>
           </MembersSection>
@@ -164,7 +185,7 @@ const Card = styled.div`
   border-radius: 0.5rem;
   box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
   padding: 1.5rem;
-  min-width: 20rem;
+  min-width: 25rem;
 `;
 
 const Header = styled.div`
@@ -272,6 +293,7 @@ const MembersHeader = styled.div`
   justify-content: space-between;
   align-items: center;
   margin-bottom: 1rem;
+  gap: 1rem;
 `;
 
 const Count = styled.span`
