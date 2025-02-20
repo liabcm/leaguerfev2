@@ -2,6 +2,8 @@ import { useMsal } from '@azure/msal-react';
 import { useEffect, useRef, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import styled from 'styled-components';
+import { useLeagueApi } from '../api/useLeagueApi';
+import { UserInvite } from '../models/UserInvite';
 
 interface PopupMenuProps {
   isOffScreen: boolean;
@@ -10,10 +12,30 @@ interface PopupMenuProps {
 const Navbar = () => {
   const [isMenuOpen, setIsMenuOpen] = useState(false);
   const [isOffScreen, setIsOffScreen] = useState(false);
+  const [invites, setInvites] = useState<UserInvite[]>([]);
   const navigate = useNavigate();
-  const { instance } = useMsal();
   const popupMenuRef = useRef<HTMLDivElement>(null);
   const [avatarUrl] = useState('');
+  const { getCurrentUserInvites } = useLeagueApi();
+  const { instance, accounts } = useMsal(); // Add accounts
+
+  useEffect(() => {
+    const fetchInvites = async () => {
+      try {
+        const userInvites = await getCurrentUserInvites();
+        setInvites(userInvites);
+      } catch (error) {
+        console.error('Failed to fetch invites:', error);
+      }
+    };
+
+    if (accounts.length > 0) {
+      // Only fetch when authenticated
+      fetchInvites();
+      const intervalId = setInterval(fetchInvites, 120000);
+      return () => clearInterval(intervalId);
+    }
+  }, [accounts]);
 
   const handleHomeClick = () => {
     console.log('go home');
@@ -27,6 +49,11 @@ const Navbar = () => {
 
   const handleManageLeaguesClick = () => {
     navigate('/manager');
+    setIsMenuOpen(false);
+  };
+
+  const handleInvitesClick = () => {
+    navigate('/invites');
     setIsMenuOpen(false);
   };
 
@@ -70,11 +97,19 @@ const Navbar = () => {
           onClick={handleAvatarClick}
           style={{ backgroundImage: `url(${avatarUrl})` }}
         />
+        {/* Display invite count badge on the avatar even when menu is closed */}
+        {invites.length > 0 && <InviteBadge>{invites.length}</InviteBadge>}
         {isMenuOpen && (
           <PopupMenu isOffScreen={isOffScreen} ref={popupMenuRef}>
             <MenuItem onClick={handleProfileClick}>Profile</MenuItem>
             <MenuItem onClick={handleManageLeaguesClick}>
               Manage Leagues
+            </MenuItem>
+            <MenuItem onClick={handleInvitesClick}>
+              Invites
+              {invites.length > 0 && (
+                <InviteCount>{invites.length}</InviteCount>
+              )}
             </MenuItem>
             <MenuItem onClick={handleLogout}>Logout</MenuItem>
           </PopupMenu>
@@ -85,6 +120,36 @@ const Navbar = () => {
 };
 
 export default Navbar;
+
+const InviteCount = styled.span`
+  background-color: #ff4444;
+  color: white;
+  border-radius: 10px;
+  padding: 2px 6px;
+  font-size: 0.75rem;
+  margin-left: 8px;
+  font-weight: bold;
+  min-width: 20px;
+  text-align: center;
+  display: inline-block;
+`;
+
+const InviteBadge = styled.span`
+  position: absolute;
+  top: -5px;
+  right: -5px;
+  background-color: #ff4444;
+  color: white;
+  border-radius: 50%;
+  padding: 2px 6px;
+  font-size: 0.75rem;
+  font-weight: bold;
+  min-width: 20px;
+  text-align: center;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+`;
 
 const NavbarContainer = styled.nav`
   display: flex;

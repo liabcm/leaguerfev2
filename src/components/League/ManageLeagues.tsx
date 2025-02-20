@@ -11,7 +11,7 @@ const ManageLeagues = () => {
   const [leagues, setLeagues] = useState<League[]>([]);
   const [selectedLeague, setSelectedLeague] = useState<League | null>(null);
   const [activeTab, setActiveTab] = useState<'details' | 'events'>('details');
-  const { getMyLeagues } = useLeagueApi();
+  const { getMyLeagues, kickFromLeague, inviteUserToLeague } = useLeagueApi();
   const navigate = useNavigate();
   const [searchParams, setSearchParams] = useSearchParams();
   const [showSearchUsersModal, setShowSearchUsersModal] = useState(false);
@@ -47,6 +47,8 @@ const ManageLeagues = () => {
     try {
       // Replace with your actual API call
       console.log(userId);
+      await inviteUserToLeague(selectedLeague?.id!, userId);
+
       // Handle success (e.g., show a toast notification)
     } catch (error) {
       console.error('Error inviting user:', error);
@@ -58,6 +60,7 @@ const ManageLeagues = () => {
     try {
       // Add your API call here to remove the member
       //await leagueApi.removeMember(leagueId, memberId);
+      await kickFromLeague(leagueId, memberId);
 
       // Update the leagues state to reflect the removal
       setLeagues(

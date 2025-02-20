@@ -8,8 +8,7 @@ import { PagedResult } from '../models/PagedResult';
 import { Sport } from '../models/Sport';
 import { User } from '../models/User';
 
-const API_BASE_URL =
-  'https://leaguerapi-e3ekc8h6crcsd8ea.canadacentral-01.azurewebsites.net/api';
+const API_BASE_URL = 'https://localhost:44378/api';
 
 export const useLeagueApi = () => {
   const { instance } = useMsal();
@@ -146,6 +145,65 @@ export const useLeagueApi = () => {
       return response.json();
     },
 
+    kickFromLeague: async (
+      leagueId: string,
+      memberId: string
+    ): Promise<boolean> => {
+      const params = new URLSearchParams();
+      params.append('userIdToKick', memberId);
+      const url = `${API_BASE_URL}/league/${leagueId}/leave?${params.toString()}`;
+      const response = await fetch(url, {
+        method: 'POST',
+        headers: await getAuthHeader(),
+      });
+
+      if (!response.ok) throw new Error('Failed to leave league');
+      return response.json();
+    },
+
+    inviteUserToLeague: async (
+      leagueId: string,
+      userId: string
+    ): Promise<boolean> => {
+      const response = await fetch(
+        `${API_BASE_URL}/league/invite-user?leagueId=${leagueId}&userId=${userId}`,
+        {
+          method: 'POST',
+          headers: await getAuthHeader(),
+        }
+      );
+
+      if (!response.ok) {
+        const errorData = await response.json();
+        throw new Error(errorData.errorMessage || 'Failed to invite user');
+      }
+
+      const result = await response.json();
+      return result.data;
+    },
+
+    declineInvite: async (
+      leagueId: string,
+      userId: string
+    ): Promise<boolean> => {
+      const response = await fetch(`${API_BASE_URL}/userinvites/decline`, {
+        method: 'POST',
+        headers: await getAuthHeader(),
+        body: JSON.stringify({
+          leagueId,
+          userId,
+        }),
+      });
+
+      if (!response.ok) {
+        const errorData = await response.json();
+        throw new Error(errorData.errorMessage || 'Failed to decline invite');
+      }
+
+      const result = await response.json();
+      return result.data; // Extract the boolean from Response<bool>
+    },
+
     //events
     createEvent: async (
       eventData: Omit<Event, 'id' | 'createdBy' | 'users'>
@@ -245,6 +303,20 @@ export const useLeagueApi = () => {
 
       if (!response.ok) throw new Error('Failed to search users');
       return response.json();
+    },
+
+    getCurrentUserInvites: async (): Promise<any[]> => {
+      const response = await fetch(`${API_BASE_URL}/user/current-invites`, {
+        headers: await getAuthHeader(),
+      });
+
+      if (!response.ok) {
+        const errorData = await response.json();
+        throw new Error(errorData.errorMessage || 'Failed to fetch invites');
+      }
+
+      const result = await response.json();
+      return result.data;
     },
   };
 };
