@@ -1,4 +1,3 @@
-// components/ManageLeagues.tsx
 import { useEffect, useState } from 'react';
 import { useNavigate, useSearchParams } from 'react-router-dom';
 import styled from 'styled-components';
@@ -45,42 +44,31 @@ const ManageLeagues = () => {
 
   const handleInviteUser = async (userId: string) => {
     try {
-      // Replace with your actual API call
       console.log(userId);
-      await inviteUserToLeague(selectedLeague?.id!, userId);
-
-      // Handle success (e.g., show a toast notification)
+      await inviteUserToLeague(selectedLeague?.id!, userId, true);
     } catch (error) {
       console.error('Error inviting user:', error);
-      // Handle error
     }
   };
 
   const handleRemoveMember = async (leagueId: string, memberId: string) => {
     try {
-      // Add your API call here to remove the member
-      //await leagueApi.removeMember(leagueId, memberId);
       await kickFromLeague(leagueId, memberId);
-
-      // Update the leagues state to reflect the removal
       setLeagues(
         leagues.map((league) => {
           if (league.id === leagueId) {
             return {
               ...league,
               leagueUsers: league.leagueUsers.filter(
-                (user) => user.id !== memberId
+                (user) => user.userId !== memberId
               ),
             };
           }
           return league;
         })
       );
-
-      // Optionally show a success notification
     } catch (error) {
       console.error('Error removing member:', error);
-      // Handle error (show error notification)
     }
   };
 
@@ -128,55 +116,57 @@ const ManageLeagues = () => {
   );
 };
 
-// Keep your existing styled components, update names if needed
 export default ManageLeagues;
 
-// Styled components
 const Container = styled.div`
-  min-width: 25rem;
+  width: 100%;
+  max-width: 768px;
   margin: 0 auto;
-  padding: 3rem 1rem;
+  padding: clamp(1rem, 5vw, 3rem) 1rem;
 `;
 
 const Select = styled.select`
-  min-width: 15rem;
-  padding: 0.75rem;
-  margin-bottom: 1.5rem;
+  width: 100%;
+  max-width: 25rem;
+  padding: clamp(0.5rem, 2vw, 0.75rem);
+  margin-bottom: clamp(1rem, 3vw, 1.5rem);
   border: 1px solid #e5e7eb;
   border-radius: 0.375rem;
+  font-size: clamp(0.875rem, 2.5vw, 1rem);
 `;
 
 const Button = styled.button<{ variant?: 'secondary' }>`
-  padding: 12px 20px;
-  border-radius: 4px;
-  font-size: 16px;
+  padding: clamp(0.5rem, 2vw, 0.75rem) clamp(0.75rem, 3vw, 1.25rem);
+  border-radius: 0.25rem;
+  font-size: clamp(0.875rem, 2.5vw, 1rem);
   font-weight: 500;
   cursor: pointer;
   transition: all 0.2s ease;
   display: flex;
   align-items: center;
   justify-content: center;
-  gap: 8px;
+  gap: clamp(0.25rem, 1vw, 0.5rem);
   width: 100%;
+  max-width: 15rem;
 
   ${({ variant }) =>
     variant === 'secondary'
       ? `
-      background-color: white;
-      border: 1px solid #ddd;
-      color: #333;
+        background-color: white;
+        border: 1px solid #ddd;
+        color: #333;
 
-      &:hover {
-        background-color: #f5f5f5;
-      }
-    `
+        &:hover {
+          background-color: #f5f5f5;
+        }
+      `
       : `
-      background-color: #0066cc;
-      border: none;
-      color: white;
+        background-color: #0066cc;
+        border: none;
+        color: white;
 
-      &:hover {
-        background-color: #0052a3;
-      }
-    `}
+        &:hover {
+          background-color: #0052a3;
+        }
+      `}
 `;

@@ -1,8 +1,8 @@
 import { X } from 'lucide-react';
 import { useState } from 'react';
 import styled from 'styled-components';
-import { User } from '../../models/User';
-import ConfirmRemoveModal from '../General/ConfirmationRemoveModal';
+import { LeagueUser } from '../../models/LeagueUser';
+import ConfirmRemoveModal from '../General/ConfirmationModal';
 
 const RemoveButton = styled.button`
   padding: 0.25rem;
@@ -33,7 +33,7 @@ const MemberName = styled.span`
 `;
 
 interface MemberRowProps {
-  member: User;
+  member: LeagueUser;
   isManaged?: boolean;
   onRemove: (memberId: string) => void;
 }
@@ -42,7 +42,7 @@ const MemberRow = ({ member, isManaged = false, onRemove }: MemberRowProps) => {
   const [showConfirmModal, setShowConfirmModal] = useState(false);
 
   const handleRemove = () => {
-    onRemove(member.id);
+    onRemove(member.userId);
     setShowConfirmModal(false);
   };
 
@@ -61,7 +61,7 @@ const MemberRow = ({ member, isManaged = false, onRemove }: MemberRowProps) => {
         isOpen={showConfirmModal}
         onClose={() => setShowConfirmModal(false)}
         onConfirm={handleRemove}
-        memberName={member.name}
+        entityName={member.name}
       />
     </>
   );

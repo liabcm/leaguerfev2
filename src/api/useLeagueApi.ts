@@ -163,10 +163,11 @@ export const useLeagueApi = () => {
 
     inviteUserToLeague: async (
       leagueId: string,
-      userId: string
+      userId: string,
+      isInvite: boolean
     ): Promise<boolean> => {
       const response = await fetch(
-        `${API_BASE_URL}/league/invite-user?leagueId=${leagueId}&userId=${userId}`,
+        `${API_BASE_URL}/league/invite-user?leagueId=${leagueId}&userId=${userId}&isInvite=${isInvite}`,
         {
           method: 'POST',
           headers: await getAuthHeader(),
@@ -186,7 +187,7 @@ export const useLeagueApi = () => {
       leagueId: string,
       userId: string
     ): Promise<boolean> => {
-      const response = await fetch(`${API_BASE_URL}/userinvites/decline`, {
+      const response = await fetch(`${API_BASE_URL}/user/decline`, {
         method: 'POST',
         headers: await getAuthHeader(),
         body: JSON.stringify({
@@ -198,6 +199,28 @@ export const useLeagueApi = () => {
       if (!response.ok) {
         const errorData = await response.json();
         throw new Error(errorData.errorMessage || 'Failed to decline invite');
+      }
+
+      const result = await response.json();
+      return result.data; // Extract the boolean from Response<bool>
+    },
+
+    acceptInvite: async (
+      leagueId: string,
+      userId: string
+    ): Promise<boolean> => {
+      const response = await fetch(`${API_BASE_URL}/user/accept`, {
+        method: 'POST',
+        headers: await getAuthHeader(),
+        body: JSON.stringify({
+          leagueId,
+          userId,
+        }),
+      });
+
+      if (!response.ok) {
+        const errorData = await response.json();
+        throw new Error(errorData.errorMessage || 'Failed to accept invite');
       }
 
       const result = await response.json();

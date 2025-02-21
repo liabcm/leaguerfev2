@@ -10,6 +10,8 @@ const GlobalStyles = createGlobalStyle`
   html {
     -webkit-text-size-adjust: 100%;
     text-size-adjust: 100%;
+    width: 100%;
+    overflow-x: hidden;
   }
 
   body {
@@ -18,6 +20,7 @@ const GlobalStyles = createGlobalStyle`
     overflow-x: hidden;
     -webkit-font-smoothing: antialiased;
     -moz-osx-font-smoothing: grayscale;
+    font-size: clamp(14px, 2.5vw, 18px); /* Fluid base font size */
   }
 `;
 

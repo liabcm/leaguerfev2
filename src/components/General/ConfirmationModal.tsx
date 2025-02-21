@@ -1,19 +1,21 @@
 import Modal from 'react-modal';
 import styled from 'styled-components';
 
-interface ConfirmationRemoveModalProps {
+interface ConfirmationModalProps {
   isOpen: boolean;
   onClose: () => void;
   onConfirm: () => void;
-  memberName: string;
+  entityName: string; // Changed from memberName to be more generic
+  action?: string; // Optional action text
 }
 
-const ConfirmationRemoveModal = ({
+const ConfirmationModal = ({
   isOpen,
   onClose,
   onConfirm,
-  memberName,
-}: ConfirmationRemoveModalProps) => {
+  entityName,
+  action = 'remove', // Default to "remove" if not specified
+}: ConfirmationModalProps) => {
   return (
     <Modal
       isOpen={isOpen}
@@ -22,15 +24,15 @@ const ConfirmationRemoveModal = ({
       ariaHideApp={false}
     >
       <ModalContent>
-        <Title>Remove Member</Title>
+        <Title>Confirm {action}</Title>
         <Message>
-          Are you sure you want to remove {memberName} from this league? This
+          Are you sure you want to {action.toLowerCase()} {entityName}? This
           action cannot be undone.
         </Message>
         <ButtonContainer>
           <Button onClick={onClose}>Cancel</Button>
           <Button $variant='danger' onClick={onConfirm}>
-            Remove
+            {action}
           </Button>
         </ButtonContainer>
       </ModalContent>
@@ -38,7 +40,7 @@ const ConfirmationRemoveModal = ({
   );
 };
 
-export default ConfirmationRemoveModal;
+export default ConfirmationModal;
 
 const ModalContent = styled.div`
   text-align: center;

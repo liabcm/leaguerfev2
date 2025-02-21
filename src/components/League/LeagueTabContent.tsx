@@ -48,7 +48,7 @@ export const LeagueTabContent = ({
       </StyledMembersHeader>
       <StyledMembersList>
         {league.leagueUsers.map((member) => (
-          <StyledMemberItem key={member.id}>{member.name}</StyledMemberItem>
+          <StyledMemberItem key={member.userId}>{member.name}</StyledMemberItem>
         ))}
       </StyledMembersList>
     </StyledMembersSection>

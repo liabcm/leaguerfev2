@@ -1,6 +1,6 @@
-import { Team } from './Team';
-import { User } from './User';
 import { Event } from './Event';
+import { LeagueUser } from './LeagueUser';
+import { Team } from './Team';
 
 export interface League {
   id: string;
@@ -8,7 +8,7 @@ export interface League {
   sport: string;
   isCompetitive: boolean;
   isPublic: boolean;
-  leagueUsers: User[];
+  leagueUsers: LeagueUser[];
   isTeamLeague: boolean;
   teams: Team[];
   events: Event[];

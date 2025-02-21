@@ -1,9 +1,10 @@
-// components/League/LeagueDetails.tsx
 import { Calendar, Trophy, User as UserIcon, Users } from 'lucide-react';
 import { useState } from 'react';
 import styled from 'styled-components';
 import { League } from '../../models/League';
+import { LeagueUserStatus } from '../../models/LeagueUserStatusEnum';
 import EventList from '../Events/EventList';
+import LoadingButton from '../General/LoadingButton';
 import MemberRow from './MemberRow';
 
 interface LeagueDetailsProps {
@@ -11,7 +12,7 @@ interface LeagueDetailsProps {
   enableMembershipActions?: boolean;
   joined?: boolean;
   onJoin?: () => Promise<void>;
-  onLeave?: () => Promise<void>;
+  onLeave?: () => void;
   eventsHeaderAction?: React.ReactNode;
   detailsContent?: React.ReactNode;
   activeTab?: 'details' | 'events';
@@ -19,6 +20,7 @@ interface LeagueDetailsProps {
   detailsHeaderAction?: React.ReactNode;
   isManaged?: boolean;
   onRemoveMember?: (leagueId: string, memberId: string) => Promise<void>;
+  requested?: boolean;
 }
 
 const LeagueDetails = ({
@@ -34,11 +36,13 @@ const LeagueDetails = ({
   detailsHeaderAction,
   isManaged = false,
   onRemoveMember,
+  requested,
 }: LeagueDetailsProps) => {
   const [internalActiveTab, setInternalActiveTab] = useState<
     'details' | 'events'
   >('details');
   const [actionLoading, setActionLoading] = useState(false);
+  console.log(joined);
 
   const isControlled =
     propActiveTab !== undefined && propOnTabChange !== undefined;
@@ -48,6 +52,10 @@ const LeagueDetails = ({
     if (isControlled) propOnTabChange?.(tab);
     else setInternalActiveTab(tab);
   };
+
+  const members = league.leagueUsers.filter(
+    (lu) => lu.status == LeagueUserStatus.Member
+  );
 
   const handleMembershipAction = async () => {
     if (actionLoading || !(onJoin && onLeave)) return;
@@ -86,23 +94,20 @@ const LeagueDetails = ({
         </InfoItem>
       </InfoContainer>
 
-      {enableMembershipActions && (
-        <ActionButton
+      {enableMembershipActions && (league.isPublic || joined) && (
+        <StyledLoadingButton
+          disabled={requested}
+          isLoading={actionLoading}
+          loadingText={joined ? 'Leaving...' : 'Requesting...'}
           onClick={handleMembershipAction}
           $joined={joined}
-          disabled={actionLoading}
         >
-          {actionLoading ? (
-            <ButtonContent>
-              <SmallSpinner />
-              {joined ? 'Leaving...' : 'Joining...'}
-            </ButtonContent>
-          ) : joined ? (
-            'Leave League'
-          ) : (
-            'Join League'
-          )}
-        </ActionButton>
+          {joined
+            ? 'Leave League'
+            : requested
+            ? 'Requested'
+            : 'Request to Join'}
+        </StyledLoadingButton>
       )}
 
       <Tabs>
@@ -128,7 +133,7 @@ const LeagueDetails = ({
               <Count>
                 {league.isTeamLeague
                   ? league.teams?.length || 0
-                  : league.leagueUsers?.length || 0}
+                  : members.length || 0}
               </Count>
               <ActionContainer>{detailsHeaderAction}</ActionContainer>
             </MembersHeader>
@@ -137,9 +142,9 @@ const LeagueDetails = ({
                 ? league.teams?.map((team) => (
                     <Member key={team.id}>{team.name}</Member>
                   ))
-                : league.leagueUsers?.map((member) => (
+                : members.map((member) => (
                     <MemberRow
-                      key={member.id}
+                      key={member.userId}
                       member={member}
                       isManaged={isManaged}
                       onRemove={handleRemoveMember}
@@ -183,16 +188,19 @@ const ActionContainer = styled.div`
 const Card = styled.div`
   background: white;
   border-radius: 0.5rem;
-  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
-  padding: 1.5rem;
-  min-width: 25rem;
+  box-shadow: 0 0.0625rem 0.1875rem rgba(0, 0, 0, 0.1);
+  padding: clamp(1rem, 3vw, 2.5rem);
+  width: 100%;
+  max-width: 100%;
+  min-width: clamp(18rem, 85vw, 30rem); /* Tighter for mobile */
+  overflow-x: hidden; /* Safety net */
 `;
 
 const Header = styled.div`
   display: flex;
   justify-content: space-between;
   align-items: center;
-  margin-bottom: 1.5rem;
+  margin-bottom: clamp(1rem, 3vw, 1.5rem);
 `;
 
 const Title = styled.h2`
@@ -202,7 +210,7 @@ const Title = styled.h2`
 
 const Badge = styled.span<{ $isPublic: boolean }>`
   padding: 0.25rem 0.75rem;
-  border-radius: 9999px;
+  border-radius: 9999rem;
   font-size: 0.875rem;
   background-color: ${({ $isPublic }) => ($isPublic ? '#60a5fa' : '#6b7280')};
   color: white;
@@ -210,8 +218,10 @@ const Badge = styled.span<{ $isPublic: boolean }>`
 
 const InfoContainer = styled.div`
   display: flex;
-  gap: 1rem;
-  margin-bottom: 1.5rem;
+  gap: clamp(0.5rem, 2vw, 1rem);
+  margin-bottom: clamp(1rem, 3vw, 1.5rem);
+  padding: 0 clamp(0.25rem, 2vw, 2rem); /* Reduced min padding */
+  width: 100%;
 `;
 
 const InfoItem = styled.div`
@@ -220,72 +230,44 @@ const InfoItem = styled.div`
   gap: 0.5rem;
   color: #4b5563;
   font-size: 0.875rem;
+  flex: 1;
 `;
 
-const ButtonContent = styled.div`
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  gap: 0.5rem;
-`;
-
-const SmallSpinner = styled.div`
-  width: 1rem;
-  height: 1rem;
-  border: 2px solid white;
-  border-top-color: transparent;
-  border-radius: 50%;
-  animation: spin 0.8s linear infinite;
-
-  @keyframes spin {
-    to {
-      transform: rotate(360deg);
-    }
-  }
-`;
-
-const ActionButton = styled.button<{ $joined: boolean }>`
-  width: 100%;
-  padding: 0.75rem;
-  margin-bottom: 1.5rem;
+const StyledLoadingButton = styled(LoadingButton)<{ $joined: boolean }>`
   background-color: ${({ $joined }) => ($joined ? '#ef4444' : '#3b82f6')};
   color: white;
-  border: none;
-  border-radius: 0.375rem;
-  font-weight: 500;
-  cursor: pointer;
-  transition: opacity 0.2s;
+  margin-bottom: clamp(1rem, 3vw, 1.5rem);
+  padding: clamp(0.5rem, 2vw, 0.75rem);
+  font-size: clamp(0.75rem, 2.5vw, 1rem);
 
   &:hover {
     opacity: 0.9;
-  }
-
-  &:disabled {
-    opacity: 0.7;
-    cursor: not-allowed;
   }
 `;
 
 const Tabs = styled.div`
   display: flex;
   gap: 0.5rem;
-  margin-bottom: 1.5rem;
+  margin-bottom: clamp(1rem, 3vw, 1.5rem);
 `;
 
 const TabButton = styled.button<{ $active: boolean }>`
   flex: 1;
-  padding: 0.5rem;
+  padding: clamp(0.375rem, 1.5vw, 0.5rem);
   background-color: ${({ $active }) => ($active ? '#3b82f6' : '#e5e7eb')};
   color: ${({ $active }) => ($active ? 'white' : '#4b5563')};
   border: none;
   border-radius: 0.375rem;
   font-weight: 500;
   cursor: pointer;
+  font-size: clamp(0.75rem, 2vw, 1rem);
 `;
 
 const MembersSection = styled.div`
   border-top: 1px solid #e5e7eb;
-  padding-top: 1.5rem;
+  padding-top: clamp(1rem, 3vw, 1.5rem);
+  padding-left: clamp(0.25rem, 2vw, 2rem); /* Reduced min padding */
+  padding-right: clamp(0.25rem, 2vw, 2rem);
 `;
 
 const MembersHeader = styled.div`
@@ -299,15 +281,16 @@ const MembersHeader = styled.div`
 const Count = styled.span`
   background-color: #e5e7eb;
   padding: 0.25rem 0.75rem;
-  border-radius: 9999px;
+  border-radius: 9999rem;
   font-size: 0.875rem;
 `;
 
 const MembersList = styled.div`
   display: grid;
   gap: 0.5rem;
-  max-height: 200px;
+  max-height: clamp(9.375rem, 50vh, 12.5rem);
   overflow-y: auto;
+  width: 100%;
 `;
 
 const Member = styled.div`
@@ -315,11 +298,14 @@ const Member = styled.div`
   background-color: #f3f4f6;
   border-radius: 0.375rem;
   font-size: 0.875rem;
+  width: 100%;
 `;
 
 const EventsSection = styled.div`
   border-top: 1px solid #e5e7eb;
-  padding-top: 1.5rem;
+  padding-top: clamp(1rem, 3vw, 1.5rem);
+  padding-left: clamp(0.25rem, 2vw, 2rem); /* Reduced min padding */
+  padding-right: clamp(0.25rem, 2vw, 2rem);
 `;
 
 const EventsHeader = styled.div`

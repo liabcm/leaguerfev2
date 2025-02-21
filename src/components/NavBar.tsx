@@ -3,7 +3,7 @@ import { useEffect, useRef, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import styled from 'styled-components';
 import { useLeagueApi } from '../api/useLeagueApi';
-import { UserInvite } from '../models/UserInvite';
+import { useAppContext } from '../provider/AppContext';
 
 interface PopupMenuProps {
   isOffScreen: boolean;
@@ -12,12 +12,13 @@ interface PopupMenuProps {
 const Navbar = () => {
   const [isMenuOpen, setIsMenuOpen] = useState(false);
   const [isOffScreen, setIsOffScreen] = useState(false);
-  const [invites, setInvites] = useState<UserInvite[]>([]);
+  const { invites, setInvites } = useAppContext();
   const navigate = useNavigate();
   const popupMenuRef = useRef<HTMLDivElement>(null);
   const [avatarUrl] = useState('');
   const { getCurrentUserInvites } = useLeagueApi();
-  const { instance, accounts } = useMsal(); // Add accounts
+  const { instance, accounts } = useMsal();
+  // Add accounts
 
   useEffect(() => {
     const fetchInvites = async () => {
