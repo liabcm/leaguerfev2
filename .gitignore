@@ -22,3 +22,4 @@ dist-ssr
 *.njsproj
 *.sw?
 /leaguerAPI/.vs/leaguerAPI
+/leaguerAPI/bin/Debug/net9.0
