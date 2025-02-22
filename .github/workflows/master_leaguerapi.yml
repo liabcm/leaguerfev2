@@ -25,7 +25,7 @@ jobs:
           dotnet-version: '9.x'
 
       - name: Build with dotnet
-        run: dotnet build leaguerAPI/leaguerAPI.sln --configuration Release
+        run: dotnet build leaguerAPI/leaguerAPI.csproj --configuration Release
 
       - name: dotnet publish
         run: dotnet publish -c Release -o "${{env.DOTNET_ROOT}}/myapp"
