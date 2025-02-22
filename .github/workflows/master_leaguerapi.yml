@@ -24,11 +24,8 @@ jobs:
         with:
           dotnet-version: '9.x'
 
-      - name: Change Directory to api directory
-        run: cd leaguerAPI
-
       - name: Build with dotnet
-        run: dotnet build --configuration Release
+        run: dotnet build leaguerAPI/leaguerAPI.sln --configuration Release
 
       - name: dotnet publish
         run: dotnet publish -c Release -o "${{env.DOTNET_ROOT}}/myapp"
