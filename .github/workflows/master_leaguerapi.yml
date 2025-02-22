@@ -26,6 +26,7 @@ jobs:
 
       - name: Build with dotnet
         run:
+          cd leaguerAPI |
           dotnet build --configuration Release
 
       - name: dotnet publish
