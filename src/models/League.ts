@@ -8,7 +8,9 @@ export interface League {
   sport: string;
   isCompetitive: boolean;
   isPublic: boolean;
-  leagueUsers: LeagueUser[];
+  leagueMembers: LeagueUser[];
+  leagueInvites: LeagueUser[];
+  leagueRequests: LeagueUser[];
   isTeamLeague: boolean;
   teams: Team[];
   events: Event[];

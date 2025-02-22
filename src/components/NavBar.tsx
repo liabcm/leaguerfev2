@@ -3,6 +3,7 @@ import { useEffect, useRef, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import styled from 'styled-components';
 import { useLeagueApi } from '../api/useLeagueApi';
+import { LeagueUserStatus } from '../models/LeagueUserStatusEnum';
 import { useAppContext } from '../provider/AppContext';
 
 interface PopupMenuProps {
@@ -90,6 +91,10 @@ const Navbar = () => {
     }
   }, [isMenuOpen]);
 
+  const inviteCount = invites.filter(
+    (invite) => invite.status === LeagueUserStatus.Invited
+  ).length;
+
   return (
     <NavbarContainer>
       <HomeButton onClick={handleHomeClick}>Home</HomeButton>
@@ -99,7 +104,7 @@ const Navbar = () => {
           style={{ backgroundImage: `url(${avatarUrl})` }}
         />
         {/* Display invite count badge on the avatar even when menu is closed */}
-        {invites.length > 0 && <InviteBadge>{invites.length}</InviteBadge>}
+        {inviteCount > 0 && <InviteBadge>{inviteCount}</InviteBadge>}
         {isMenuOpen && (
           <PopupMenu isOffScreen={isOffScreen} ref={popupMenuRef}>
             <MenuItem onClick={handleProfileClick}>Profile</MenuItem>
@@ -108,9 +113,7 @@ const Navbar = () => {
             </MenuItem>
             <MenuItem onClick={handleInvitesClick}>
               Invites
-              {invites.length > 0 && (
-                <InviteCount>{invites.length}</InviteCount>
-              )}
+              {inviteCount > 0 && <InviteCount>{inviteCount}</InviteCount>}
             </MenuItem>
             <MenuItem onClick={handleLogout}>Logout</MenuItem>
           </PopupMenu>

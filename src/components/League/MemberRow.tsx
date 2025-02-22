@@ -35,13 +35,14 @@ const MemberName = styled.span`
 interface MemberRowProps {
   member: LeagueUser;
   isManaged?: boolean;
-  onRemove: (memberId: string) => void;
+  onRemove?: (memberId: string) => void;
 }
 
 const MemberRow = ({ member, isManaged = false, onRemove }: MemberRowProps) => {
   const [showConfirmModal, setShowConfirmModal] = useState(false);
 
   const handleRemove = () => {
+    if (!onRemove) return;
     onRemove(member.userId);
     setShowConfirmModal(false);
   };

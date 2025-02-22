@@ -145,8 +145,8 @@ const EventForm = () => {
               isMulti
               closeMenuOnSelect={false}
               name='users'
-              options={league.leagueUsers.map((user) => ({
-                value: user.id,
+              options={league.leagueMembers.map((user) => ({
+                value: user.userId,
                 label: user.name,
               }))}
               onChange={(selected) => {
