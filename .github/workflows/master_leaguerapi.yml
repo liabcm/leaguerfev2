@@ -25,8 +25,7 @@ jobs:
           dotnet-version: '9.x'
 
       - name: Build with dotnet
-        run: 
-          cd leaguerAPI |
+        run:
           dotnet build --configuration Release
 
       - name: dotnet publish
