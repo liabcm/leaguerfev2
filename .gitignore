@@ -20,3 +20,6 @@ dist-ssr
 *.ntvs*
 *.njsproj
 *.sw?
+/leaguerAPI/.vs
+/leaguerAPI/obj
+/leaguerAPI/leaguerAPI.csproj.user
