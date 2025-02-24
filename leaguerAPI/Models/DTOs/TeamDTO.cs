@@ -6,13 +6,20 @@
         {
             Id = team.Id;
             Name = team.Name;
-            Rank = team.Rank;
             Wins = team.Wins;
             Losses = team.Losses;
             TeamUsers = team.TeamUsers?
-                .Where(t => t.User != null)
-                .Select(t =>new UserDTO(t.User))
+                .Where(t => !t.IsManager)
+                .Select(t => new TeamUserDTO(t))
                 .ToList();
+            TeamManagers = team.TeamUsers?
+                .Where(t => t.IsManager)
+                .Select(t => new TeamUserDTO(t))
+                .ToList();
+            Rank = team.League?.Teams?
+                .OrderBy(t => (decimal)t.Wins / (decimal)t.Losses)
+                .ToList()
+                .FindIndex(t => t.Id == team.Id) + 1 ?? 0;
         }
         public Guid Id { get; set; }
         public string Name { get; set; }
@@ -20,6 +27,7 @@
         public int Wins { get; set; }
         public int Losses { get; set; }
 
-        public List<UserDTO>? TeamUsers { get; set; }
+        public List<TeamUserDTO>? TeamUsers { get; set; }
+        public List<TeamUserDTO>? TeamManagers { get; set; }
     }
 }

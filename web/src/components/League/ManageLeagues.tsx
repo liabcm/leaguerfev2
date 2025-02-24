@@ -15,7 +15,10 @@ import SearchUsersModal from './SearchUsersModal';
 const ManageLeagues = () => {
   const [leagues, setLeagues] = useState<League[]>([]);
   const [selectedLeague, setSelectedLeague] = useState<League | null>(null);
-  const [activeTab, setActiveTab] = useState<'details' | 'events'>('details');
+  // Now activeTab tracks one of three states: members, teams, or events
+  const [activeTab, setActiveTab] = useState<'members' | 'teams' | 'events'>(
+    'members'
+  );
   const {
     getMyLeagues,
     kickFromLeague,
@@ -43,6 +46,11 @@ const ManageLeagues = () => {
     };
     fetchLeagues();
   }, []);
+
+  // Reset activeTab when a new league is selected.
+  useEffect(() => {
+    setActiveTab('members');
+  }, [selectedLeague]);
 
   const handleCreateEvent = () => {
     selectedLeague && navigate(`/event/${selectedLeague.id}`);
@@ -110,7 +118,6 @@ const ManageLeagues = () => {
     }
   };
 
-  // New functions for pending actions
   const onAccept = async (member: LeagueUser) => {
     try {
       await acceptInvite(selectedLeague?.id!, member.userId);
@@ -138,7 +145,6 @@ const ManageLeagues = () => {
   const onDecline = async (member: LeagueUser) => {
     try {
       await declineInvite(selectedLeague?.id!, member.userId);
-
       setLeagues((prevLeagues) => {
         const updatedLeagues = prevLeagues.map((league) => {
           if (league.id === selectedLeague?.id) {
@@ -163,7 +169,6 @@ const ManageLeagues = () => {
   const onRemoveInvite = async (member: LeagueUser) => {
     try {
       await declineInvite(selectedLeague?.id!, member.userId);
-
       setLeagues((prevLeagues) => {
         const updatedLeagues = prevLeagues.map((league) => {
           if (league.id === selectedLeague?.id) {
@@ -181,8 +186,12 @@ const ManageLeagues = () => {
         return updatedLeagues;
       });
     } catch (error) {
-      console.error('Error declining request:', error);
+      console.error('Error removing invite:', error);
     }
+  };
+
+  const handleAddTeam = () => {
+    navigate(`/league/${selectedLeague?.id}/team`);
   };
 
   return (
@@ -222,13 +231,22 @@ const ManageLeagues = () => {
             </InfoItem>
           </InfoContainer>
 
+          {/* Three tabs: Members, Teams (if applicable), and Events */}
           <Tabs>
             <TabButton
-              $active={activeTab === 'details'}
-              onClick={() => setActiveTab('details')}
+              $active={activeTab === 'members'}
+              onClick={() => setActiveTab('members')}
             >
-              Details
+              Members
             </TabButton>
+            {selectedLeague.isTeamLeague && (
+              <TabButton
+                $active={activeTab === 'teams'}
+                onClick={() => setActiveTab('teams')}
+              >
+                Teams
+              </TabButton>
+            )}
             <TabButton
               $active={activeTab === 'events'}
               onClick={() => setActiveTab('events')}
@@ -237,45 +255,27 @@ const ManageLeagues = () => {
             </TabButton>
           </Tabs>
 
-          {activeTab === 'details' && (
+          {activeTab === 'members' && (
             <>
               <MembersSection>
                 <MembersHeader>
-                  {selectedLeague.isTeamLeague ? (
-                    <h3>Teams</h3>
-                  ) : (
-                    <h3>Members</h3>
-                  )}
-                  <Count>
-                    {selectedLeague.isTeamLeague
-                      ? selectedLeague.teams?.length || 0
-                      : selectedLeague.leagueMembers.length || 0}
-                  </Count>
+                  <h3>Members</h3>
+                  <Count>{selectedLeague.leagueMembers.length || 0}</Count>
                   <ActionContainer>
-                    {selectedLeague.isTeamLeague ? (
-                      <Button onClick={() => console.log('team')}>
-                        Add Team
-                      </Button>
-                    ) : (
-                      <Button onClick={() => setShowSearchUsersModal(true)}>
-                        Search Users
-                      </Button>
-                    )}
+                    <Button onClick={() => setShowSearchUsersModal(true)}>
+                      Search Users
+                    </Button>
                   </ActionContainer>
                 </MembersHeader>
                 <MembersList>
-                  {selectedLeague.isTeamLeague
-                    ? selectedLeague.teams?.map((team) => (
-                        <Member key={team.id}>{team.name}</Member>
-                      ))
-                    : selectedLeague.leagueMembers.map((member) => (
-                        <MemberRow
-                          key={member.userId}
-                          member={member}
-                          isManaged={true}
-                          onRemove={handleRemoveMember}
-                        />
-                      ))}
+                  {selectedLeague.leagueMembers.map((member) => (
+                    <MemberRow
+                      key={member.userId}
+                      member={member}
+                      isManaged={true}
+                      onRemove={handleRemoveMember}
+                    />
+                  ))}
                 </MembersList>
               </MembersSection>
               <LeaguePendingSection
@@ -292,6 +292,23 @@ const ManageLeagues = () => {
                 type='request'
               />
             </>
+          )}
+
+          {activeTab === 'teams' && selectedLeague.isTeamLeague && (
+            <MembersSection>
+              <MembersHeader>
+                <h3>Teams</h3>
+                <Count>{selectedLeague.teams?.length || 0}</Count>
+                <ActionContainer>
+                  <Button onClick={handleAddTeam}>Add Team</Button>
+                </ActionContainer>
+              </MembersHeader>
+              <MembersList>
+                {selectedLeague.teams?.map((team) => (
+                  <Member key={team.id}>{team.name}</Member>
+                ))}
+              </MembersList>
+            </MembersSection>
           )}
 
           {activeTab === 'events' && (
@@ -390,7 +407,7 @@ const InfoItem = styled.div`
 const Tabs = styled.div`
   display: flex;
   gap: 0.5rem;
-  margin-bottom: clamp(1rem, 3vw, 1.5rem);
+  margin-bottom: 1rem;
 `;
 
 const TabButton = styled.button<{ $active: boolean }>`

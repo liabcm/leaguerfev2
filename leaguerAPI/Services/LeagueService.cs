@@ -3,7 +3,6 @@ using leaguerAPI.Models;
 using leaguerAPI.Models.DTOs;
 using leaguerAPI.Services.Interfaces;
 using Microsoft.EntityFrameworkCore;
-using System.Linq;
 
 namespace leaguerAPI.Services
 {
@@ -57,6 +56,8 @@ namespace leaguerAPI.Services
                     .ThenInclude(eu => eu.User)
                     .Include(l => l.LeagueUsers)
                     .ThenInclude(lu => lu.User)
+                    .Include(l => l.Teams)
+                    .ThenInclude(t => t.TeamUsers)
                 .FirstOrDefaultAsync(l => l.Id == id);
 
             return new LeagueDTO(league);
@@ -84,7 +85,7 @@ namespace leaguerAPI.Services
 
             return new PagedResult<LeagueDTO>
             {
-                Items = items.Select(l=>new LeagueDTO(l)),
+                Items = items.Select(l => new LeagueDTO(l)),
                 TotalCount = totalCount,
                 PageNumber = page,
                 PageSize = pageSize
@@ -107,7 +108,7 @@ namespace leaguerAPI.Services
             {
                 league.Sport = request.Sport;
             }
-            if(request.isPublic != league.isPublic)
+            if (request.isPublic != league.isPublic)
             {
                 league.isPublic = request.isPublic;
             }
@@ -124,14 +125,14 @@ namespace leaguerAPI.Services
         public async Task<Response<bool>> JoinLeague(Guid leagueId, Guid userId)
         {
             Response<bool> response = new Response<bool>();
-            var leagueUser = await _context.LeagueUsers.IgnoreQueryFilters().FirstOrDefaultAsync(lu=>lu.UserId == userId && lu.LeagueId == leagueId);
+            var leagueUser = await _context.LeagueUsers.IgnoreQueryFilters().FirstOrDefaultAsync(lu => lu.UserId == userId && lu.LeagueId == leagueId);
             if (leagueUser != null && leagueUser.IsDeleted)
             {
                 leagueUser.IsDeleted = false;
                 await _context.SaveChangesAsync();
                 return response;
             }
-            else if(leagueUser != null && !leagueUser.IsDeleted)
+            else if (leagueUser != null && !leagueUser.IsDeleted)
             {
                 response.ErrorMessage = "User already joined league";
                 return response;
@@ -145,21 +146,21 @@ namespace leaguerAPI.Services
 
         public async Task<Response<bool>> LeaveLeague(Guid leagueId, Guid userId, bool kicking, Guid? managerId)
         {
-            if(kicking)
+            if (kicking)
             {
-                if(userId == managerId)
+                if (userId == managerId)
                 {
                     return Response<bool>.FailureResult("Please dont kick yourself!");
                 }
                 var manager = await _context.LeagueUsers
                     .FirstOrDefaultAsync(lu => lu.UserId == managerId && lu.LeagueId == leagueId && lu.IsManager);
-                if(manager == null)
+                if (manager == null)
                 {
                     return Response<bool>.FailureResult("User not authorized to kick");
                 }
             }
             var leagueUser = await _context.LeagueUsers.IgnoreQueryFilters().FirstOrDefaultAsync(lu => lu.UserId == userId && lu.LeagueId == leagueId);
-            if(leagueUser == null || leagueUser.IsDeleted)
+            if (leagueUser == null || leagueUser.IsDeleted)
             {
                 return Response<bool>.FailureResult("User not in league");
             }
@@ -174,13 +175,14 @@ namespace leaguerAPI.Services
             {
                 var leagues = await _context.Leagues
                     .AsNoTracking()
-                    .Include(l=>l.Events)
-                    .ThenInclude(e=>e.EventUsers)
-                    .ThenInclude(eu=>eu.User)
-                    .Include(l=>l.LeagueUsers)
-                    .ThenInclude(lu=>lu.User)
-                    .Where(l=>l.CreatedBy == userId)
-                    .Select(l=>new LeagueDTO(l))
+                    .Include(l => l.Events)
+                    .ThenInclude(e => e.EventUsers)
+                    .ThenInclude(eu => eu.User)
+                    .Include(l => l.LeagueUsers)
+                    .ThenInclude(lu => lu.User)
+                    .Include(l => l.Teams)
+                    .Where(l => l.CreatedBy == userId)
+                    .Select(l => new LeagueDTO(l))
                     .ToListAsync();
 
                 return new Response<List<LeagueDTO>>()
@@ -189,9 +191,11 @@ namespace leaguerAPI.Services
                     Success = true
                 };
             }
-            catch (Exception ex) { 
-                return new Response<List<LeagueDTO>>() { 
-                    ErrorMessage= ex.Message, 
+            catch (Exception ex)
+            {
+                return new Response<List<LeagueDTO>>()
+                {
+                    ErrorMessage = ex.Message,
                     Success = false
                 };
             }
@@ -205,7 +209,7 @@ namespace leaguerAPI.Services
                     .AsNoTracking()
                     .Include(l => l.LeagueUsers)
                     .ThenInclude(lu => lu.User)
-                    .Where(l => l.LeagueUsers.Any(lu=>lu.UserId == userId && lu.Status == LeagueUserStatus.Member))
+                    .Where(l => l.LeagueUsers.Any(lu => lu.UserId == userId && lu.Status == LeagueUserStatus.Member))
                     .Select(l => new LeagueDTO(l))
                     .ToListAsync();
 

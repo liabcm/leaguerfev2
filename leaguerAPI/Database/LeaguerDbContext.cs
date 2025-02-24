@@ -202,7 +202,6 @@ namespace leaguerAPI.Database
                 entity.HasKey(t => t.Id);
 
                 entity.Property(t => t.Name).IsRequired().HasMaxLength(100);
-                entity.Property(t => t.Rank).IsRequired();
                 entity.Property(t => t.Wins).HasDefaultValue(0);
                 entity.Property(t => t.Losses).HasDefaultValue(0);
 
@@ -225,6 +224,9 @@ namespace leaguerAPI.Database
                     .WithMany(u => u.TeamUsers)
                     .HasForeignKey(tu => tu.UserId)
                     .OnDelete(DeleteBehavior.Restrict);
+
+                entity.Property(tu => tu.IsManager)
+                .HasDefaultValue(false);
             });
         }
     }

@@ -6,9 +6,11 @@ import { Event } from '../models/Event';
 import { League } from '../models/League';
 import { PagedResult } from '../models/PagedResult';
 import { Sport } from '../models/Sport';
+import { Team } from '../models/Team';
+import { TeamCreateDTO, TeamUpdateDTO } from '../models/TeamCreateDTO';
 import { User } from '../models/User';
 
-const API_BASE_URL = 'https://localhost:44378/api';
+const API_BASE_URL = 'https://localhost:44378/api/v1';
 
 export const useLeagueApi = () => {
   const { instance } = useMsal();
@@ -342,6 +344,37 @@ export const useLeagueApi = () => {
 
       const result = await response.json();
       return result.data;
+    },
+
+    //TEAM SECTION
+    createTeam: async (teamData: TeamCreateDTO): Promise<Team> => {
+      const response = await fetch(`${API_BASE_URL}/team`, {
+        method: 'POST',
+        headers: await getAuthHeader(),
+        body: JSON.stringify(teamData),
+      });
+
+      if (!response.ok) throw new Error('Failed to create team');
+      return response.json();
+    },
+
+    getTeamById: async (id: string): Promise<Team> => {
+      const response = await fetch(`${API_BASE_URL}/team/${id}`, {
+        headers: await getAuthHeader(),
+      });
+      if (!response.ok) throw new Error('Failed to fetch team');
+      return response.json();
+    },
+
+    updateTeam: async (teamData: TeamUpdateDTO): Promise<Team> => {
+      const response = await fetch(`${API_BASE_URL}/team`, {
+        method: 'PUT',
+        headers: await getAuthHeader(),
+        body: JSON.stringify(teamData),
+      });
+
+      if (!response.ok) throw new Error('Failed to update team');
+      return response.json();
     },
   };
 };

@@ -16,6 +16,7 @@ import MyLeagues from './League/MyLeagues';
 import Profile from './Profile';
 import ProtectedRoute from './ProtectedRoute';
 import SportForm from './Sport/SportForm';
+import TeamForm from './Teams/TeamForm';
 
 function Pages() {
   const { instance, accounts } = useMsal();
@@ -52,6 +53,7 @@ function Pages() {
         <Route path='league/joined' element={<MyLeagues />} />
         <Route path='sport' element={<SportForm />} />
         <Route path='/invites' element={<InvitesPage />} />
+        <Route path='league/:leagueId/team' element={<TeamForm />} />
       </Route>
     </Routes>
   );

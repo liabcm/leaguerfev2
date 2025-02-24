@@ -5,7 +5,7 @@ using Microsoft.AspNetCore.Mvc;
 
 namespace leaguerAPI.Controllers.v1
 {
-    [Route("api/[controller]")]
+    [Route("api/v1/[controller]")]
     [ApiController]
     [Authorize]
     public class SportController : ControllerBase

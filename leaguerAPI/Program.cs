@@ -1,7 +1,7 @@
-using leaguerAPI.Services.Interfaces;
-using leaguerAPI.Services;
-using Microsoft.AspNetCore.Authentication.JwtBearer;
 using leaguerAPI.Database;
+using leaguerAPI.Services;
+using leaguerAPI.Services.Interfaces;
+using Microsoft.AspNetCore.Authentication.JwtBearer;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Identity.Web;
 
@@ -17,6 +17,7 @@ builder.Services.AddScoped<ILeagueService, LeagueService>();
 builder.Services.AddScoped<IUserService, UserService>();
 builder.Services.AddScoped<IEventService, EventService>();
 builder.Services.AddScoped<ISportService, SportService>();
+builder.Services.AddScoped<ITeamService, TeamService>();
 
 // Learn more about configuring Swagger/OpenAPI at https://aka.ms/aspnetcore/swashbuckle
 builder.Services.AddEndpointsApiExplorer();

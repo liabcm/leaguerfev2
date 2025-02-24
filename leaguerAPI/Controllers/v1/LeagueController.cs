@@ -7,7 +7,7 @@ using Microsoft.AspNetCore.Mvc;
 namespace leaguerAPI.Controllers.v1
 {
     [ApiController]
-    [Route("api/[controller]")]
+    [Route("api/v1/[controller]")]
     [Authorize]
     public class LeagueController : ControllerBase
     {

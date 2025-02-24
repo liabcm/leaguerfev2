@@ -249,9 +249,6 @@ namespace leaguerAPI.Migrations
                         .HasMaxLength(100)
                         .HasColumnType("nvarchar(100)");
 
-                    b.Property<int>("Rank")
-                        .HasColumnType("int");
-
                     b.Property<int>("Wins")
                         .ValueGeneratedOnAdd()
                         .HasColumnType("int")
@@ -271,6 +268,11 @@ namespace leaguerAPI.Migrations
 
                     b.Property<Guid>("UserId")
                         .HasColumnType("uniqueidentifier");
+
+                    b.Property<bool>("IsManager")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("bit")
+                        .HasDefaultValue(false);
 
                     b.HasKey("TeamId", "UserId");
 

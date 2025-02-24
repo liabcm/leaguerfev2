@@ -25,3 +25,4 @@ dist-ssr
 /leaguerAPI/leaguerAPI.csproj.user
 /leaguerAPI/bin/Debug/net9.0
 .vs/slnx.sqlite
+/.vs
