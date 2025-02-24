@@ -76,8 +76,9 @@ namespace leaguerAPI.Controllers.v1
             {
                 return BadRequest(Response<bool>.FailureResult("Invalid request data"));
             }
+            var userId = User.GetObjectId();
 
-            var response = await _userService.DeclineInviteAsync(request.LeagueId, request.UserId);
+            var response = await _userService.DeclineInviteAsync(request.LeagueId, request.UserId, userId);
 
             if (!response.Success)
             {

@@ -6,7 +6,7 @@ import { User } from '../../models/User'; // You'll need to create this type
 interface SearchUsersModalProps {
   isOpen: boolean;
   onClose: () => void;
-  onInviteUser: (userId: string) => Promise<void>;
+  onInviteUser: (user: User) => Promise<void>;
   leagueId: string;
 }
 
@@ -27,7 +27,6 @@ const SearchUsersModal = ({
   const fetchUsers = async (query: string, pageNum: number) => {
     setLoading(true);
     try {
-      console.log('in');
       const data = await searchUsers(leagueId, query, pageNum);
       if (pageNum === 1) {
         setUsers(data.items);
@@ -53,18 +52,19 @@ const SearchUsersModal = ({
     }
   }, [searchTerm, isOpen]);
 
-  const handleInvite = async (userId: string) => {
-    setInvitingUsers((prev) => new Set(prev).add(userId));
+  const handleInvite = async (user: User) => {
+    console.log(users);
+    setInvitingUsers((prev) => new Set(prev).add(user.id));
     try {
-      await onInviteUser(userId);
+      await onInviteUser(user);
       // Optionally remove the user from the list after successful invite
-      setUsers((prev) => prev.filter((user) => user.id !== userId));
+      setUsers((prev) => prev.filter((u) => u.id !== user.id));
     } catch (error) {
       console.error('Error inviting user:', error);
     } finally {
       setInvitingUsers((prev) => {
         const newSet = new Set(prev);
-        newSet.delete(userId);
+        newSet.delete(user.id);
         return newSet;
       });
     }
@@ -105,7 +105,7 @@ const SearchUsersModal = ({
                 </UserDetails>
               </UserInfo>
               <InviteButton
-                onClick={() => handleInvite(user.id)}
+                onClick={() => handleInvite(user)}
                 disabled={invitingUsers.has(user.id)}
               >
                 {invitingUsers.has(user.id) ? 'Inviting...' : 'Invite'}

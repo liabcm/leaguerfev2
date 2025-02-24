@@ -110,7 +110,7 @@ namespace leaguerAPI.Controllers.v1
                 return BadRequest(result.ErrorMessage);
             }
 
-            return Ok();
+            return Ok(result.Data);
         }
     }
 }

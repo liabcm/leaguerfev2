@@ -4,6 +4,9 @@ import { useNavigate, useSearchParams } from 'react-router-dom';
 import styled from 'styled-components';
 import { useLeagueApi } from '../../api/useLeagueApi';
 import { League } from '../../models/League';
+import { LeagueUser } from '../../models/LeagueUser';
+import { LeagueUserStatus } from '../../models/LeagueUserStatusEnum';
+import { User } from '../../models/User';
 import EventList from '../Events/EventList';
 import LeaguePendingSection from './LeaguePendingSection';
 import MemberRow from './MemberRow';
@@ -13,7 +16,13 @@ const ManageLeagues = () => {
   const [leagues, setLeagues] = useState<League[]>([]);
   const [selectedLeague, setSelectedLeague] = useState<League | null>(null);
   const [activeTab, setActiveTab] = useState<'details' | 'events'>('details');
-  const { getMyLeagues, kickFromLeague, inviteUserToLeague } = useLeagueApi();
+  const {
+    getMyLeagues,
+    kickFromLeague,
+    inviteUserToLeague,
+    acceptInvite,
+    declineInvite,
+  } = useLeagueApi();
   const navigate = useNavigate();
   const [searchParams, setSearchParams] = useSearchParams();
   const [showSearchUsersModal, setShowSearchUsersModal] = useState(false);
@@ -45,10 +54,33 @@ const ManageLeagues = () => {
     setSelectedLeague(leagues.find((l) => l.id === leagueId) || null);
   };
 
-  const handleInviteUser = async (userId: string) => {
+  const handleInviteUser = async (user: User) => {
     try {
-      console.log(userId);
-      await inviteUserToLeague(selectedLeague?.id!, userId, true);
+      await inviteUserToLeague(selectedLeague?.id!, user.id, true);
+      setLeagues(
+        leagues.map((league) => {
+          if (league.id === selectedLeague?.id) {
+            const updatedLeague = {
+              ...league,
+              leagueInvites: [
+                ...league.leagueInvites,
+                {
+                  userId: user.id,
+                  name: user.name,
+                  leagueId: selectedLeague.id,
+                  leagueName: selectedLeague.name,
+                  email: user.email,
+                  isManager: false,
+                  status: LeagueUserStatus.Invited,
+                },
+              ],
+            };
+            setSelectedLeague(updatedLeague);
+            return updatedLeague;
+          }
+          return league;
+        })
+      );
     } catch (error) {
       console.error('Error inviting user:', error);
     }
@@ -61,12 +93,14 @@ const ManageLeagues = () => {
       setLeagues(
         leagues.map((league) => {
           if (league.id === leagueId) {
-            return {
+            const updatedLeague = {
               ...league,
-              leagueUsers: league.leagueMembers.filter(
+              leagueMembers: league.leagueMembers.filter(
                 (user) => user.userId !== memberId
               ),
             };
+            setSelectedLeague(updatedLeague);
+            return updatedLeague;
           }
           return league;
         })
@@ -77,12 +111,78 @@ const ManageLeagues = () => {
   };
 
   // New functions for pending actions
-  const onAccept = async (userId: string) => {
-    console.log(`Accepted user: ${userId}`);
+  const onAccept = async (member: LeagueUser) => {
+    try {
+      await acceptInvite(selectedLeague?.id!, member.userId);
+      setLeagues(
+        leagues.map((league) => {
+          if (league.id === selectedLeague?.id) {
+            const updatedLeague = {
+              ...league,
+              leagueMembers: [...league.leagueMembers, member],
+              leagueRequests: league.leagueRequests.filter(
+                (user) => user.userId !== member.userId
+              ),
+            };
+            setSelectedLeague(updatedLeague);
+            return updatedLeague;
+          }
+          return league;
+        })
+      );
+    } catch (error) {
+      console.error('Error accepting request:', error);
+    }
   };
 
-  const onDecline = async (userId: string) => {
-    console.log(`Declined user: ${userId}`);
+  const onDecline = async (member: LeagueUser) => {
+    try {
+      await declineInvite(selectedLeague?.id!, member.userId);
+
+      setLeagues((prevLeagues) => {
+        const updatedLeagues = prevLeagues.map((league) => {
+          if (league.id === selectedLeague?.id) {
+            const updatedLeague = {
+              ...league,
+              leagueRequests: league.leagueRequests.filter(
+                (user) => user.userId !== member.userId
+              ),
+            };
+            setSelectedLeague(updatedLeague);
+            return updatedLeague;
+          }
+          return league;
+        });
+        return updatedLeagues;
+      });
+    } catch (error) {
+      console.error('Error declining request:', error);
+    }
+  };
+
+  const onRemoveInvite = async (member: LeagueUser) => {
+    try {
+      await declineInvite(selectedLeague?.id!, member.userId);
+
+      setLeagues((prevLeagues) => {
+        const updatedLeagues = prevLeagues.map((league) => {
+          if (league.id === selectedLeague?.id) {
+            const updatedLeague = {
+              ...league,
+              leagueInvites: league.leagueInvites.filter(
+                (user) => user.userId !== member.userId
+              ),
+            };
+            setSelectedLeague(updatedLeague);
+            return updatedLeague;
+          }
+          return league;
+        });
+        return updatedLeagues;
+      });
+    } catch (error) {
+      console.error('Error declining request:', error);
+    }
   };
 
   return (
@@ -181,8 +281,7 @@ const ManageLeagues = () => {
               <LeaguePendingSection
                 title='Pending Invites'
                 items={selectedLeague.leagueInvites}
-                onAccept={onAccept}
-                onDecline={onDecline}
+                onDecline={onRemoveInvite}
                 type='invite'
               />
               <LeaguePendingSection

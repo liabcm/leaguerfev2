@@ -111,8 +111,23 @@ namespace leaguerAPI.Services
             }
         }
 
-        public async Task<Response<bool>> DeclineInviteAsync(Guid leagueId, Guid userId)
+        public async Task<Response<bool>> DeclineInviteAsync(Guid leagueId, Guid userId, Guid currentUserId)
         {
+            if (leagueId == Guid.Empty || userId == Guid.Empty || currentUserId == Guid.Empty)
+            {
+                return Response<bool>.FailureResult("Invalid LeagueId or UserId.");
+            }
+
+            if (userId != currentUserId)
+            {
+                var canDecline = await _context.ConfirmedLeagueUsers
+                    .AnyAsync(lu => lu.LeagueId == leagueId && lu.UserId == currentUserId && lu.IsManager);
+                if (!canDecline)
+                {
+                    return Response<bool>.FailureResult("You do not have permission to decline this invite.");
+                }
+            }
+
             var record = await _context.LeagueUserRequestsAndInvites
                 .FirstOrDefaultAsync(lu => lu.LeagueId == leagueId && lu.UserId == userId);
 

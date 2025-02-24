@@ -145,27 +145,27 @@ namespace leaguerAPI.Services
 
         public async Task<Response<bool>> LeaveLeague(Guid leagueId, Guid userId, bool kicking, Guid? managerId)
         {
-            var response = new Response<bool>();
             if(kicking)
             {
+                if(userId == managerId)
+                {
+                    return Response<bool>.FailureResult("Please dont kick yourself!");
+                }
                 var manager = await _context.LeagueUsers
                     .FirstOrDefaultAsync(lu => lu.UserId == managerId && lu.LeagueId == leagueId && lu.IsManager);
                 if(manager == null)
                 {
-                    response.ErrorMessage = "User not authorized to kick";
-                    return response;
+                    return Response<bool>.FailureResult("User not authorized to kick");
                 }
             }
             var leagueUser = await _context.LeagueUsers.IgnoreQueryFilters().FirstOrDefaultAsync(lu => lu.UserId == userId && lu.LeagueId == leagueId);
             if(leagueUser == null || leagueUser.IsDeleted)
             {
-                response.ErrorMessage = "User not in league";
-                return response;
+                return Response<bool>.FailureResult("User not in league");
             }
             leagueUser.IsDeleted = true;
             await _context.SaveChangesAsync();
-            response.Data = true;
-            return response;
+            return Response<bool>.SuccessResult(true);
         }
 
         public async Task<Response<List<LeagueDTO>>> GetMyLeaguesAsync(Guid userId)
@@ -205,7 +205,7 @@ namespace leaguerAPI.Services
                     .AsNoTracking()
                     .Include(l => l.LeagueUsers)
                     .ThenInclude(lu => lu.User)
-                    .Where(l => l.LeagueUsers.Any(lu=>lu.UserId == userId))
+                    .Where(l => l.LeagueUsers.Any(lu=>lu.UserId == userId && lu.Status == LeagueUserStatus.Member))
                     .Select(l => new LeagueDTO(l))
                     .ToListAsync();
 

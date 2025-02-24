@@ -5,8 +5,8 @@ import { LeagueUser } from '../../models/LeagueUser';
 interface LeaguePendingSectionProps {
   title: string;
   items?: LeagueUser[];
-  onAccept: (userId: string) => Promise<void>;
-  onDecline: (userId: string) => Promise<void>;
+  onAccept?: (member: LeagueUser) => Promise<void>;
+  onDecline: (member: LeagueUser) => Promise<void>;
   type: 'invite' | 'request';
   isLoading?: boolean;
 }
@@ -41,15 +41,17 @@ const LeaguePendingSection = ({
               </StatusText>
             </ItemInfo>
             <ButtonGroup>
+              {type === 'request' && (
+                <ActionButton
+                  onClick={() => onAccept!(item)}
+                  disabled={isLoading}
+                  $variant='primary'
+                >
+                  Accept
+                </ActionButton>
+              )}
               <ActionButton
-                onClick={() => onAccept(item.userId)}
-                disabled={isLoading}
-                $variant='primary'
-              >
-                {type === 'invite' ? 'Cancel Invite' : 'Accept'}
-              </ActionButton>
-              <ActionButton
-                onClick={() => onDecline(item.userId)}
+                onClick={() => onDecline(item)}
                 disabled={isLoading}
                 $variant='danger'
               >
