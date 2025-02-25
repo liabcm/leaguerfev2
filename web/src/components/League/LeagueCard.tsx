@@ -246,7 +246,10 @@ const LeagueCard = () => {
                 <h3>Upcoming Events</h3>
               </HeaderTopRow>
             </EventsHeader>
-            <EventList events={league.events || []} />
+            <EventList
+              events={league.events || []}
+              isTeamEvents={league.isTeamLeague}
+            />
           </EventsSection>
         )}
       </Card>

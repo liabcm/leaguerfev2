@@ -1,3 +1,4 @@
+import { Team } from './Team';
 import { User } from './User';
 
 export interface Event {
@@ -7,5 +8,6 @@ export interface Event {
   eventTime: string;
   createdBy: string;
   users: User[];
+  teams: Team[];
   opponentIds?: string[] | null;
 }

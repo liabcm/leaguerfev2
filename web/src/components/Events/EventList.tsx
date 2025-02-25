@@ -4,9 +4,10 @@ import { Event } from '../../models/Event';
 
 interface EventListProps {
   events: Event[];
+  isTeamEvents: boolean;
 }
 
-const EventList = ({ events }: EventListProps) => {
+const EventList = ({ events, isTeamEvents }: EventListProps) => {
   if (!events || events.length === 0) {
     return <NoEventsMessage>No events yet.</NoEventsMessage>;
   }
@@ -27,7 +28,9 @@ const EventList = ({ events }: EventListProps) => {
             })}
           </EventTime>
           <Opponents>
-            {event.users.map((u) => u.name).join(' vs ') || 'TBD'}
+            {isTeamEvents
+              ? event.teams?.map((t) => t.name).join(' vs ')
+              : event.users?.map((u) => u.name).join(' vs ') || 'TBD'}
           </Opponents>
         </StyledEventItem>
       ))}

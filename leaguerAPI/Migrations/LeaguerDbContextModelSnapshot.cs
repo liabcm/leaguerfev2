@@ -236,6 +236,11 @@ namespace leaguerAPI.Migrations
                         .ValueGeneratedOnAdd()
                         .HasColumnType("uniqueidentifier");
 
+                    b.Property<bool>("IsPending")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("bit")
+                        .HasDefaultValue(false);
+
                     b.Property<Guid>("LeagueId")
                         .HasColumnType("uniqueidentifier");
 
@@ -443,7 +448,8 @@ namespace leaguerAPI.Migrations
 
             modelBuilder.Entity("leaguerAPI.Models.Event", b =>
                 {
-                    b.Navigation("EventResult");
+                    b.Navigation("EventResult")
+                        .IsRequired();
 
                     b.Navigation("EventTeams");
 

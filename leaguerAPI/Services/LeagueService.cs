@@ -52,10 +52,13 @@ namespace leaguerAPI.Services
             var league = await _context.Leagues
                 .AsNoTracking()
                     .Include(l => l.Events)
-                    .ThenInclude(e => e.EventUsers)
-                    .ThenInclude(eu => eu.User)
+                        .ThenInclude(e => e.EventUsers)
+                        .ThenInclude(eu => eu.User)
+                    .Include(lu => lu.Events)
+                        .ThenInclude(e => e.EventTeams)
+                        .ThenInclude(et => et.Team)
                     .Include(l => l.LeagueUsers)
-                    .ThenInclude(lu => lu.User)
+                        .ThenInclude(lu => lu.User)
                     .Include(l => l.Teams)
                     .ThenInclude(t => t.TeamUsers)
                 .FirstOrDefaultAsync(l => l.Id == id);
@@ -174,16 +177,19 @@ namespace leaguerAPI.Services
             try
             {
                 var leagues = await _context.Leagues
-                    .AsNoTracking()
-                    .Include(l => l.Events)
-                    .ThenInclude(e => e.EventUsers)
-                    .ThenInclude(eu => eu.User)
-                    .Include(l => l.LeagueUsers)
-                    .ThenInclude(lu => lu.User)
-                    .Include(l => l.Teams)
-                    .Where(l => l.CreatedBy == userId)
-                    .Select(l => new LeagueDTO(l))
-                    .ToListAsync();
+                                        .AsNoTracking()
+                                            .Include(l => l.Events)
+                                                .ThenInclude(e => e.EventUsers)
+                                                .ThenInclude(eu => eu.User)
+                                            .Include(lu => lu.Events)
+                                                .ThenInclude(e => e.EventTeams)
+                                                .ThenInclude(et => et.Team)
+                                            .Include(l => l.LeagueUsers)
+                                                .ThenInclude(lu => lu.User)
+                                            .Include(l => l.Teams)
+                                        .Where(l => l.CreatedBy == userId)
+                                        .Select(l => new LeagueDTO(l))
+                                        .ToListAsync();
 
                 return new Response<List<LeagueDTO>>()
                 {

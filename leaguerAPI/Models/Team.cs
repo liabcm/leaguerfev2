@@ -7,6 +7,7 @@
         public string Name { get; set; }
         public int Wins { get; set; }
         public int Losses { get; set; }
+        public bool IsPending { get; set; }
 
         public League League { get; set; }
         public ICollection<TeamUser> TeamUsers { get; set; }

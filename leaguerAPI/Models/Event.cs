@@ -12,8 +12,8 @@
 
         public League League { get; set; }
         public User CreatedByUser { get; set; }
-        public EventResult? EventResult { get; set; }
-        public ICollection<EventUser>? EventUsers { get; set; }
+        public EventResult EventResult { get; set; }
+        public ICollection<EventUser> EventUsers { get; set; }
         public ICollection<EventTeam> EventTeams { get; set; }
     }
 }

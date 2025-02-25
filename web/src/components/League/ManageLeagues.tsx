@@ -231,7 +231,6 @@ const ManageLeagues = () => {
             </InfoItem>
           </InfoContainer>
 
-          {/* Three tabs: Members, Teams (if applicable), and Events */}
           <Tabs>
             <TabButton
               $active={activeTab === 'members'}
@@ -322,7 +321,10 @@ const ManageLeagues = () => {
                   <Button onClick={handleCreateEvent}>Create New Event</Button>
                 </ActionContainer>
               </EventsHeader>
-              <EventList events={selectedLeague.events || []} />
+              <EventList
+                events={selectedLeague.events || []}
+                isTeamEvents={selectedLeague.isTeamLeague}
+              />
             </EventsSection>
           )}
         </Card>

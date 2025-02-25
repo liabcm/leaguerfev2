@@ -1,6 +1,6 @@
 ﻿using leaguerAPI.Database;
-using leaguerAPI.Models.DTOs;
 using leaguerAPI.Models;
+using leaguerAPI.Models.DTOs;
 using leaguerAPI.Services.Interfaces;
 using Microsoft.EntityFrameworkCore;
 
@@ -20,8 +20,8 @@ namespace leaguerAPI.Services
             try
             {
                 // Validate league exists
-                var leagueExists = await _context.Leagues.AnyAsync(l => l.Id == eventDto.LeagueId);
-                if (!leagueExists)
+                var league = await _context.Leagues.FirstOrDefaultAsync(l => l.Id == eventDto.LeagueId);
+                if (league == null)
                 {
                     return new Response<EventDTO>
                     {
@@ -49,21 +49,17 @@ namespace leaguerAPI.Services
                     EventTime = eventDto.EventTime,
                     Createdby = userId
                 };
-                _context.Events.Add(newEvent);
-
-                var league = await _context.Leagues.FirstOrDefaultAsync(l=>l.Id == eventDto.LeagueId);
 
                 if (league.IsTeamLeague)
                 {
-                    var eventTeams = eventDto.OpponentIds.Select(og => new EventTeam { EventId = newEvent.Id, TeamId = og });
-                    await _context.EventTeams.AddRangeAsync(eventTeams);
+                    newEvent.EventTeams = eventDto.OpponentIds.Select(og => new EventTeam { EventId = newEvent.Id, TeamId = og }).ToList();
                 }
                 else
                 {
-                    var eventUsers = eventDto.OpponentIds.Select(og => new EventUser { EventId = newEvent.Id, UserId = og });
-                    await _context.EventUsers.AddRangeAsync(eventUsers);
+                    newEvent.EventUsers = eventDto.OpponentIds.Select(og => new EventUser { EventId = newEvent.Id, UserId = og }).ToList();
                 }
 
+                await _context.Events.AddAsync(newEvent);
                 await _context.SaveChangesAsync();
 
                 return new Response<EventDTO>

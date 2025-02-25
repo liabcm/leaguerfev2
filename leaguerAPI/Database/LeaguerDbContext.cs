@@ -25,7 +25,7 @@ namespace leaguerAPI.Database
         public IQueryable<LeagueUser> LeagueUserInvites =>
             LeagueUsers.Where(lu => lu.Status == LeagueUserStatus.Invited);
         public IQueryable<LeagueUser> LeagueUserRequestsAndInvites =>
-                                LeagueUsers.Where(lu => lu.Status == LeagueUserStatus.Requested 
+                                LeagueUsers.Where(lu => lu.Status == LeagueUserStatus.Requested
                                 || lu.Status == LeagueUserStatus.Invited);
 
         protected override void OnModelCreating(ModelBuilder modelBuilder)
@@ -204,6 +204,7 @@ namespace leaguerAPI.Database
                 entity.Property(t => t.Name).IsRequired().HasMaxLength(100);
                 entity.Property(t => t.Wins).HasDefaultValue(0);
                 entity.Property(t => t.Losses).HasDefaultValue(0);
+                entity.Property(t => t.IsPending).HasDefaultValue(false);
 
                 entity.HasOne(t => t.League)
                     .WithMany(l => l.Teams)
