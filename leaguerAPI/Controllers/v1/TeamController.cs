@@ -30,7 +30,7 @@ namespace leaguerAPI.Controllers
                 return BadRequest(response);
             }
 
-            return Ok(response);
+            return Ok(response.Data);
         }
 
         [HttpPut]
@@ -47,7 +47,7 @@ namespace leaguerAPI.Controllers
                 return BadRequest(response);
             }
 
-            return Ok(response);
+            return Ok(response.Data);
         }
 
         [HttpGet("{teamId}")]
@@ -58,7 +58,7 @@ namespace leaguerAPI.Controllers
             {
                 return NotFound(response);
             }
-            return Ok(response);
+            return Ok(response.Data);
         }
 
         [HttpGet("league/{leagueId}")]
@@ -69,7 +69,7 @@ namespace leaguerAPI.Controllers
             {
                 return NotFound(response);
             }
-            return Ok(response);
+            return Ok(response.Data);
         }
     }
 }

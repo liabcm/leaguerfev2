@@ -17,9 +17,10 @@
                 .Select(t => new TeamUserDTO(t))
                 .ToList();
             Rank = team.League?.Teams?
-                .OrderBy(t => (decimal)t.Wins / (decimal)t.Losses)
+                .OrderBy(t => (t.Wins + t.Losses) == 0 ? decimal.MinValue : (decimal)t.Wins / (t.Wins + t.Losses))
                 .ToList()
                 .FindIndex(t => t.Id == team.Id) + 1 ?? 0;
+
         }
         public Guid Id { get; set; }
         public string Name { get; set; }

@@ -1,17 +1,20 @@
 import React, { FormEvent, useEffect, useState } from 'react';
-import { useNavigate, useParams } from 'react-router-dom';
+import { useNavigate, useParams, useSearchParams } from 'react-router-dom';
 import Select from 'react-select';
 import styled from 'styled-components';
 import { useLeagueApi } from '../../api/useLeagueApi';
 import { League } from '../../models/League';
+import { LeagueUser } from '../../models/LeagueUser';
 import { TeamCreateDTO, TeamUpdateDTO } from '../../models/TeamCreateDTO';
 import BackButton from '../General/BackButton';
 
 const TeamForm = () => {
-  const { leagueId, teamId } = useParams<{
+  const { leagueId } = useParams<{
     leagueId: string;
-    teamId?: string;
   }>();
+
+  const [searchParams] = useSearchParams();
+  const teamId = searchParams.get('teamId');
 
   const navigate = useNavigate();
 
@@ -25,7 +28,7 @@ const TeamForm = () => {
   const [loadingLeague, setLoadingLeague] = useState<boolean>(true);
   const [error, setError] = useState<string | null>(null);
   const [availableLeagueMembers, setAvailableLeagueMembers] = useState<
-    LeagueMember[]
+    LeagueUser[]
   >([]);
 
   const [formData, setFormData] = useState<TeamCreateDTO>({
@@ -35,8 +38,9 @@ const TeamForm = () => {
     teamUserIds: [],
   });
 
-  const [isEditMode, setIsEditMode] = useState<boolean>(false);
+  const [isEditMode, setIsEditMode] = useState<boolean>(!teamId);
   const [submitting, setSubmitting] = useState<boolean>(false);
+  const [managerError, setManagerError] = useState<string | null>(null);
 
   useEffect(() => {
     const fetchLeague = async () => {
@@ -50,6 +54,18 @@ const TeamForm = () => {
         ]);
         setAvailableLeagueMembers(
           leagueData.leagueMembers.filter((m) => {
+            // If we're in edit mode, we need to include the current team members in the available list
+            if (teamId) {
+              const currentTeam = leagueData.teams.find((t) => t.id === teamId);
+              if (currentTeam) {
+                const isInCurrentTeam = [
+                  ...currentTeam.teamManagers,
+                  ...currentTeam.teamUsers,
+                ].some((tm) => tm.userId === m.userId);
+
+                if (isInCurrentTeam) return true;
+              }
+            }
             return !membersInTeam.find((mt) => mt.userId === m.userId);
           })
         );
@@ -60,11 +76,10 @@ const TeamForm = () => {
       }
     };
     fetchLeague();
-  }, [leagueId]);
+  }, [leagueId, teamId]);
 
   useEffect(() => {
     if (teamId) {
-      setIsEditMode(true);
       const fetchTeam = async () => {
         try {
           const teamData = await getTeamById(teamId);
@@ -91,16 +106,30 @@ const TeamForm = () => {
     }));
   };
 
+  const handleEdit = (e: React.MouseEvent) => {
+    e.preventDefault();
+    setIsEditMode(true);
+  };
+
   const handleSubmit = async (e: FormEvent) => {
     e.preventDefault();
     setSubmitting(true);
+    setManagerError(null); // Reset previous error
+
+    if (formData.teamManagerIds.length === 0) {
+      setManagerError('At least one team manager is required.');
+      setSubmitting(false);
+      return;
+    }
     try {
-      if (isEditMode && teamId) {
+      if (teamId) {
         const teamUpdateDTO: TeamUpdateDTO = { id: teamId, ...formData };
         await updateTeam(teamUpdateDTO);
+        setIsEditMode(false);
       } else {
-        await createTeam(formData);
-        setIsEditMode(true);
+        const result = await createTeam(formData);
+        navigate(`/league/${leagueId}/team?teamId=${result.id}`);
+        setIsEditMode(false);
       }
     } catch (err) {
       setError('An error occurred.' + err);
@@ -118,7 +147,7 @@ const TeamForm = () => {
       <BackButton />
       <FormCard>
         <Header>
-          <Title>{isEditMode ? 'Edit Team' : 'Create Team'}</Title>
+          <Title>{teamId ? 'Edit Team' : 'Create Team'}</Title>
         </Header>
         <Form onSubmit={handleSubmit}>
           <Label>
@@ -129,6 +158,7 @@ const TeamForm = () => {
               value={formData.name}
               onChange={handleChange}
               required
+              disabled={!isEditMode}
             />
           </Label>
           <Label>
@@ -137,7 +167,8 @@ const TeamForm = () => {
               isMulti
               closeMenuOnSelect={false}
               name='teamManagerIds'
-              value={league.leagueMembers
+              isDisabled={!isEditMode}
+              value={availableLeagueMembers
                 .filter((member) =>
                   formData.teamManagerIds.includes(member.userId)
                 )
@@ -154,9 +185,11 @@ const TeamForm = () => {
                   teamManagerIds: selectedIds,
                 }));
               }}
-              options={league.leagueMembers
+              options={availableLeagueMembers
                 .filter(
-                  (member) => !formData.teamUserIds.includes(member.userId)
+                  (member) =>
+                    !formData.teamUserIds.includes(member.userId) ||
+                    formData.teamManagerIds.includes(member.userId)
                 )
                 .map((member) => ({
                   value: member.userId,
@@ -165,6 +198,7 @@ const TeamForm = () => {
               placeholder='Select team managers...'
               classNamePrefix='select'
             />
+            {managerError && <ErrorText>{managerError}</ErrorText>}
           </Label>
           <Label>
             Team Users
@@ -172,7 +206,8 @@ const TeamForm = () => {
               isMulti
               closeMenuOnSelect={false}
               name='teamUserIds'
-              value={league.leagueMembers
+              isDisabled={!isEditMode}
+              value={availableLeagueMembers
                 .filter((member) =>
                   formData.teamUserIds.includes(member.userId)
                 )
@@ -189,9 +224,11 @@ const TeamForm = () => {
                   teamUserIds: selectedIds,
                 }));
               }}
-              options={league.leagueMembers
+              options={availableLeagueMembers
                 .filter(
-                  (member) => !formData.teamManagerIds.includes(member.userId)
+                  (member) =>
+                    !formData.teamManagerIds.includes(member.userId) ||
+                    formData.teamUserIds.includes(member.userId)
                 )
                 .map((member) => ({
                   value: member.userId,
@@ -201,13 +238,19 @@ const TeamForm = () => {
               classNamePrefix='select'
             />
           </Label>
-          <SubmitButton type='submit' disabled={submitting}>
-            {submitting
-              ? 'Submitting...'
-              : isEditMode
-              ? 'Update Team'
-              : 'Create Team'}
-          </SubmitButton>
+          {isEditMode ? (
+            <SubmitButton type='submit' disabled={submitting}>
+              {submitting
+                ? 'Submitting...'
+                : teamId
+                ? 'Save Team'
+                : 'Create Team'}
+            </SubmitButton>
+          ) : (
+            <EditButton type='button' onClick={handleEdit}>
+              Edit Team
+            </EditButton>
+          )}
         </Form>
       </FormCard>
     </Container>
@@ -265,6 +308,12 @@ const Input = styled.input`
   border-radius: 0.375rem;
   font-size: 1rem;
   margin-top: 0.5rem;
+
+  &:disabled {
+    background-color: #f3f4f6;
+    cursor: not-allowed;
+    opacity: 0.7;
+  }
 `;
 
 const SubmitButton = styled.button`
@@ -279,6 +328,25 @@ const SubmitButton = styled.button`
   &:hover {
     opacity: 0.9;
   }
+
+  &:disabled {
+    background-color: #93c5fd;
+    cursor: not-allowed;
+  }
+`;
+
+const EditButton = styled.button`
+  padding: 0.75rem;
+  background-color: #6b7280;
+  color: white;
+  border: none;
+  border-radius: 0.375rem;
+  font-size: 1rem;
+  cursor: pointer;
+
+  &:hover {
+    background-color: #4b5563;
+  }
 `;
 
 const ErrorMessage = styled.div`
@@ -291,4 +359,10 @@ const Spinner = styled.div`
   text-align: center;
   padding: 2rem;
   font-size: 1.5rem;
+`;
+
+const ErrorText = styled.p`
+  color: red;
+  font-size: 0.875rem;
+  margin-top: 0.25rem;
 `;
