@@ -71,5 +71,31 @@ namespace leaguerAPI.Controllers
             }
             return Ok(response.Data);
         }
+
+        [HttpPost("request")]
+        public async Task<IActionResult> RequestTeamCreation([FromBody] TeamRequestDTO teamCreateDTO)
+        {
+            if (teamCreateDTO == null)
+            {
+                return BadRequest(Response<TeamDTO>.FailureResult("Team data is required."));
+            }
+            var response = await _teamService.RequestTeamCreation(teamCreateDTO, User.GetObjectId());
+            if (!response.Success)
+            {
+                return BadRequest(response.ErrorMessage);
+            }
+            return Ok(response.Data);
+        }
+
+        [HttpPost("accept/{teamId}")]
+        public async Task<IActionResult> AcceptTeamRequest(Guid teamId)
+        {
+            var response = await _teamService.AcceptTeamRequest(teamId, User.GetObjectId());
+            if (!response.Success)
+            {
+                return BadRequest(response.ErrorMessage);
+            }
+            return Ok(response.Data);
+        }
     }
 }

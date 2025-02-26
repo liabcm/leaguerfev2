@@ -13,11 +13,12 @@
             isCompetitive = league.isCompetitive;
             CreatedBy = league.CreatedBy;
             IsTeamLeague = league.IsTeamLeague;
-            LeagueMembers = league.LeagueUsers?.Where(lu=>lu.Status == LeagueUserStatus.Member).Select(l => new LeagueUserDTO(l)).ToList();
-            LeagueInvites = league.LeagueUsers?.Where(lu=>lu.Status == LeagueUserStatus.Invited).Select(l => new LeagueUserDTO(l)).ToList();
-            LeagueRequests = league.LeagueUsers?.Where(lu=>lu.Status == LeagueUserStatus.Requested).Select(l => new LeagueUserDTO(l)).ToList();
+            LeagueMembers = league.LeagueUsers?.Where(lu => lu.Status == LeagueUserStatus.Member).Select(l => new LeagueUserDTO(l)).ToList();
+            LeagueInvites = league.LeagueUsers?.Where(lu => lu.Status == LeagueUserStatus.Invited).Select(l => new LeagueUserDTO(l)).ToList();
+            LeagueRequests = league.LeagueUsers?.Where(lu => lu.Status == LeagueUserStatus.Requested).Select(l => new LeagueUserDTO(l)).ToList();
             Events = league.Events?.Select(e => new EventDTO(e)).ToList();
-            Teams = league.Teams?.Select(t=>new TeamDTO(t)).ToList();
+            Teams = league.Teams?.Where(t => !t.IsPending).Select(t => new TeamDTO(t)).ToList();
+            TeamRequests = league.Teams?.Where(t => t.IsPending).Select(t => new TeamDTO(t)).ToList();
         }
         public Guid Id { get; set; }
         public string Name { get; set; } = string.Empty;
@@ -33,5 +34,6 @@
         public List<LeagueUserDTO>? LeagueRequests { get; set; }
         public List<EventDTO>? Events { get; set; }
         public List<TeamDTO>? Teams { get; set; }
+        public List<TeamDTO>? TeamRequests { get; set; }
     }
 }

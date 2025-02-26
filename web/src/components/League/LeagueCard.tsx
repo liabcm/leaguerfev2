@@ -1,5 +1,5 @@
 import { useMsal } from '@azure/msal-react';
-import { Calendar, Trophy, User as UserIcon, Users } from 'lucide-react';
+import { Trophy, User as UserIcon, Users } from 'lucide-react';
 import { useEffect, useState } from 'react';
 import { useParams } from 'react-router-dom';
 import styled from 'styled-components';
@@ -7,12 +7,22 @@ import { useLeagueApi } from '../../api/useLeagueApi';
 import { League } from '../../models/League';
 import { LeagueUser } from '../../models/LeagueUser';
 import { LeagueUserStatus } from '../../models/LeagueUserStatusEnum';
-import EventList from '../Events/EventList';
 import BackButton from '../General/BackButton';
 import ConfirmationModal from '../General/ConfirmationModal';
 import LoadingButton from '../General/LoadingButton';
 import { StyledSpinner } from '../SharedStyles';
-import MemberRow from './MemberRow';
+import LeagueEventsSection from './LeagueEventsSection';
+import LeagueMembersSection from './LeagueMembersSection';
+import LeagueTeamsSection from './LeagueTeamsSection';
+import {
+  Badge,
+  Card,
+  Header,
+  InfoItem,
+  TabButton,
+  Tabs,
+  Title,
+} from './SharedLeagueStyles';
 
 const LeagueCard = () => {
   const { id } = useParams<{ id: string }>();
@@ -24,8 +34,13 @@ const LeagueCard = () => {
   const [requested, setRequested] = useState(false);
   const [invited, setInvited] = useState(false);
   const [showLeaveModal, setShowLeaveModal] = useState(false);
-  const { getLeagueById, inviteUserToLeague, leaveLeague, acceptInvite } =
-    useLeagueApi();
+  const {
+    getLeagueById,
+    inviteUserToLeague,
+    leaveLeague,
+    acceptInvite,
+    sendTeamRequest,
+  } = useLeagueApi();
   const user = accounts[0];
 
   const [activeTab, setActiveTab] = useState<'details' | 'events'>('details');
@@ -151,6 +166,15 @@ const LeagueCard = () => {
     }
   };
 
+  const handleTeamRequest = async (teamName: string) => {
+    if (!teamName || !league) return;
+    try {
+      await sendTeamRequest(teamName, league.id);
+    } catch (err) {
+      console.error(err);
+    }
+  };
+
   if (loading) return <StyledSpinner />;
   if (error || !league)
     return <ErrorMessage message={error || 'League not found'} />;
@@ -212,45 +236,24 @@ const LeagueCard = () => {
           </TabButton>
         </Tabs>
 
-        {activeTab === 'details' && (
-          <MembersSection>
-            <MembersHeader>
-              {league.isTeamLeague ? <h3>Teams</h3> : <h3>Members</h3>}
-              <Count>
-                {league.isTeamLeague
-                  ? league.teams?.length || 0
-                  : league.leagueMembers.length || 0}
-              </Count>
-            </MembersHeader>
-            <MembersList>
-              {league.isTeamLeague
-                ? league.teams?.map((team) => (
-                    <Member key={team.id}>{team.name}</Member>
-                  ))
-                : league.leagueMembers.map((member) => (
-                    <MemberRow
-                      key={member.userId}
-                      member={member}
-                      isManaged={false}
-                    />
-                  ))}
-            </MembersList>
-          </MembersSection>
-        )}
+        {activeTab === 'details' &&
+          (league.isTeamLeague ? (
+            <LeagueTeamsSection
+              league={league}
+              isManaged={false}
+              onRequestSend={handleTeamRequest}
+              joined={joined}
+            />
+          ) : (
+            <LeagueMembersSection league={league} isManaged={false} />
+          ))}
 
         {activeTab === 'events' && (
-          <EventsSection>
-            <EventsHeader>
-              <HeaderTopRow>
-                <Calendar size={20} />
-                <h3>Upcoming Events</h3>
-              </HeaderTopRow>
-            </EventsHeader>
-            <EventList
-              events={league.events || []}
-              isTeamEvents={league.isTeamLeague}
-            />
-          </EventsSection>
+          <LeagueEventsSection
+            events={league.events || []}
+            isTeamEvents={league.isTeamLeague}
+            showCreateButton={false}
+          />
         )}
       </Card>
       <ConfirmationModal
@@ -275,48 +278,10 @@ const Container = styled.div`
   overflow-x: hidden;
 `;
 
-const Card = styled.div`
-  background: white;
-  border-radius: 0.5rem;
-  box-shadow: 0 0.0625rem 0.1875rem rgba(0, 0, 0, 0.1);
-  padding: clamp(1rem, 3vw, 2.5rem);
-  width: 100%;
-  margin-bottom: 2rem;
-`;
-
-const Header = styled.div`
-  display: flex;
-  justify-content: space-between;
-  align-items: center;
-  margin-bottom: clamp(1rem, 3vw, 1.5rem);
-`;
-
-const Title = styled.h2`
-  font-size: 1.5rem;
-  font-weight: 600;
-`;
-
-const Badge = styled.span<{ $isPublic: boolean }>`
-  padding: 0.25rem 0.75rem;
-  border-radius: 9999rem;
-  font-size: 0.875rem;
-  background-color: ${({ $isPublic }) => ($isPublic ? '#60a5fa' : '#6b7280')};
-  color: white;
-`;
-
 const InfoContainer = styled.div`
   display: flex;
   gap: clamp(0.5rem, 2vw, 1rem);
   margin-bottom: clamp(1rem, 3vw, 1.5rem);
-`;
-
-const InfoItem = styled.div`
-  display: flex;
-  align-items: center;
-  gap: 0.5rem;
-  color: #4b5563;
-  font-size: 0.875rem;
-  flex: 1;
 `;
 
 const StyledLoadingButton = styled(LoadingButton)<{ $joined: boolean }>`
@@ -325,79 +290,9 @@ const StyledLoadingButton = styled(LoadingButton)<{ $joined: boolean }>`
   margin-bottom: clamp(1rem, 3vw, 1.5rem);
   padding: clamp(0.5rem, 2vw, 0.75rem);
   font-size: clamp(0.75rem, 2.5vw, 1rem);
-
   &:hover {
     opacity: 0.9;
   }
-`;
-
-const Tabs = styled.div`
-  display: flex;
-  gap: 0.5rem;
-  margin-bottom: clamp(1rem, 3vw, 1.5rem);
-`;
-
-const TabButton = styled.button<{ $active: boolean }>`
-  flex: 1;
-  padding: clamp(0.375rem, 1.5vw, 0.5rem);
-  background-color: ${({ $active }) => ($active ? '#3b82f6' : '#e5e7eb')};
-  color: ${({ $active }) => ($active ? 'white' : '#4b5563')};
-  border: none;
-  border-radius: 0.375rem;
-  font-weight: 500;
-  cursor: pointer;
-  font-size: clamp(0.75rem, 2vw, 1rem);
-`;
-
-const MembersSection = styled.div`
-  border-top: 1px solid #e5e7eb;
-  padding-top: clamp(1rem, 3vw, 1.5rem);
-`;
-
-const MembersHeader = styled.div`
-  display: flex;
-  justify-content: space-between;
-  align-items: center;
-  margin-bottom: 1rem;
-`;
-
-const Count = styled.span`
-  background-color: #e5e7eb;
-  padding: 0.25rem 0.75rem;
-  border-radius: 9999rem;
-  font-size: 0.875rem;
-`;
-
-const MembersList = styled.div`
-  display: grid;
-  gap: 0.5rem;
-  max-height: clamp(9.375rem, 50vh, 12.5rem);
-  overflow-y: auto;
-`;
-
-const Member = styled.div`
-  padding: 0.5rem;
-  background-color: #f3f4f6;
-  border-radius: 0.375rem;
-  font-size: 0.875rem;
-`;
-
-const EventsSection = styled.div`
-  border-top: 1px solid #e5e7eb;
-  padding-top: clamp(1rem, 3vw, 1.5rem);
-`;
-
-const EventsHeader = styled.div`
-  display: flex;
-  flex-direction: column;
-  margin-bottom: 1rem;
-`;
-
-const HeaderTopRow = styled.div`
-  display: flex;
-  align-items: center;
-  gap: 0.5rem;
-  margin-bottom: 0.5rem;
 `;
 
 const ErrorMessage = ({ message }: { message: string }) => (

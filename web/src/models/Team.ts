@@ -9,4 +9,5 @@ export interface Team {
   losses: number;
   teamUsers: TeamUser[];
   teamManagers: TeamUser[];
+  isPending: boolean;
 }

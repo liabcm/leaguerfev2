@@ -13,5 +13,6 @@ export interface League {
   leagueRequests: LeagueUser[];
   isTeamLeague: boolean;
   teams: Team[];
+  teamRequests: Team[];
   events: Event[];
 }

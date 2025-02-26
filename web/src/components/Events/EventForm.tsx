@@ -41,7 +41,7 @@ const EventForm = () => {
     console.log(league);
     if (!league) return;
 
-    const eventData: Omit<Event, 'id' | 'createdBy' | 'users'> = {
+    const eventData: Omit<Event, 'id' | 'createdBy' | 'users' | 'teams'> = {
       eventTime: moment(eventTime).toISOString(), // Send in ISO format
       leagueId: league.id,
       location: location,

@@ -36,6 +36,9 @@ namespace leaguerAPI.Services
                 if (!await AreUsersAvailable(combinedUserIds, teamDTO.LeagueId, null))
                     return Response<TeamDTO>.FailureResult("One or more users are already part of a team in this league");
 
+                if (!await ConfirmUsersExistInLeague(combinedUserIds, teamDTO.LeagueId))
+                    return Response<TeamDTO>.FailureResult("One or more users are not part of the league");
+
                 var team = new Team
                 {
                     Id = Guid.NewGuid(),
@@ -46,18 +49,12 @@ namespace leaguerAPI.Services
                     TeamUsers = new List<TeamUser>()
                 };
 
-                if (!await ConfirmUsersExistInLeague(teamDTO.TeamManagerIds, teamDTO.LeagueId))
-                    return Response<TeamDTO>.FailureResult("One or more users are not part of the league");
-
                 AddTeamMembers(team, teamDTO.TeamManagerIds, true);
 
                 if (teamDTO.TeamUserIds != null && teamDTO.TeamUserIds.Any())
                 {
                     if (teamDTO.TeamUserIds.Any(id => teamDTO.TeamManagerIds.Contains(id)))
                         return Response<TeamDTO>.FailureResult("Managers cannot also be users");
-
-                    if (!await ConfirmUsersExistInLeague(teamDTO.TeamUserIds, teamDTO.LeagueId))
-                        return Response<TeamDTO>.FailureResult("One or more users are not part of the league");
 
                     AddTeamMembers(team, teamDTO.TeamUserIds, false);
                 }
@@ -85,6 +82,7 @@ namespace leaguerAPI.Services
                 var combinedUserIds = teamDTO.TeamManagerIds
                     .Concat(teamDTO.TeamUserIds ?? Enumerable.Empty<Guid>())
                     .ToList();
+
                 if (!await AreUsersAvailable(combinedUserIds, team.LeagueId, team.Id))
                     return Response<TeamDTO>.FailureResult("One or more users are already part of a team in this league");
 
@@ -221,6 +219,53 @@ namespace leaguerAPI.Services
                     IsManager = isManager
                 });
             }
+        }
+
+        public async Task<Response<TeamDTO>> RequestTeamCreation(TeamRequestDTO teamDTO, Guid userId)
+        {
+            if (userId == Guid.Empty)
+                return Response<TeamDTO>.FailureResult("At least one manager is required");
+
+            if (!await AreUsersAvailable(new List<Guid> { userId }, teamDTO.LeagueId, null))
+                return Response<TeamDTO>.FailureResult("One or more users are already part of a team in this league");
+
+            if (!await ConfirmUsersExistInLeague(new List<Guid> { userId }, teamDTO.LeagueId))
+                return Response<TeamDTO>.FailureResult("One or more users are not part of the league");
+
+            var team = new Team
+            {
+                Id = Guid.NewGuid(),
+                LeagueId = teamDTO.LeagueId,
+                Name = teamDTO.TeamName,
+                Wins = 0,
+                Losses = 0,
+                IsPending = true,
+                TeamUsers = new List<TeamUser>()
+            };
+
+            AddTeamMembers(team, new List<Guid> { userId }, true);
+
+            await _context.Teams.AddAsync(team);
+            await _context.SaveChangesAsync();
+            return Response<TeamDTO>.SuccessResult(new TeamDTO(team));
+
+        }
+
+        public async Task<Response<TeamDTO>> AcceptTeamRequest(Guid teamId, Guid managerId)
+        {
+            var canAddTeam = await _context.Teams.AnyAsync(t => t.Id == teamId && t.League.LeagueUsers.Any(lu => lu.UserId == managerId && lu.IsManager));
+
+            if (!canAddTeam)
+                return Response<TeamDTO>.FailureResult("You do not have permission to admit a team to this league");
+
+            var team = await _context.Teams.FirstOrDefaultAsync(t => t.Id == teamId);
+
+            if (team == null)
+                return Response<TeamDTO>.FailureResult("Team not found");
+
+            team.IsPending = false;
+            await _context.SaveChangesAsync();
+            return Response<TeamDTO>.SuccessResult(new TeamDTO(team));
         }
     }
 }

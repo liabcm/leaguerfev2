@@ -20,6 +20,7 @@
                 .OrderBy(t => (t.Wins + t.Losses) == 0 ? decimal.MinValue : (decimal)t.Wins / (t.Wins + t.Losses))
                 .ToList()
                 .FindIndex(t => t.Id == team.Id) + 1 ?? 0;
+            IsPending = team.IsPending;
 
         }
         public Guid Id { get; set; }
@@ -27,6 +28,7 @@
         public int Rank { get; set; }
         public int Wins { get; set; }
         public int Losses { get; set; }
+        public bool IsPending { get; set; }
 
         public List<TeamUserDTO>? TeamUsers { get; set; }
         public List<TeamUserDTO>? TeamManagers { get; set; }

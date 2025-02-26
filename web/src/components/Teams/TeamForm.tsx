@@ -48,15 +48,16 @@ const TeamForm = () => {
         setLoadingLeague(true);
         const leagueData = await getLeagueById(leagueId);
         setLeague(leagueData);
-        const membersInTeam = leagueData.teams.flatMap((t) => [
-          ...t.teamManagers,
-          ...t.teamUsers,
-        ]);
+        const membersInTeam = leagueData.teams
+          .concat(...leagueData.teamRequests)
+          .flatMap((t) => [...t.teamManagers, ...t.teamUsers]);
         setAvailableLeagueMembers(
           leagueData.leagueMembers.filter((m) => {
             // If we're in edit mode, we need to include the current team members in the available list
             if (teamId) {
-              const currentTeam = leagueData.teams.find((t) => t.id === teamId);
+              const currentTeam = leagueData.teams
+                .concat(...leagueData.teamRequests)
+                .find((t) => t.id === teamId);
               if (currentTeam) {
                 const isInCurrentTeam = [
                   ...currentTeam.teamManagers,

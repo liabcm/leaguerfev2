@@ -233,7 +233,7 @@ export const useLeagueApi = () => {
 
     //events
     createEvent: async (
-      eventData: Omit<Event, 'id' | 'createdBy' | 'users'>
+      eventData: Omit<Event, 'id' | 'createdBy' | 'users' | 'teams'>
     ): Promise<Event> => {
       const response = await fetch(`${API_BASE_URL}/event`, {
         method: 'POST',
@@ -374,6 +374,28 @@ export const useLeagueApi = () => {
       });
 
       if (!response.ok) throw new Error('Failed to update team');
+      return response.json();
+    },
+
+    sendTeamRequest: async (
+      teamName: string,
+      leagueId: string
+    ): Promise<boolean> => {
+      const response = await fetch(`${API_BASE_URL}/team/request`, {
+        method: 'POST',
+        headers: await getAuthHeader(),
+        body: JSON.stringify({ teamName, leagueId }),
+      });
+      if (!response.ok) throw new Error('Failed to send team request');
+      return response.json();
+    },
+
+    acceptTeamRequest: async (teamId: string): Promise<boolean> => {
+      const response = await fetch(`${API_BASE_URL}/team/accept/${teamId}`, {
+        method: 'POST',
+        headers: await getAuthHeader(),
+      });
+      if (!response.ok) throw new Error('Failed to accept team request');
       return response.json();
     },
   };
