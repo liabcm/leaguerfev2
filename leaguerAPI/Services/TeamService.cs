@@ -267,5 +267,18 @@ namespace leaguerAPI.Services
             await _context.SaveChangesAsync();
             return Response<TeamDTO>.SuccessResult(new TeamDTO(team));
         }
+
+        public async Task<Response<List<TeamDTO>>> GetMyTeamsAsync(Guid userId)
+        {
+            if (userId == Guid.Empty)
+                return Response<List<TeamDTO>>.FailureResult("Invalid User Id");
+
+            var teams = await _context.Teams.AsNoTracking().Where(t => t.TeamUsers.Any(tu => tu.UserId == userId && tu.IsManager))
+                .Include(t => t.TeamUsers)
+                .Select(t => new TeamDTO(t))
+                .ToListAsync();
+
+            return Response<List<TeamDTO>>.SuccessResult(teams);
+        }
     }
 }

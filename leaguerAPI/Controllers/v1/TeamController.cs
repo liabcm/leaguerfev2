@@ -97,5 +97,16 @@ namespace leaguerAPI.Controllers
             }
             return Ok(response.Data);
         }
+
+        [HttpGet("my-teams")]
+        public async Task<IActionResult> GetMyTeams()
+        {
+            var response = await _teamService.GetMyTeamsAsync(User.GetObjectId());
+            if (!response.Success)
+            {
+                return NotFound(response);
+            }
+            return Ok(response.Data);
+        }
     }
 }

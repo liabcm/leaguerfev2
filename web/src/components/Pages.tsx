@@ -16,6 +16,7 @@ import MyLeagues from './League/MyLeagues';
 import Profile from './Profile';
 import ProtectedRoute from './ProtectedRoute';
 import SportForm from './Sport/SportForm';
+import ManageTeams from './Teams/ManageTeams';
 import TeamForm from './Teams/TeamForm';
 
 function Pages() {
@@ -54,6 +55,7 @@ function Pages() {
         <Route path='sport' element={<SportForm />} />
         <Route path='/invites' element={<InvitesPage />} />
         <Route path='league/:leagueId/team' element={<TeamForm />} />
+        <Route path='/manage-teams' element={<ManageTeams />} />
       </Route>
     </Routes>
   );

@@ -10,5 +10,6 @@ namespace leaguerAPI.Services.Interfaces
         Task<Response<IEnumerable<TeamDTO>>> GetTeamsByLeagueIdAsync(Guid leagueId);
         Task<Response<TeamDTO>> RequestTeamCreation(TeamRequestDTO teamDTO, Guid userId);
         Task<Response<TeamDTO>> AcceptTeamRequest(Guid teamId, Guid managerId);
+        Task<Response<List<TeamDTO>>> GetMyTeamsAsync(Guid userId);
     }
 }

@@ -60,7 +60,7 @@ const ManageLeagues = () => {
 
   useEffect(() => {
     setActiveTab('members');
-  }, [selectedLeague]);
+  }, [selectedLeague?.id]);
 
   const handleCreateEvent = () => {
     selectedLeague && navigate(`/event/${selectedLeague.id}`);

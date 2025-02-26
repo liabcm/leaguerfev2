@@ -398,5 +398,13 @@ export const useLeagueApi = () => {
       if (!response.ok) throw new Error('Failed to accept team request');
       return response.json();
     },
+
+    getMyTeams: async (): Promise<Team[]> => {
+      const response = await fetch(`${API_BASE_URL}/team/my-teams`, {
+        headers: await getAuthHeader(),
+      });
+      if (!response.ok) throw new Error('Failed to fetch my teams');
+      return response.json();
+    },
   };
 };

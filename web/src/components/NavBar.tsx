@@ -54,6 +54,11 @@ const Navbar = () => {
     setIsMenuOpen(false);
   };
 
+  const handleManageTeamsClick = () => {
+    navigate('/manage-teams');
+    setIsMenuOpen(false);
+  };
+
   const handleInvitesClick = () => {
     navigate('/invites');
     setIsMenuOpen(false);
@@ -111,6 +116,7 @@ const Navbar = () => {
             <MenuItem onClick={handleManageLeaguesClick}>
               Manage Leagues
             </MenuItem>
+            <MenuItem onClick={handleManageTeamsClick}>Manage Teams</MenuItem>
             <MenuItem onClick={handleInvitesClick}>
               Invites
               {inviteCount > 0 && <InviteCount>{inviteCount}</InviteCount>}

@@ -1,7 +1,5 @@
 ﻿using leaguerAPI.Extensions;
-using leaguerAPI.Models;
 using leaguerAPI.Models.DTOs;
-using leaguerAPI.Services;
 using leaguerAPI.Services.Interfaces;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
@@ -28,7 +26,7 @@ namespace leaguerAPI.Controllers.v1
             {
                 return BadRequest();
             }
-            return CreatedAtAction("GETUSER", response);
+            return Ok(response);
         }
 
         [HttpGet("{id:guid}")]
@@ -45,7 +43,7 @@ namespace leaguerAPI.Controllers.v1
         [FromQuery] int page = 1,
         [FromQuery] int pageSize = 10)
         {
-            var result = await _userService.SearchUsersToInviteAsync(leagueId,q, page, pageSize);
+            var result = await _userService.SearchUsersToInviteAsync(leagueId, q, page, pageSize);
 
             if (!result.Success)
             {
