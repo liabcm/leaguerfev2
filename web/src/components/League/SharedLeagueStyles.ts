@@ -93,6 +93,18 @@ export const Member = styled.div`
   font-size: 0.875rem;
 `;
 
+export const HoverableMember = styled.div`
+  padding: 0.5rem;
+  background-color: #f3f4f6;
+  border-radius: 0.375rem;
+  font-size: 0.875rem;
+  cursor: pointer;
+  transition: background-color 0.2s ease-in-out;
+  &:hover {
+    background-color: rgb(81, 111, 169);
+  }
+`;
+
 export const EventsSection = styled.div`
   border-top: 1px solid #e5e7eb;
   padding-top: clamp(1rem, 3vw, 1.5rem);

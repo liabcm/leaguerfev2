@@ -11,5 +11,8 @@ namespace leaguerAPI.Services.Interfaces
         Task<Response<TeamDTO>> RequestTeamCreation(TeamRequestDTO teamDTO, Guid userId);
         Task<Response<TeamDTO>> AcceptTeamRequest(Guid teamId, Guid managerId);
         Task<Response<List<TeamDTO>>> GetMyTeamsAsync(Guid userId);
+        Task<Response<bool>> InviteOrRequestToTeam(Guid teamId, Guid userId, Guid currentUserId, bool isInvite);
+        Task<Response<bool>> DeclineInviteOrRequest(Guid teamId, Guid userId, Guid currentUserId);
+        Task<Response<bool>> AcceptRequestOrInvite(Guid teamId, Guid userId, Guid currentUserId);
     }
 }

@@ -9,7 +9,6 @@
             LeagueName = leagueUser.League.Name;
             Name = leagueUser.User?.Name;
             Email = leagueUser.User?.Email;
-            IsManager = leagueUser.IsManager;
             Status = ((int)leagueUser.Status);
         }
         public Guid UserId { get; set; }

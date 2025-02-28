@@ -1,5 +1,4 @@
-﻿using leaguerAPI.Models;
-using leaguerAPI.Models.DTOs;
+﻿using leaguerAPI.Models.DTOs;
 
 namespace leaguerAPI.Services.Interfaces
 {

@@ -47,7 +47,7 @@ namespace leaguerAPI.Controllers.v1
 
             if (!result.Success)
             {
-                return BadRequest(result.Data);
+                return BadRequest(result.ErrorMessage);
             }
 
             return Ok(result.Data);
@@ -105,6 +105,34 @@ namespace leaguerAPI.Controllers.v1
             {
                 return BadRequest(result);
             }
+        }
+
+        [HttpGet("search-team")]
+        public async Task<IActionResult> SearchUsersForTeam(
+        [FromQuery] Guid teamId,
+        [FromQuery] string q,
+        [FromQuery] int page = 1,
+        [FromQuery] int pageSize = 10)
+        {
+            var result = await _userService.SearchUsersToInviteTeamsAsync(teamId, q, page, pageSize);
+
+            if (!result.Success)
+            {
+                return BadRequest(result.ErrorMessage);
+            }
+
+            return Ok(result.Data);
+        }
+
+        [HttpGet("current-team-invites")]
+        public async Task<IActionResult> GetCurrentTeamInvites()
+        {
+            var result = await _userService.GetCurrentUserTeamInvitesAndRequests(User.GetObjectId());
+            if (!result.Success)
+            {
+                return BadRequest(result.ErrorMessage);
+            }
+            return Ok(result.Data);
         }
     }
 }

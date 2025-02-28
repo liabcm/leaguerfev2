@@ -11,7 +11,7 @@
             IsConfirmed = @event.IsConfirmed;
             CreatedBy = @event.Createdby;
             Users = @event.EventUsers?.Select(eu => new EventUserDTO(eu)).ToList();
-            Teams = @event.EventTeams?.Select(et => new EventTeamDTO(et)).ToList();
+            Teams = @event.EventTeams?.Select(et => new EventTeamDTO(et, false)).ToList();
         }
         public Guid Id { get; set; }
         public string Location { get; set; }

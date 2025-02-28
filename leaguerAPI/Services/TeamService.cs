@@ -22,7 +22,7 @@ namespace leaguerAPI.Services
                 bool canAddTeam = await _context.LeagueUsers.AnyAsync(lu =>
                     lu.UserId == leagueManagerId &&
                     lu.LeagueId == teamDTO.LeagueId &&
-                    lu.IsManager);
+                    lu.Status == LeagueUserStatus.Manager);
 
                 if (!canAddTeam)
                     return Response<TeamDTO>.FailureResult("You do not have permission to add a team to this league");
@@ -49,14 +49,14 @@ namespace leaguerAPI.Services
                     TeamUsers = new List<TeamUser>()
                 };
 
-                AddTeamMembers(team, teamDTO.TeamManagerIds, true);
+                AddTeamMembers(team, teamDTO.TeamManagerIds, TeamUserStatus.Manager);
 
                 if (teamDTO.TeamUserIds != null && teamDTO.TeamUserIds.Any())
                 {
                     if (teamDTO.TeamUserIds.Any(id => teamDTO.TeamManagerIds.Contains(id)))
                         return Response<TeamDTO>.FailureResult("Managers cannot also be users");
 
-                    AddTeamMembers(team, teamDTO.TeamUserIds, false);
+                    AddTeamMembers(team, teamDTO.TeamUserIds, TeamUserStatus.Member);
                 }
 
                 await _context.Teams.AddAsync(team);
@@ -92,7 +92,7 @@ namespace leaguerAPI.Services
                     return Response<TeamDTO>.FailureResult("At least one manager is required");
 
                 var currentManagerIds = team.TeamUsers
-                    .Where(tu => tu.IsManager)
+                    .Where(tu => tu.Status == TeamUserStatus.Manager)
                     .Select(tu => tu.UserId)
                     .OrderBy(id => id)
                     .ToList();
@@ -103,14 +103,14 @@ namespace leaguerAPI.Services
                     if (!await ConfirmUsersExistInLeague(teamDTO.TeamManagerIds, team.LeagueId))
                         return Response<TeamDTO>.FailureResult("One or more users are not part of the league");
 
-                    foreach (var tu in team.TeamUsers.Where(tu => tu.IsManager).ToList())
+                    foreach (var tu in team.TeamUsers.Where(tu => tu.Status == TeamUserStatus.Manager).ToList())
                         team.TeamUsers.Remove(tu);
 
-                    AddTeamMembers(team, teamDTO.TeamManagerIds, true);
+                    AddTeamMembers(team, teamDTO.TeamManagerIds, TeamUserStatus.Manager);
                 }
 
                 var currentTeamUserIds = team.TeamUsers
-                    .Where(tu => !tu.IsManager)
+                    .Where(tu => tu.Status == TeamUserStatus.Member)
                     .Select(tu => tu.UserId)
                     .OrderBy(id => id)
                     .ToList();
@@ -124,11 +124,11 @@ namespace leaguerAPI.Services
                     if (teamDTO.TeamUserIds != null && !await ConfirmUsersExistInLeague(teamDTO.TeamUserIds, team.LeagueId))
                         return Response<TeamDTO>.FailureResult("One or more users are not part of the league");
 
-                    foreach (var tu in team.TeamUsers.Where(tu => !tu.IsManager).ToList())
+                    foreach (var tu in team.TeamUsers.Where(tu => tu.Status == TeamUserStatus.Member).ToList())
                         team.TeamUsers.Remove(tu);
 
                     if (teamDTO.TeamUserIds != null)
-                        AddTeamMembers(team, teamDTO.TeamUserIds, false);
+                        AddTeamMembers(team, teamDTO.TeamUserIds, TeamUserStatus.Member);
                 }
 
                 await _context.SaveChangesAsync();
@@ -147,6 +147,10 @@ namespace leaguerAPI.Services
                 var team = await _context.Teams
                     .AsNoTracking()
                     .Include(t => t.TeamUsers)
+                        .ThenInclude(tu => tu.User)
+                    .Include(t => t.EventTeams)
+                        .ThenInclude(et => et.Event)
+                    .Include(t => t.League)
                     .FirstOrDefaultAsync(t => t.Id == teamId);
 
                 if (team == null)
@@ -208,7 +212,7 @@ namespace leaguerAPI.Services
             return count == distinctUserIds.Count;
         }
 
-        private void AddTeamMembers(Team team, IEnumerable<Guid> userIds, bool isManager)
+        private void AddTeamMembers(Team team, IEnumerable<Guid> userIds, TeamUserStatus status)
         {
             foreach (var userId in userIds)
             {
@@ -216,7 +220,7 @@ namespace leaguerAPI.Services
                 {
                     TeamId = team.Id,
                     UserId = userId,
-                    IsManager = isManager
+                    Status = status
                 });
             }
         }
@@ -243,7 +247,7 @@ namespace leaguerAPI.Services
                 TeamUsers = new List<TeamUser>()
             };
 
-            AddTeamMembers(team, new List<Guid> { userId }, true);
+            AddTeamMembers(team, new List<Guid> { userId }, TeamUserStatus.TeamRequested);
 
             await _context.Teams.AddAsync(team);
             await _context.SaveChangesAsync();
@@ -253,17 +257,24 @@ namespace leaguerAPI.Services
 
         public async Task<Response<TeamDTO>> AcceptTeamRequest(Guid teamId, Guid managerId)
         {
-            var canAddTeam = await _context.Teams.AnyAsync(t => t.Id == teamId && t.League.LeagueUsers.Any(lu => lu.UserId == managerId && lu.IsManager));
+            var canAddTeam = await _context.Teams.AnyAsync(t => t.Id == teamId && t.League.LeagueUsers.Any(lu => lu.UserId == managerId && lu.Status == LeagueUserStatus.Manager));
 
             if (!canAddTeam)
                 return Response<TeamDTO>.FailureResult("You do not have permission to admit a team to this league");
 
-            var team = await _context.Teams.FirstOrDefaultAsync(t => t.Id == teamId);
+            var team = await _context.Teams.Include(t => t.TeamUsers).FirstOrDefaultAsync(t => t.Id == teamId);
 
             if (team == null)
                 return Response<TeamDTO>.FailureResult("Team not found");
 
+            if (!team.IsPending)
+                return Response<TeamDTO>.FailureResult("Team already accepted");
+
             team.IsPending = false;
+            foreach (var item in team.TeamUsers)
+            {
+                item.Status = TeamUserStatus.Manager;
+            };
             await _context.SaveChangesAsync();
             return Response<TeamDTO>.SuccessResult(new TeamDTO(team));
         }
@@ -273,12 +284,106 @@ namespace leaguerAPI.Services
             if (userId == Guid.Empty)
                 return Response<List<TeamDTO>>.FailureResult("Invalid User Id");
 
-            var teams = await _context.Teams.AsNoTracking().Where(t => t.TeamUsers.Any(tu => tu.UserId == userId && tu.IsManager))
+            var teams = await _context.Teams.AsNoTracking()
+                .Where(t => t.TeamUsers.Any(tu => tu.UserId == userId && tu.Status == TeamUserStatus.Manager))
                 .Include(t => t.TeamUsers)
+                    .ThenInclude(tu => tu.User)
+                .Include(t => t.EventTeams)
+                    .ThenInclude(et => et.Event)
+                .Include(t => t.League)
                 .Select(t => new TeamDTO(t))
                 .ToListAsync();
 
             return Response<List<TeamDTO>>.SuccessResult(teams);
+        }
+
+        public async Task<Response<bool>> InviteOrRequestToTeam(Guid teamId, Guid userId, Guid currentUserId, bool isInvite)
+        {
+            var team = await _context.Teams.Include(t => t.TeamUsers).FirstOrDefaultAsync(t => t.Id == teamId);
+            if (team == null)
+                return Response<bool>.FailureResult("Team not found");
+            if (isInvite)
+            {
+                var isManager = team.TeamUsers.Any(tu => tu.UserId == currentUserId && tu.Status == TeamUserStatus.Manager);
+                if (!isManager)
+                    return Response<bool>.FailureResult("You do not have permission to invite to this team");
+            }
+
+            if (team.TeamUsers.Any(tu => tu.UserId == userId))
+                return Response<bool>.FailureResult("User is already part of this team or has already been invited/requested");
+
+            team.TeamUsers.Add(new TeamUser
+            {
+                TeamId = teamId,
+                UserId = userId,
+                Status = isInvite ? TeamUserStatus.Invited : TeamUserStatus.Requested
+            });
+
+            await _context.SaveChangesAsync();
+            return Response<bool>.SuccessResult(true);
+        }
+
+        public async Task<Response<bool>> DeclineInviteOrRequest(Guid teamId, Guid userId, Guid currentUserId)
+        {
+            var team = await _context.Teams.Include(t => t.TeamUsers).FirstOrDefaultAsync(t => t.Id == teamId);
+            if (team == null)
+                return Response<bool>.FailureResult("Team not found");
+
+            if (userId != currentUserId)
+            {
+                var isManager = team.TeamUsers.Any(tu => tu.UserId == currentUserId && tu.Status == TeamUserStatus.Manager);
+                if (!isManager)
+                    return Response<bool>.FailureResult("You do not have permission to decline this invite");
+            }
+
+            var teamUser = team.TeamUsers.FirstOrDefault(tu => tu.UserId == userId);
+            if (teamUser == null)
+                return Response<bool>.FailureResult("User is not part of this team");
+
+            if (teamUser.Status == TeamUserStatus.Member)
+                return Response<bool>.FailureResult("User is already a member of this team");
+
+            if (teamUser.Status == TeamUserStatus.Manager)
+                return Response<bool>.FailureResult("Cannot remove a manager from the team");
+
+            team.TeamUsers.Remove(teamUser);
+            await _context.SaveChangesAsync();
+            return Response<bool>.SuccessResult(true);
+        }
+
+        public async Task<Response<bool>> AcceptRequestOrInvite(Guid teamId, Guid userId, Guid currentUserId)
+        {
+            var team = await _context.Teams.Include(t => t.TeamUsers).FirstOrDefaultAsync(t => t.Id == teamId);
+            if (team == null)
+                return Response<bool>.FailureResult("Team not found");
+
+            if (userId != currentUserId)
+            {
+                var isManager = team.TeamUsers.Any(tu => tu.UserId == currentUserId && tu.Status == TeamUserStatus.Manager);
+                if (!isManager)
+                    return Response<bool>.FailureResult("You do not have permission to accept this request");
+            }
+
+            var teamUser = team.TeamUsers.FirstOrDefault(tu => tu.UserId == userId);
+            if (teamUser == null)
+                return Response<bool>.FailureResult("User invite/request not found");
+
+            if (teamUser.Status == TeamUserStatus.Member || teamUser.Status == TeamUserStatus.Manager)
+                return Response<bool>.FailureResult("User is already a member of this team");
+
+            if (teamUser.Status == TeamUserStatus.Requested && userId == currentUserId)
+            {
+                return Response<bool>.FailureResult("User cannot accept own request");
+            }
+
+            if (teamUser.Status == TeamUserStatus.Invited && userId != currentUserId)
+            {
+                return Response<bool>.FailureResult("Manager cannot accept users invite");
+            }
+
+            teamUser.Status = TeamUserStatus.Member;
+            await _context.SaveChangesAsync();
+            return Response<bool>.SuccessResult(true);
         }
     }
 }

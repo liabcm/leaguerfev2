@@ -55,7 +55,7 @@ namespace leaguerAPI.Controllers.v1
         public async Task<IActionResult> JoinLeague(Guid id)
         {
             var userId = User.GetObjectId();
-            var reponse = await _leagueService.JoinLeague(id,userId);
+            var reponse = await _leagueService.JoinLeague(id, userId);
             return Ok(reponse);
         }
 
@@ -64,9 +64,9 @@ namespace leaguerAPI.Controllers.v1
         {
             bool isKicking = userIdToKick != Guid.Empty;
             var userId = User.GetObjectId();
-            var reponse = isKicking ? await _leagueService.LeaveLeague(id, userIdToKick, isKicking, userId) : 
+            var reponse = isKicking ? await _leagueService.LeaveLeague(id, userIdToKick, isKicking, userId) :
                 await _leagueService.LeaveLeague(id, userId, isKicking, null);
-            if(!reponse.Success)
+            if (!reponse.Success)
             {
                 return BadRequest(new { message = reponse.ErrorMessage });
             }
@@ -89,7 +89,7 @@ namespace leaguerAPI.Controllers.v1
         public async Task<IActionResult> GetJoinedLeagues()
         {
             var userId = User.GetObjectId();
-            
+
             var result = await _leagueService.GetJoinedLeaguesAsync(userId);
             if (!result.Success)
             {
@@ -100,7 +100,7 @@ namespace leaguerAPI.Controllers.v1
 
         [HttpPost("invite-user")]
         [Authorize]
-        public async Task<IActionResult> InviteUser([FromQuery] Guid leagueId, [FromQuery] Guid userId, [FromQuery]bool isInvite)
+        public async Task<IActionResult> InviteUser([FromQuery] Guid leagueId, [FromQuery] Guid userId, [FromQuery] bool isInvite)
         {
             var currentUserId = User.GetObjectId();
             var result = await _leagueService.InviteUserToLeagueAsync(leagueId, userId, currentUserId, isInvite);

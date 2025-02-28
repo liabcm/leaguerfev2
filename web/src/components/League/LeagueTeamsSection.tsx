@@ -1,12 +1,13 @@
 import { useState } from 'react';
+import { useNavigate } from 'react-router-dom';
 import { styled } from 'styled-components';
 import { League } from '../../models/League';
 import {
   ActionContainer,
   Button,
   Count,
+  HoverableMember,
   Input,
-  Member,
   MembersHeader,
   MembersList,
   MembersSection,
@@ -29,6 +30,7 @@ const LeagueTeamsSection = ({
 }: LeagueTeamsSectionProps) => {
   const [showAddTeamInput, setShowAddTeamInput] = useState(false);
   const [teamName, setTeamName] = useState('');
+  const navigate = useNavigate();
 
   const handleRequestSendButtonClick = async () => {
     if (showAddTeamInput) {
@@ -39,6 +41,10 @@ const LeagueTeamsSection = ({
     } else {
       setShowAddTeamInput(true);
     }
+  };
+
+  const handleRowClick = (teamId: string) => {
+    navigate(`/team/${teamId}`);
   };
 
   return (
@@ -54,7 +60,12 @@ const LeagueTeamsSection = ({
       </MembersHeader>
       <MembersList>
         {league.teams?.map((team) => (
-          <Member key={team.id}>{team.name}</Member>
+          <HoverableMember
+            onClick={() => handleRowClick(team.id)}
+            key={team.id}
+          >
+            {team.name}
+          </HoverableMember>
         ))}
       </MembersList>
       {!isManaged && joined && (

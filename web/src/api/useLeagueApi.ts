@@ -8,6 +8,7 @@ import { PagedResult } from '../models/PagedResult';
 import { Sport } from '../models/Sport';
 import { Team } from '../models/Team';
 import { TeamCreateDTO, TeamUpdateDTO } from '../models/TeamCreateDTO';
+import { TeamUser } from '../models/TeamUser';
 import { User } from '../models/User';
 
 const API_BASE_URL = 'https://localhost:44378/api/v1';
@@ -332,6 +333,39 @@ export const useLeagueApi = () => {
       return response.json();
     },
 
+    searchUsersForTeamInvite: async (
+      teamId: string,
+      searchTerm: string,
+      page: number = 1,
+      pageSize: number = 10
+    ): Promise<PagedResult> => {
+      let url = `${API_BASE_URL}/user/search-team`;
+      const params = new URLSearchParams();
+      params.append('teamId', teamId);
+
+      if (searchTerm) {
+        params.append('q', searchTerm);
+      }
+      if (page) {
+        params.append('page', page.toString());
+      }
+      if (pageSize) {
+        params.append('pageSize', pageSize.toString());
+      }
+
+      if (params.toString()) {
+        url += `?${params.toString()}`;
+      }
+      console.log(url);
+
+      const response = await fetch(url, {
+        headers: await getAuthHeader(),
+      });
+
+      if (!response.ok) throw new Error('Failed to search users');
+      return response.json();
+    },
+
     getCurrentUserInvites: async (): Promise<any[]> => {
       const response = await fetch(`${API_BASE_URL}/user/current-invites`, {
         headers: await getAuthHeader(),
@@ -404,6 +438,65 @@ export const useLeagueApi = () => {
         headers: await getAuthHeader(),
       });
       if (!response.ok) throw new Error('Failed to fetch my teams');
+      return response.json();
+    },
+
+    inviteOrRequestUserToTeam: async (
+      teamId: string,
+      userId: string,
+      isInvite: boolean
+    ): Promise<boolean> => {
+      const response = await fetch(
+        `${API_BASE_URL}/team/invite-request?teamId=${teamId}&userId=${userId}&isInvite=${isInvite}`,
+        {
+          method: 'POST',
+          headers: await getAuthHeader(),
+        }
+      );
+      if (!response.ok)
+        throw new Error('Failed to invite or request user to team');
+      return response.json();
+    },
+
+    getCurrentUserTeamInvites: async (): Promise<TeamUser[]> => {
+      const response = await fetch(
+        `${API_BASE_URL}/user/current-team-invites`,
+        {
+          headers: await getAuthHeader(),
+        }
+      );
+      if (!response.ok)
+        throw new Error('Failed to fetch current user team invites');
+      return response.json();
+    },
+
+    declineTeamInvite: async (
+      teamId: string,
+      userId: string
+    ): Promise<boolean> => {
+      const response = await fetch(
+        `${API_BASE_URL}/team/decline?teamId=${teamId}&userId=${userId}`,
+        {
+          method: 'POST',
+          headers: await getAuthHeader(),
+        }
+      );
+      if (!response.ok) throw new Error('Failed to decline team invite');
+      return response.json();
+    },
+
+    acceptTeamInvite: async (
+      teamId: string,
+      userId: string
+    ): Promise<boolean> => {
+      const response = await fetch(
+        `${API_BASE_URL}/team/accept-invite?teamId=${teamId}&userId=${userId}`,
+        {
+          method: 'POST',
+          headers: await getAuthHeader(),
+        }
+      );
+      if (!response.ok) throw new Error('Failed to accept team invite');
       return response.json();
     },
   };

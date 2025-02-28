@@ -4,7 +4,8 @@
     {
         public Guid TeamId { get; set; }
         public Guid UserId { get; set; }
-        public bool IsManager { get; set; }
+        public bool IsDeleted { get; set; }
+        public TeamUserStatus Status { get; set; }
 
         public Team Team { get; set; }
         public User User { get; set; }

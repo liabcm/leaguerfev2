@@ -12,8 +12,8 @@ using leaguerAPI.Database;
 namespace leaguerAPI.Migrations
 {
     [DbContext(typeof(LeaguerDbContext))]
-    [Migration("20250216002712_locationevent")]
-    partial class locationevent
+    [Migration("20250228183202_initafterdelete")]
+    partial class initafterdelete
     {
         /// <inheritdoc />
         protected override void BuildTargetModel(ModelBuilder modelBuilder)
@@ -76,10 +76,10 @@ namespace leaguerAPI.Migrations
                     b.Property<Guid>("StarPlayerUserId")
                         .HasColumnType("uniqueidentifier");
 
-                    b.Property<Guid>("WinningTeamId")
+                    b.Property<Guid?>("WinningTeamId")
                         .HasColumnType("uniqueidentifier");
 
-                    b.Property<Guid>("WinningUserId")
+                    b.Property<Guid?>("WinningUserId")
                         .HasColumnType("uniqueidentifier");
 
                     b.HasKey("EventId");
@@ -185,11 +185,23 @@ namespace leaguerAPI.Migrations
                         .HasColumnType("bit")
                         .HasDefaultValue(false);
 
+                    b.Property<int>("Status")
+                        .HasColumnType("int");
+
                     b.HasKey("UserId", "LeagueId");
+
+                    b.HasIndex("IsDeleted")
+                        .HasDatabaseName("IX_LeagueUsers_IsDeleted");
 
                     b.HasIndex("LeagueId");
 
-                    b.ToTable("LeagueUsers");
+                    b.HasIndex("Status")
+                        .HasDatabaseName("IX_LeagueUsers_Status");
+
+                    b.ToTable("LeagueUsers", null, t =>
+                        {
+                            t.HasCheckConstraint("CK_LeagueUsers_Status", "Status BETWEEN 0 AND 4");
+                        });
                 });
 
             modelBuilder.Entity("leaguerAPI.Models.Sport", b =>
@@ -222,6 +234,11 @@ namespace leaguerAPI.Migrations
                         .ValueGeneratedOnAdd()
                         .HasColumnType("uniqueidentifier");
 
+                    b.Property<bool>("IsPending")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("bit")
+                        .HasDefaultValue(false);
+
                     b.Property<Guid>("LeagueId")
                         .HasColumnType("uniqueidentifier");
 
@@ -234,9 +251,6 @@ namespace leaguerAPI.Migrations
                         .IsRequired()
                         .HasMaxLength(100)
                         .HasColumnType("nvarchar(100)");
-
-                    b.Property<int>("Rank")
-                        .HasColumnType("int");
 
                     b.Property<int>("Wins")
                         .ValueGeneratedOnAdd()
@@ -258,11 +272,26 @@ namespace leaguerAPI.Migrations
                     b.Property<Guid>("UserId")
                         .HasColumnType("uniqueidentifier");
 
+                    b.Property<bool>("IsDeleted")
+                        .HasColumnType("bit");
+
+                    b.Property<int>("Status")
+                        .HasColumnType("int");
+
                     b.HasKey("TeamId", "UserId");
+
+                    b.HasIndex("IsDeleted")
+                        .HasDatabaseName("IX_TeamUsers_IsDeleted");
+
+                    b.HasIndex("Status")
+                        .HasDatabaseName("IX_TeamUsers_Status");
 
                     b.HasIndex("UserId");
 
-                    b.ToTable("TeamUsers");
+                    b.ToTable("TeamUsers", null, t =>
+                        {
+                            t.HasCheckConstraint("CK_TeamUsers_Status", "Status BETWEEN 0 AND 4");
+                        });
                 });
 
             modelBuilder.Entity("leaguerAPI.Models.User", b =>
@@ -322,14 +351,12 @@ namespace leaguerAPI.Migrations
                     b.HasOne("leaguerAPI.Models.Team", "WinningTeam")
                         .WithMany()
                         .HasForeignKey("WinningTeamId")
-                        .OnDelete(DeleteBehavior.Restrict)
-                        .IsRequired();
+                        .OnDelete(DeleteBehavior.Restrict);
 
                     b.HasOne("leaguerAPI.Models.User", "WinningUser")
                         .WithMany()
                         .HasForeignKey("WinningUserId")
-                        .OnDelete(DeleteBehavior.Restrict)
-                        .IsRequired();
+                        .OnDelete(DeleteBehavior.Restrict);
 
                     b.Navigation("Event");
 
@@ -429,7 +456,8 @@ namespace leaguerAPI.Migrations
 
             modelBuilder.Entity("leaguerAPI.Models.Event", b =>
                 {
-                    b.Navigation("EventResult");
+                    b.Navigation("EventResult")
+                        .IsRequired();
 
                     b.Navigation("EventTeams");
 

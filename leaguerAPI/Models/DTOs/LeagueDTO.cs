@@ -13,7 +13,7 @@
             isCompetitive = league.isCompetitive;
             CreatedBy = league.CreatedBy;
             IsTeamLeague = league.IsTeamLeague;
-            LeagueMembers = league.LeagueUsers?.Where(lu => lu.Status == LeagueUserStatus.Member).Select(l => new LeagueUserDTO(l)).ToList();
+            LeagueMembers = league.LeagueUsers?.Where(lu => lu.Status == LeagueUserStatus.Member || lu.Status == LeagueUserStatus.Manager).Select(l => new LeagueUserDTO(l)).ToList();
             LeagueInvites = league.LeagueUsers?.Where(lu => lu.Status == LeagueUserStatus.Invited).Select(l => new LeagueUserDTO(l)).ToList();
             LeagueRequests = league.LeagueUsers?.Where(lu => lu.Status == LeagueUserStatus.Requested).Select(l => new LeagueUserDTO(l)).ToList();
             Events = league.Events?.Select(e => new EventDTO(e)).ToList();

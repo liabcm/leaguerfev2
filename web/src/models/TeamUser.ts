@@ -1,3 +1,5 @@
+import { TeamUserStatus } from './TeamUserStatusEnum';
+
 export interface TeamUser {
   userId: string;
   teamId: string;
@@ -5,4 +7,5 @@ export interface TeamUser {
   name: string;
   email: string;
   isManager: boolean;
+  status: TeamUserStatus;
 }

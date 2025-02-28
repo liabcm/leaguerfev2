@@ -108,5 +108,38 @@ namespace leaguerAPI.Controllers
             }
             return Ok(response.Data);
         }
+
+        [HttpPost("invite-request")]
+        public async Task<IActionResult> InviteOrRequestToTeam(Guid teamId, Guid userId, bool isInvite)
+        {
+            var response = await _teamService.InviteOrRequestToTeam(teamId, userId, User.GetObjectId(), isInvite);
+            if (!response.Success)
+            {
+                return BadRequest(response.ErrorMessage);
+            }
+            return Ok(response.Data);
+        }
+
+        [HttpPost("decline")]
+        public async Task<IActionResult> DeclineInviteOrRequest(Guid teamId, Guid userId)
+        {
+            var response = await _teamService.DeclineInviteOrRequest(teamId, userId, User.GetObjectId());
+            if (!response.Success)
+            {
+                return BadRequest(response.ErrorMessage);
+            }
+            return Ok(response.Data);
+        }
+
+        [HttpPost("accept-invite")]
+        public async Task<IActionResult> AcceptRequestOrInvite(Guid teamId, Guid userId)
+        {
+            var response = await _teamService.AcceptRequestOrInvite(teamId, userId, User.GetObjectId());
+            if (!response.Success)
+            {
+                return BadRequest(response.ErrorMessage);
+            }
+            return Ok(response.Data);
+        }
     }
 }

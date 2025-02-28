@@ -1,20 +1,20 @@
 import { useEffect, useState } from 'react';
 import styled from 'styled-components';
-import { useLeagueApi } from '../../api/useLeagueApi';
+import { PagedResult } from '../../models/PagedResult';
 import { User } from '../../models/User'; // You'll need to create this type
 
 interface SearchUsersModalProps {
   isOpen: boolean;
   onClose: () => void;
   onInviteUser: (user: User) => Promise<void>;
-  leagueId: string;
+  onSearchUsers: (query: string, pageNum: number) => Promise<PagedResult>;
 }
 
 const SearchUsersModal = ({
   isOpen,
   onClose,
   onInviteUser,
-  leagueId,
+  onSearchUsers,
 }: SearchUsersModalProps) => {
   const [searchTerm, setSearchTerm] = useState('');
   const [users, setUsers] = useState<User[]>([]);
@@ -22,12 +22,11 @@ const SearchUsersModal = ({
   const [page, setPage] = useState(1);
   const [hasMore, setHasMore] = useState(true);
   const [invitingUsers, setInvitingUsers] = useState<Set<string>>(new Set());
-  const { searchUsers } = useLeagueApi();
 
   const fetchUsers = async (query: string, pageNum: number) => {
     setLoading(true);
     try {
-      const data = await searchUsers(leagueId, query, pageNum);
+      const data = await onSearchUsers(query, pageNum);
       if (pageNum === 1) {
         setUsers(data.items);
       } else {

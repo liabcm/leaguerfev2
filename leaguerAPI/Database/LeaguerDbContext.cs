@@ -21,7 +21,7 @@ namespace leaguerAPI.Database
         public DbSet<Team> Teams { get; set; }
         public DbSet<TeamUser> TeamUsers { get; set; }
         public IQueryable<LeagueUser> ConfirmedLeagueUsers =>
-            LeagueUsers.Where(lu => lu.Status == LeagueUserStatus.Member);
+            LeagueUsers.Where(lu => lu.Status == LeagueUserStatus.Member || lu.Status == LeagueUserStatus.Manager);
         public IQueryable<LeagueUser> LeagueUserInvites =>
             LeagueUsers.Where(lu => lu.Status == LeagueUserStatus.Invited);
         public IQueryable<LeagueUser> LeagueUserRequestsAndInvites =>
@@ -88,9 +88,6 @@ namespace leaguerAPI.Database
                     .OnDelete(DeleteBehavior.Restrict);
 
                 entity.Property(lu => lu.IsDeleted)
-                    .HasDefaultValue(false);
-
-                entity.Property(lu => lu.IsManager)
                     .HasDefaultValue(false);
 
                 // Configure Status as an integer mapped to the enum
@@ -226,8 +223,20 @@ namespace leaguerAPI.Database
                     .HasForeignKey(tu => tu.UserId)
                     .OnDelete(DeleteBehavior.Restrict);
 
-                entity.Property(tu => tu.IsManager)
-                .HasDefaultValue(false);
+                entity.Property(lu => lu.Status)
+                    .HasConversion<int>()
+                    .IsRequired();
+
+                entity.ToTable("TeamUsers", tb =>
+                    tb.HasCheckConstraint("CK_TeamUsers_Status", "Status BETWEEN 0 AND 4"));
+
+                entity.HasIndex(lu => lu.Status)
+                    .HasDatabaseName("IX_TeamUsers_Status");
+
+                entity.HasQueryFilter(lu => !lu.IsDeleted);
+
+                entity.HasIndex(lu => lu.IsDeleted)
+                    .HasDatabaseName("IX_TeamUsers_IsDeleted");
             });
         }
     }

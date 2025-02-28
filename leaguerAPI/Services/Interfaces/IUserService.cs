@@ -11,6 +11,8 @@ namespace leaguerAPI.Services.Interfaces
         Task<Response<List<LeagueUserDTO>>> GetCurrentUserInvitesAsync(Guid userId);
         Task<Response<bool>> DeclineInviteAsync(Guid leagueId, Guid userId, Guid currentUserId);
         Task<Response<bool>> AcceptInviteAsync(Guid leagueId, Guid userId, Guid currentUserId);
+        Task<Response<PagedResult<UserDTO>>> SearchUsersToInviteTeamsAsync(Guid teamId, string searchTerm, int page, int pageSize);
+        Task<Response<List<TeamUserDTO>>> GetCurrentUserTeamInvitesAndRequests(Guid userId);
 
     }
 }

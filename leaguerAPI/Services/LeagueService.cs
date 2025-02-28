@@ -38,8 +38,7 @@ namespace leaguerAPI.Services
             {
                 LeagueId = league.Id,
                 User = user,
-                Status = LeagueUserStatus.Member,
-                IsManager = true
+                Status = LeagueUserStatus.Manager,
             });
 
             await _context.SaveChangesAsync();
@@ -156,18 +155,28 @@ namespace leaguerAPI.Services
                     return Response<bool>.FailureResult("Please dont kick yourself!");
                 }
                 var manager = await _context.LeagueUsers
-                    .FirstOrDefaultAsync(lu => lu.UserId == managerId && lu.LeagueId == leagueId && lu.IsManager);
+                    .FirstOrDefaultAsync(lu => lu.UserId == managerId && lu.LeagueId == leagueId && lu.Status == LeagueUserStatus.Manager);
                 if (manager == null)
                 {
                     return Response<bool>.FailureResult("User not authorized to kick");
                 }
             }
-            var leagueUser = await _context.LeagueUsers.IgnoreQueryFilters().FirstOrDefaultAsync(lu => lu.UserId == userId && lu.LeagueId == leagueId);
+            var leagueUser = await _context.LeagueUsers.IgnoreQueryFilters().Include(lu => lu.League).FirstOrDefaultAsync(lu => lu.UserId == userId && lu.LeagueId == leagueId);
             if (leagueUser == null || leagueUser.IsDeleted)
             {
                 return Response<bool>.FailureResult("User not in league");
             }
             leagueUser.IsDeleted = true;
+
+            if (leagueUser.League.IsTeamLeague)
+            {
+                var teamUser = await _context.TeamUsers.FirstOrDefaultAsync(tu => tu.UserId == userId && tu.Team.LeagueId == leagueId);
+                if (teamUser != null)
+                {
+                    _context.TeamUsers.Remove(teamUser);
+                }
+            }
+
             await _context.SaveChangesAsync();
             return Response<bool>.SuccessResult(true);
         }
@@ -215,7 +224,7 @@ namespace leaguerAPI.Services
                     .AsNoTracking()
                     .Include(l => l.LeagueUsers)
                     .ThenInclude(lu => lu.User)
-                    .Where(l => l.LeagueUsers.Any(lu => lu.UserId == userId && lu.Status == LeagueUserStatus.Member))
+                    .Where(l => l.LeagueUsers.Any(lu => lu.UserId == userId && (lu.Status == LeagueUserStatus.Member || lu.Status == LeagueUserStatus.Manager)))
                     .Select(l => new LeagueDTO(l))
                     .ToListAsync();
 
@@ -244,8 +253,7 @@ namespace leaguerAPI.Services
                     .Include(lu => lu.League)//remove this at some point when you implement add new manager
                     .AnyAsync(lu => lu.LeagueId == leagueId
                         && lu.UserId == currentUserId
-                        && lu.Status == LeagueUserStatus.Member
-                        && (lu.IsManager || lu.League.CreatedBy == currentUserId)
+                        && (lu.Status == LeagueUserStatus.Manager || lu.League.CreatedBy == currentUserId)
                         && !lu.IsDeleted);
 
                 if (!isManager)
@@ -296,7 +304,6 @@ namespace leaguerAPI.Services
                     LeagueId = leagueId,
                     UserId = invitedUserId,
                     Status = isInvite ? LeagueUserStatus.Invited : LeagueUserStatus.Requested,
-                    IsManager = false,
                 };
                 await _context.LeagueUsers.AddAsync(newRecord);
             }

@@ -23,7 +23,8 @@ namespace leaguerAPI.Services
                 return null;
             }
 
-            User userToAdd = new User(){
+            User userToAdd = new User()
+            {
                 Id = user.Id,
                 Name = user.Name,
                 Email = user.Email
@@ -32,10 +33,10 @@ namespace leaguerAPI.Services
             await _context.SaveChangesAsync();
             return userToAdd;
         }
-            
+
         public async Task<User> GetByIdAsync(Guid id)
         {
-            return await _context.Users.AsNoTracking().FirstOrDefaultAsync(x=>x.Id == id);
+            return await _context.Users.AsNoTracking().FirstOrDefaultAsync(x => x.Id == id);
         }
 
         public async Task<Response<PagedResult<UserDTO>>> SearchUsersToInviteAsync(Guid leagueId, string searchTerm, int page = 1, int pageSize = 10)
@@ -77,7 +78,7 @@ namespace leaguerAPI.Services
                     TotalCount = items.Count(),
                     PageNumber = page,
                     PageSize = pageSize
-                };  
+                };
 
                 return Response<PagedResult<UserDTO>>.SuccessResult(result);
             }
@@ -92,7 +93,7 @@ namespace leaguerAPI.Services
             try
             {
                 var user = await _context.Users.FirstOrDefaultAsync(u => u.Id == userId);
-                if(user == null)
+                if (user == null)
                 {
                     return Response<List<LeagueUserDTO>>.FailureResult("User not found");
                 }
@@ -121,7 +122,7 @@ namespace leaguerAPI.Services
             if (userId != currentUserId)
             {
                 var canDecline = await _context.ConfirmedLeagueUsers
-                    .AnyAsync(lu => lu.LeagueId == leagueId && lu.UserId == currentUserId && lu.IsManager);
+                    .AnyAsync(lu => lu.LeagueId == leagueId && lu.UserId == currentUserId && lu.Status == LeagueUserStatus.Manager);
                 if (!canDecline)
                 {
                     return Response<bool>.FailureResult("You do not have permission to decline this invite.");
@@ -148,10 +149,10 @@ namespace leaguerAPI.Services
                 return Response<bool>.FailureResult("Invalid LeagueId or UserId.");
             }
 
-            if(userId != currentUserId)
+            if (userId != currentUserId)
             {
                 var canAccept = await _context.ConfirmedLeagueUsers
-                    .AnyAsync(lu => lu.LeagueId == leagueId && lu.UserId == currentUserId && lu.IsManager);
+                    .AnyAsync(lu => lu.LeagueId == leagueId && lu.UserId == currentUserId && lu.Status == LeagueUserStatus.Manager);
                 if (!canAccept)
                 {
                     return Response<bool>.FailureResult("You do not have permission to accept this invite.");
@@ -166,15 +167,105 @@ namespace leaguerAPI.Services
                 return Response<bool>.FailureResult("Invite not found or already accepted.");
             }
 
-            if(record.Status == LeagueUserStatus.Requested && userId == currentUserId)
+            if (record.Status == LeagueUserStatus.Requested && userId == currentUserId)
             {
                 return Response<bool>.FailureResult("User cannot accept own request");
             }
 
+            if (record.Status == LeagueUserStatus.Invited && userId != currentUserId)
+            {
+                return Response<bool>.FailureResult("Manager Cannot accept invite for user");
+            }
+
             record.Status = LeagueUserStatus.Member;
-            record.IsManager = false;
             await _context.SaveChangesAsync();
             return Response<bool>.SuccessResult(true);
+        }
+
+        public async Task<Response<PagedResult<UserDTO>>> SearchUsersToInviteTeamsAsync(Guid teamId, string searchTerm, int page, int pageSize)
+        {
+            // Validate input parameters
+            if (string.IsNullOrWhiteSpace(searchTerm))
+            {
+                return Response<PagedResult<UserDTO>>.FailureResult("Search term is required");
+            }
+            if (page < 1)
+            {
+                return Response<PagedResult<UserDTO>>.FailureResult("Page must be greater than 0");
+            }
+            if (pageSize < 1 || pageSize > 50)
+            {
+                return Response<PagedResult<UserDTO>>.FailureResult("Page size must be between 1 and 50");
+            }
+
+            try
+            {
+                var team = await _context.Teams
+                    .AsNoTracking()
+                    .Include(t => t.League.LeagueUsers)
+                        .ThenInclude(lu => lu.User)
+                    .Include(t => t.TeamUsers)
+                        .ThenInclude(tu => tu.User)
+                    .FirstOrDefaultAsync(t => t.Id == teamId);
+
+                if (team == null)
+                    return Response<PagedResult<UserDTO>>.FailureResult("Team Not Found");
+
+                searchTerm = searchTerm.Trim().ToLowerInvariant();
+
+                var query = team.League.LeagueUsers
+                    .Select(lu => new UserDTO(lu.User))
+                    .Where(user => !team.TeamUsers.Any(tu => tu.User.Id == user.Id))
+                    .Where(user =>
+                        (user.Email?.ToLowerInvariant().Contains(searchTerm) == true) ||
+                        (user.Name?.ToLowerInvariant().Contains(searchTerm) == true));
+
+                var totalCount = await Task.FromResult(query.Count()); // This needs to be adjusted based on your ORM
+
+                var items = await Task.FromResult(query
+                    .Skip((page - 1) * pageSize)
+                    .Take(pageSize)
+                    .ToList());
+
+                var result = new PagedResult<UserDTO>
+                {
+                    Items = items,
+                    TotalCount = totalCount,
+                    PageNumber = page,
+                    PageSize = pageSize
+                };
+
+                return Response<PagedResult<UserDTO>>.SuccessResult(result);
+            }
+            catch (Exception ex)
+            {
+                // Consider logging the exception here
+                return Response<PagedResult<UserDTO>>.FailureResult($"Error searching users: {ex.Message}");
+            }
+        }
+
+        public async Task<Response<List<TeamUserDTO>>> GetCurrentUserTeamInvitesAndRequests(Guid userId)
+        {
+            try
+            {
+                var user = await _context.Users.FirstOrDefaultAsync(u => u.Id == userId);
+                if (user == null)
+                {
+                    return Response<List<TeamUserDTO>>.FailureResult("User not found");
+                }
+
+                var invites = await _context.TeamUsers.AsNoTracking().Include(tu => tu.Team)
+                    .Where(tu => tu.UserId == userId
+                    && (tu.Status == TeamUserStatus.Invited || tu.Status == TeamUserStatus.Requested))
+                    .Select(tu => new TeamUserDTO(tu))
+                    .ToListAsync();
+
+                return Response<List<TeamUserDTO>>.SuccessResult(invites);
+            }
+            catch (Exception ex)
+            {
+                return Response<List<TeamUserDTO>>.FailureResult($"Failed to retrieve team user invites: {ex.Message}");
+            }
         }
     }
 }

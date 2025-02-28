@@ -7,7 +7,7 @@ import { useLeagueApi } from '../api/useLeagueApi';
 // Components
 import EventForm from './Events/EventForm';
 import GetStarted from './GetStarted';
-import InvitesPage from './League/InvitesPage';
+import InvitesPage from './InvitesPage';
 import LeagueCard from './League/LeagueCard';
 import LeagueForm from './League/LeagueForm';
 import LeagueList from './League/LeagueList';
@@ -17,6 +17,7 @@ import Profile from './Profile';
 import ProtectedRoute from './ProtectedRoute';
 import SportForm from './Sport/SportForm';
 import ManageTeams from './Teams/ManageTeams';
+import TeamCard from './Teams/TeamCard';
 import TeamForm from './Teams/TeamForm';
 
 function Pages() {
@@ -56,6 +57,7 @@ function Pages() {
         <Route path='/invites' element={<InvitesPage />} />
         <Route path='league/:leagueId/team' element={<TeamForm />} />
         <Route path='/manage-teams' element={<ManageTeams />} />
+        <Route path='/team/:id' element={<TeamCard />} />
       </Route>
     </Routes>
   );

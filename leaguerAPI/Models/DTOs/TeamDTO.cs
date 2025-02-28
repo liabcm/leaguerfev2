@@ -9,11 +9,11 @@
             Wins = team.Wins;
             Losses = team.Losses;
             TeamUsers = team.TeamUsers?
-                .Where(t => !t.IsManager)
+                .Where(t => t.Status == TeamUserStatus.Member)
                 .Select(t => new TeamUserDTO(t))
                 .ToList();
             TeamManagers = team.TeamUsers?
-                .Where(t => t.IsManager)
+                .Where(t => t.Status == TeamUserStatus.Manager)
                 .Select(t => new TeamUserDTO(t))
                 .ToList();
             Rank = team.League?.Teams?
@@ -21,6 +21,8 @@
                 .ToList()
                 .FindIndex(t => t.Id == team.Id) + 1 ?? 0;
             IsPending = team.IsPending;
+            EventTeams = team.EventTeams?.Select(et => new EventTeamDTO(et)).ToList();
+            LeagueName = team.League?.Name;
 
         }
         public Guid Id { get; set; }
@@ -29,8 +31,10 @@
         public int Wins { get; set; }
         public int Losses { get; set; }
         public bool IsPending { get; set; }
+        public string? LeagueName { get; set; }
 
         public List<TeamUserDTO>? TeamUsers { get; set; }
         public List<TeamUserDTO>? TeamManagers { get; set; }
+        public List<EventTeamDTO>? EventTeams { get; set; }
     }
 }

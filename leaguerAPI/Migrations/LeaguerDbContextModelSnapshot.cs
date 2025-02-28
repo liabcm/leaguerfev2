@@ -182,11 +182,6 @@ namespace leaguerAPI.Migrations
                         .HasColumnType("bit")
                         .HasDefaultValue(false);
 
-                    b.Property<bool>("IsManager")
-                        .ValueGeneratedOnAdd()
-                        .HasColumnType("bit")
-                        .HasDefaultValue(false);
-
                     b.Property<int>("Status")
                         .HasColumnType("int");
 
@@ -274,16 +269,26 @@ namespace leaguerAPI.Migrations
                     b.Property<Guid>("UserId")
                         .HasColumnType("uniqueidentifier");
 
-                    b.Property<bool>("IsManager")
-                        .ValueGeneratedOnAdd()
-                        .HasColumnType("bit")
-                        .HasDefaultValue(false);
+                    b.Property<bool>("IsDeleted")
+                        .HasColumnType("bit");
+
+                    b.Property<int>("Status")
+                        .HasColumnType("int");
 
                     b.HasKey("TeamId", "UserId");
 
+                    b.HasIndex("IsDeleted")
+                        .HasDatabaseName("IX_TeamUsers_IsDeleted");
+
+                    b.HasIndex("Status")
+                        .HasDatabaseName("IX_TeamUsers_Status");
+
                     b.HasIndex("UserId");
 
-                    b.ToTable("TeamUsers");
+                    b.ToTable("TeamUsers", null, t =>
+                        {
+                            t.HasCheckConstraint("CK_TeamUsers_Status", "Status BETWEEN 0 AND 4");
+                        });
                 });
 
             modelBuilder.Entity("leaguerAPI.Models.User", b =>

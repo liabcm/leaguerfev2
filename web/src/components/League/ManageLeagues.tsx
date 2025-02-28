@@ -6,6 +6,7 @@ import { useLeagueApi } from '../../api/useLeagueApi';
 import { League } from '../../models/League';
 import { LeagueUser } from '../../models/LeagueUser';
 import { LeagueUserStatus } from '../../models/LeagueUserStatusEnum';
+import { PagedResult } from '../../models/PagedResult';
 import { Team } from '../../models/Team';
 import { User } from '../../models/User';
 import LeagueEventsSection from './LeagueEventsSection';
@@ -36,6 +37,7 @@ const ManageLeagues = () => {
     acceptInvite,
     declineInvite,
     acceptTeamRequest,
+    searchUsers,
   } = useLeagueApi();
   const navigate = useNavigate();
   const [searchParams, setSearchParams] = useSearchParams();
@@ -250,6 +252,14 @@ const ManageLeagues = () => {
     }
   };
 
+  const handleSearchUsers = async (
+    query: string,
+    pageNum: number
+  ): Promise<PagedResult> => {
+    const users = await searchUsers(selectedLeague?.id!, query, pageNum);
+    return users;
+  };
+
   const handleAddTeam = () => {
     navigate(`/league/${selectedLeague?.id}/team`);
   };
@@ -373,7 +383,7 @@ const ManageLeagues = () => {
           isOpen={showSearchUsersModal}
           onClose={() => setShowSearchUsersModal(false)}
           onInviteUser={handleInviteUser}
-          leagueId={selectedLeague.id}
+          onSearchUsers={handleSearchUsers}
         />
       )}
     </Container>

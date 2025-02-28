@@ -1,12 +1,15 @@
 import { Trophy, Users } from 'lucide-react';
 import { useEffect, useState } from 'react';
-import { useNavigate, useSearchParams } from 'react-router-dom';
+import { useSearchParams } from 'react-router-dom';
 import styled from 'styled-components';
 import { useLeagueApi } from '../../api/useLeagueApi';
+import { PagedResult } from '../../models/PagedResult';
 import { Team } from '../../models/Team';
+import { User } from '../../models/User';
 import EventResultsSection from '../Events/EventResultsSection';
 import LeagueEventsSection from '../League/LeagueEventsSection';
 import LeagueMembersSection from '../League/LeagueMembersSection';
+import SearchUsersModal from '../League/SearchUsersModal';
 import {
   Card,
   Header,
@@ -22,8 +25,9 @@ const ManageTeams = () => {
   const [activeTab, setActiveTab] = useState<'roster' | 'upcoming' | 'results'>(
     'roster'
   );
-  const { getMyTeams } = useLeagueApi();
-  const navigate = useNavigate();
+  const [showSearchUsersModal, setShowSearchUsersModal] = useState(false);
+  const { getMyTeams, searchUsersForTeamInvite, inviteOrRequestUserToTeam } =
+    useLeagueApi();
   const [searchParams, setSearchParams] = useSearchParams();
 
   useEffect(() => {
@@ -62,6 +66,21 @@ const ManageTeams = () => {
     } as any;
   };
 
+  const handleInviteUserToTeam = async (user: User): Promise<void> => {
+    try {
+      await inviteOrRequestUserToTeam(selectedTeam?.id!, user.id, true);
+    } catch (error) {
+      console.error('Error inviting user to team:', error);
+    }
+  };
+
+  const handleSearchUsers = async (
+    query: string,
+    pageNum: number
+  ): Promise<PagedResult> => {
+    return await searchUsersForTeamInvite(selectedTeam?.id!, query, pageNum);
+  };
+
   return (
     <Container>
       <Select onChange={handleTeamSelect}>
@@ -76,7 +95,9 @@ const ManageTeams = () => {
       {selectedTeam && (
         <Card>
           <Header>
-            <Title>{selectedTeam.name}</Title>
+            <Title>
+              {selectedTeam.name} - {selectedTeam.leagueName}
+            </Title>
           </Header>
 
           <InfoContainer>
@@ -116,13 +137,14 @@ const ManageTeams = () => {
           {activeTab === 'roster' && (
             <LeagueMembersSection
               league={teamToLeague(selectedTeam)}
-              isManaged={false}
+              isManaged={true}
+              onSearchUsers={() => setShowSearchUsersModal(true)}
             />
           )}
 
           {activeTab === 'upcoming' && (
             <LeagueEventsSection
-              events={selectedTeam.events || []}
+              events={selectedTeam.eventTeams.map((et) => et.event) || []}
               isTeamEvents={true}
               showCreateButton={false}
             />
@@ -134,6 +156,15 @@ const ManageTeams = () => {
             />
           )}
         </Card>
+      )}
+
+      {showSearchUsersModal && selectedTeam && (
+        <SearchUsersModal
+          isOpen={showSearchUsersModal}
+          onClose={() => setShowSearchUsersModal(false)}
+          onInviteUser={handleInviteUserToTeam}
+          onSearchUsers={handleSearchUsers}
+        />
       )}
     </Container>
   );

@@ -5,6 +5,7 @@ export interface Team {
   id: string;
   name: string;
   leagueId: string;
+  leagueName: string;
   rank: number;
   wins: number;
   losses: number;
@@ -12,5 +13,11 @@ export interface Team {
   teamManagers: TeamUser[];
   isPending: boolean;
   eventResults: EventResult[];
-  events: Event[];
+  eventTeams: EventTeam[];
+}
+
+export interface EventTeam {
+  eventId: string;
+  teamId: string;
+  event: Event;
 }
