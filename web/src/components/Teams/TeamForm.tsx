@@ -67,6 +67,8 @@ const TeamForm = () => {
                 const isInCurrentTeam = [
                   ...currentTeam.teamManagers,
                   ...currentTeam.teamUsers,
+                  ...currentTeam.teamInvites,
+                  ...currentTeam.teamRequests,
                 ].some((tm) => tm.userId === m.userId);
 
                 if (isInCurrentTeam) return true;
