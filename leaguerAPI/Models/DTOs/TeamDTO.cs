@@ -16,6 +16,14 @@
                 .Where(t => t.Status == TeamUserStatus.Manager)
                 .Select(t => new TeamUserDTO(t))
                 .ToList();
+            TeamInvites = team.TeamUsers?
+                .Where(t => t.Status == TeamUserStatus.Invited)
+                .Select(t => new TeamUserDTO(t))
+                .ToList();
+            TeamRequests = team.TeamUsers?
+                .Where(t => t.Status == TeamUserStatus.Requested)
+                .Select(t => new TeamUserDTO(t))
+                .ToList();
             Rank = team.League?.Teams?
                 .OrderBy(t => (t.Wins + t.Losses) == 0 ? decimal.MinValue : (decimal)t.Wins / (t.Wins + t.Losses))
                 .ToList()
@@ -35,6 +43,8 @@
 
         public List<TeamUserDTO>? TeamUsers { get; set; }
         public List<TeamUserDTO>? TeamManagers { get; set; }
+        public List<TeamUserDTO>? TeamInvites { get; set; }
+        public List<TeamUserDTO>? TeamRequests { get; set; }
         public List<EventTeamDTO>? EventTeams { get; set; }
     }
 }

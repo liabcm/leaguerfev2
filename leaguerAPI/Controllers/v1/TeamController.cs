@@ -141,5 +141,16 @@ namespace leaguerAPI.Controllers
             }
             return Ok(response.Data);
         }
+
+        [HttpPost("{id:guid}/leave")]
+        public async Task<IActionResult> LeaveTeam(Guid id, Guid userIdToKick)
+        {
+            var response = await _teamService.LeaveTeam(id, User.GetObjectId(), userIdToKick);
+            if (!response.Success)
+            {
+                return BadRequest(response.ErrorMessage);
+            }
+            return Ok(response.Data);
+        }
     }
 }

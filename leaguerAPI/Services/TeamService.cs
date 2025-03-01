@@ -309,8 +309,11 @@ namespace leaguerAPI.Services
                     return Response<bool>.FailureResult("You do not have permission to invite to this team");
             }
 
-            if (team.TeamUsers.Any(tu => tu.UserId == userId))
-                return Response<bool>.FailureResult("User is already part of this team or has already been invited/requested");
+            if (!await AreUsersAvailable(new List<Guid> { userId }, team.LeagueId, null))
+                return Response<bool>.FailureResult("One or more users are already part of a team in this league");
+
+            if (!await ConfirmUsersExistInLeague(new List<Guid> { userId }, team.LeagueId))
+                return Response<bool>.FailureResult("One or more users are not part of the league");
 
             team.TeamUsers.Add(new TeamUser
             {
@@ -384,6 +387,41 @@ namespace leaguerAPI.Services
             teamUser.Status = TeamUserStatus.Member;
             await _context.SaveChangesAsync();
             return Response<bool>.SuccessResult(true);
+        }
+
+        public async Task<Response<bool>> LeaveTeam(Guid teamId, Guid currentUserId, Guid userIdToKick)
+        {
+            var team = await _context.Teams.Include(t => t.TeamUsers).FirstOrDefaultAsync(t => t.Id == teamId);
+            if (team == null)
+                return Response<bool>.FailureResult("Team not found");
+
+            if (userIdToKick == currentUserId)
+            {
+                return Response<bool>.FailureResult("please dont kick yourself");
+            }
+            else if (userIdToKick == Guid.Empty)
+            {
+                var teamUser = team.TeamUsers.FirstOrDefault(tu => tu.UserId == currentUserId);
+                if (teamUser == null)
+                    return Response<bool>.FailureResult("User is not part of this team");
+                if (teamUser.Status == TeamUserStatus.Manager && team.TeamUsers.Where(tu => tu.Status == TeamUserStatus.Manager).Count() == 1)
+                    return Response<bool>.FailureResult("There must be a manager in the team");
+                team.TeamUsers.Remove(teamUser);
+                await _context.SaveChangesAsync();
+                return Response<bool>.SuccessResult(true);
+            }
+            else
+            {
+                var canKick = team.TeamUsers.Any(tu => tu.UserId == currentUserId && tu.Status == TeamUserStatus.Manager);
+                if (!canKick)
+                    return Response<bool>.FailureResult("You do not have permission to kick from this team");
+                var teamUser = team.TeamUsers.FirstOrDefault(tu => tu.UserId == userIdToKick);
+                if (teamUser == null)
+                    return Response<bool>.FailureResult("User is not part of this team");
+                team.TeamUsers.Remove(teamUser);
+                await _context.SaveChangesAsync();
+                return Response<bool>.SuccessResult(true);
+            }
         }
     }
 }

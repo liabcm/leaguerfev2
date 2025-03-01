@@ -5,6 +5,7 @@ import styled from 'styled-components';
 import { useLeagueApi } from '../../api/useLeagueApi';
 import { PagedResult } from '../../models/PagedResult';
 import { Team } from '../../models/Team';
+import { TeamUser } from '../../models/TeamUser';
 import { User } from '../../models/User';
 import EventResultsSection from '../Events/EventResultsSection';
 import LeagueEventsSection from '../League/LeagueEventsSection';
@@ -18,6 +19,7 @@ import {
   Tabs,
   Title,
 } from '../League/SharedLeagueStyles';
+import TeamPendingSection from './TeamPendingSection';
 
 const ManageTeams = () => {
   const [teams, setTeams] = useState<Team[]>([]);
@@ -26,8 +28,14 @@ const ManageTeams = () => {
     'roster'
   );
   const [showSearchUsersModal, setShowSearchUsersModal] = useState(false);
-  const { getMyTeams, searchUsersForTeamInvite, inviteOrRequestUserToTeam } =
-    useLeagueApi();
+  const {
+    getMyTeams,
+    searchUsersForTeamInvite,
+    inviteOrRequestUserToTeam,
+    declineTeamInvite,
+    acceptTeamInvite,
+    leaveTeam,
+  } = useLeagueApi();
   const [searchParams, setSearchParams] = useSearchParams();
 
   useEffect(() => {
@@ -57,7 +65,6 @@ const ManageTeams = () => {
     setSelectedTeam(teams.find((t) => t.id === teamId) || null);
   };
 
-  // Convert team to League format for LeagueMembersSection
   const teamToLeague = (team: Team) => {
     return {
       id: team.id,
@@ -79,6 +86,105 @@ const ManageTeams = () => {
     pageNum: number
   ): Promise<PagedResult> => {
     return await searchUsersForTeamInvite(selectedTeam?.id!, query, pageNum);
+  };
+
+  const handleRemoveMember = async (memberId: string) => {
+    try {
+      const teamId = selectedTeam?.id!;
+      await leaveTeam(teamId, memberId);
+      setTeams(
+        teams.map((team) => {
+          if (team.id === teamId) {
+            const updatedTeam = {
+              ...team,
+              teamUsers: team.teamUsers.filter(
+                (user) => user.userId !== memberId
+              ),
+              teamManagers: team.teamManagers.filter(
+                (user) => user.userId !== memberId
+              ),
+            };
+            setSelectedTeam(updatedTeam);
+            return updatedTeam;
+          }
+          return team;
+        })
+      );
+    } catch (error) {
+      console.error('Error removing member:', error);
+    }
+  };
+
+  const onDecline = async (member: TeamUser) => {
+    try {
+      await declineTeamInvite(selectedTeam?.id!, member.userId);
+      setTeams((prevTeams) => {
+        const updatedTeams = prevTeams.map((team) => {
+          if (team.id === selectedTeam?.id) {
+            const updatedTeam = {
+              ...team,
+              teamRequests: team.teamRequests.filter(
+                (user) => user.userId !== member.userId
+              ),
+            };
+            setSelectedTeam(updatedTeam);
+            return updatedTeam;
+          }
+          return team;
+        });
+        return updatedTeams;
+      });
+    } catch (error) {
+      console.error('Error declining request:', error);
+    }
+  };
+
+  const onRemoveInvite = async (member: TeamUser) => {
+    try {
+      await declineTeamInvite(selectedTeam?.id!, member.userId);
+      setTeams((prevTeams) => {
+        const updatedTeams = prevTeams.map((team) => {
+          if (team.id === selectedTeam?.id) {
+            const updatedTeam = {
+              ...team,
+              teamInvites: team.teamInvites.filter(
+                (user) => user.userId !== member.userId
+              ),
+            };
+            setSelectedTeam(updatedTeam);
+            return updatedTeam;
+          }
+          return team;
+        });
+        return updatedTeams;
+      });
+    } catch (error) {
+      console.error('Error removing invite:', error);
+    }
+  };
+
+  const onAccept = async (member: TeamUser) => {
+    try {
+      await acceptTeamInvite(selectedTeam?.id!, member.userId);
+      setTeams(
+        teams.map((team) => {
+          if (team.id === selectedTeam?.id) {
+            const updatedTeam = {
+              ...team,
+              teamMembers: [...team.teamUsers, member],
+              teamRequests: team.teamRequests.filter(
+                (user) => user.userId !== member.userId
+              ),
+            };
+            setSelectedTeam(updatedTeam);
+            return updatedTeam;
+          }
+          return team;
+        })
+      );
+    } catch (error) {
+      console.error('Error accepting request:', error);
+    }
   };
 
   return (
@@ -135,11 +241,27 @@ const ManageTeams = () => {
           </Tabs>
 
           {activeTab === 'roster' && (
-            <LeagueMembersSection
-              league={teamToLeague(selectedTeam)}
-              isManaged={true}
-              onSearchUsers={() => setShowSearchUsersModal(true)}
-            />
+            <>
+              <LeagueMembersSection
+                league={teamToLeague(selectedTeam)}
+                isManaged={true}
+                onSearchUsers={() => setShowSearchUsersModal(true)}
+                onRemove={handleRemoveMember}
+              />
+              <TeamPendingSection
+                title='Pending Invites'
+                items={selectedTeam.teamInvites}
+                onDecline={onRemoveInvite}
+                type='invite'
+              />
+              <TeamPendingSection
+                title='Join Requests'
+                items={selectedTeam.teamRequests}
+                onAccept={onAccept}
+                onDecline={onDecline}
+                type='request'
+              />
+            </>
           )}
 
           {activeTab === 'upcoming' && (

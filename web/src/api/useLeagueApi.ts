@@ -499,5 +499,20 @@ export const useLeagueApi = () => {
       if (!response.ok) throw new Error('Failed to accept team invite');
       return response.json();
     },
+
+    leaveTeam: async (
+      teamId: string,
+      userIdToKick?: string
+    ): Promise<boolean> => {
+      const url = userIdToKick
+        ? `${API_BASE_URL}/team/${teamId}/leave?userIdToKick=${userIdToKick}`
+        : `${API_BASE_URL}/team/${teamId}/leave`;
+      const response = await fetch(url, {
+        method: 'POST',
+        headers: await getAuthHeader(),
+      });
+      if (!response.ok) throw new Error('Failed to leave team');
+      return response.json();
+    },
   };
 };

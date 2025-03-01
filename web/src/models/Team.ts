@@ -11,6 +11,8 @@ export interface Team {
   losses: number;
   teamUsers: TeamUser[];
   teamManagers: TeamUser[];
+  teamInvites: TeamUser[];
+  teamRequests: TeamUser[];
   isPending: boolean;
   eventResults: EventResult[];
   eventTeams: EventTeam[];
