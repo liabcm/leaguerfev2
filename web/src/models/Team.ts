@@ -13,6 +13,7 @@ export interface Team {
   teamManagers: TeamUser[];
   teamInvites: TeamUser[];
   teamRequests: TeamUser[];
+  teamCreateRequests: TeamUser[];
   isPending: boolean;
   eventResults: EventResult[];
   eventTeams: EventTeam[];

@@ -55,6 +55,7 @@ const TeamForm = () => {
             ...t.teamUsers,
             ...t.teamInvites,
             ...t.teamRequests,
+            ...t.teamCreateRequests,
           ]);
         setAvailableLeagueMembers(
           leagueData.leagueMembers.filter((m) => {
@@ -67,8 +68,6 @@ const TeamForm = () => {
                 const isInCurrentTeam = [
                   ...currentTeam.teamManagers,
                   ...currentTeam.teamUsers,
-                  ...currentTeam.teamInvites,
-                  ...currentTeam.teamRequests,
                 ].some((tm) => tm.userId === m.userId);
 
                 if (isInCurrentTeam) return true;
