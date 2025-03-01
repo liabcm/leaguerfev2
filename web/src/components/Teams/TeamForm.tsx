@@ -50,7 +50,12 @@ const TeamForm = () => {
         setLeague(leagueData);
         const membersInTeam = leagueData.teams
           .concat(...leagueData.teamRequests)
-          .flatMap((t) => [...t.teamManagers, ...t.teamUsers]);
+          .flatMap((t) => [
+            ...t.teamManagers,
+            ...t.teamUsers,
+            ...t.teamInvites,
+            ...t.teamRequests,
+          ]);
         setAvailableLeagueMembers(
           leagueData.leagueMembers.filter((m) => {
             // If we're in edit mode, we need to include the current team members in the available list
