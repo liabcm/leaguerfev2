@@ -6,6 +6,7 @@ import { useLeagueApi } from '../api/useLeagueApi';
 
 // Components
 import EventForm from './Events/EventForm';
+import UpcomingEvents from './Events/UpcomingEvents';
 import GetStarted from './GetStarted';
 import InvitesPage from './InvitesPage';
 import LeagueCard from './League/LeagueCard';
@@ -13,10 +14,12 @@ import LeagueForm from './League/LeagueForm';
 import LeagueList from './League/LeagueList';
 import ManageLeagues from './League/ManageLeagues';
 import MyLeagues from './League/MyLeagues';
+import Manager from './Manager';
 import Profile from './Profile';
 import ProtectedRoute from './ProtectedRoute';
 import SportForm from './Sport/SportForm';
 import ManageTeams from './Teams/ManageTeams';
+import MyTeams from './Teams/MyTeams';
 import TeamCard from './Teams/TeamCard';
 import TeamForm from './Teams/TeamForm';
 
@@ -50,14 +53,17 @@ function Pages() {
         <Route path='/leagues' element={<LeagueList />} />
         <Route path='/profile' element={<Profile />} />
         <Route path='league/:id' element={<LeagueCard />} />
-        <Route path='manager' element={<ManageLeagues />} />
+        <Route path='manage-leagues' element={<ManageLeagues />} />
         <Route path='event/:leagueId' element={<EventForm />} />
-        <Route path='league/joined' element={<MyLeagues />} />
+        <Route path='my-leagues' element={<MyLeagues />} />
         <Route path='sport' element={<SportForm />} />
         <Route path='/invites' element={<InvitesPage />} />
         <Route path='league/:leagueId/team' element={<TeamForm />} />
         <Route path='/manage-teams' element={<ManageTeams />} />
         <Route path='/team/:id' element={<TeamCard />} />
+        <Route path='/upcoming-events' element={<UpcomingEvents />} />
+        <Route path='/manager' element={<Manager />} />
+        <Route path='/my-teams' element={<MyTeams />} />
       </Route>
     </Routes>
   );

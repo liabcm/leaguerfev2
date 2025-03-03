@@ -423,5 +423,50 @@ namespace leaguerAPI.Services
                 return Response<bool>.SuccessResult(true);
             }
         }
+
+        public async Task<Response<bool>> RejectTeamCreation(Guid teamId, Guid currentUserId)
+        {
+            try
+            {
+                var canReject = await _context.Teams
+                                        .AnyAsync(t => t.Id == teamId
+                                                && t.League.LeagueUsers.Any(tu =>
+                                                tu.UserId == currentUserId
+                                                && tu.Status == LeagueUserStatus.Manager));
+                if (!canReject)
+                    return Response<bool>.FailureResult("You do not have permission to reject this team");
+
+                var team = await _context.Teams.Include(t => t.TeamUsers).FirstOrDefaultAsync(t => t.Id == teamId);
+                if (team == null)
+                    return Response<bool>.FailureResult("Team not found");
+                _context.TeamUsers.RemoveRange(team.TeamUsers);
+                _context.Teams.Remove(team);
+                await _context.SaveChangesAsync();
+                return Response<bool>.SuccessResult(true);
+            }
+            catch (Exception ex)
+            {
+                return Response<bool>.FailureResult(ex.Message);
+            }
+        }
+
+        public async Task<Response<List<TeamDTO>>> GetMyJoinedTeams(Guid userId)
+        {
+            try
+            {
+                var teams = await _context.Teams.AsNoTracking()
+                    .Where(t => t.TeamUsers.Any(tu => tu.UserId == userId
+                                            && (tu.Status == TeamUserStatus.Member
+                                                            || tu.Status == TeamUserStatus.Manager)))
+                    .Include(t => t.League)
+                    .Select(t => new TeamDTO(t))
+                    .ToListAsync();
+                return Response<List<TeamDTO>>.SuccessResult(teams);
+            }
+            catch (Exception ex)
+            {
+                return Response<List<TeamDTO>>.FailureResult(ex.Message);
+            }
+        }
     }
 }

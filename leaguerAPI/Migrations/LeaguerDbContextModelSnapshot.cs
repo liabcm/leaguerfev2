@@ -62,6 +62,10 @@ namespace leaguerAPI.Migrations
 
             modelBuilder.Entity("leaguerAPI.Models.EventResult", b =>
                 {
+                    b.Property<Guid>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("uniqueidentifier");
+
                     b.Property<Guid>("EventId")
                         .HasColumnType("uniqueidentifier");
 
@@ -79,7 +83,10 @@ namespace leaguerAPI.Migrations
                     b.Property<Guid?>("WinningUserId")
                         .HasColumnType("uniqueidentifier");
 
-                    b.HasKey("EventId");
+                    b.HasKey("Id");
+
+                    b.HasIndex("EventId")
+                        .IsUnique();
 
                     b.HasIndex("StarPlayerUserId");
 

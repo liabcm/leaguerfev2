@@ -6,5 +6,6 @@ namespace leaguerAPI.Services.Interfaces
     {
         Task<Response<EventDTO>> CreateEvent(EventInputDTO eventDto, Guid userId);
         Task<Response<EventDTO>> GetEventById(Guid eventId);
+        Task<Response<PagedResult<EventDTO>>> GetMyUpcomingEvents(Guid userId, int page, int pageSize);
     }
 }

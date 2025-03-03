@@ -152,5 +152,27 @@ namespace leaguerAPI.Controllers
             }
             return Ok(response.Data);
         }
+
+        [HttpPost("reject/{teamId}")]
+        public async Task<IActionResult> RejectTeamCreation(Guid teamId)
+        {
+            var response = await _teamService.RejectTeamCreation(teamId, User.GetObjectId());
+            if (!response.Success)
+            {
+                return BadRequest(response.ErrorMessage);
+            }
+            return Ok(response.Data);
+        }
+
+        [HttpGet("my-joined-teams")]
+        public async Task<IActionResult> GetMyJoinedTeams()
+        {
+            var response = await _teamService.GetMyJoinedTeams(User.GetObjectId());
+            if (!response.Success)
+            {
+                return BadRequest(response);
+            }
+            return Ok(response.Data);
+        }
     }
 }

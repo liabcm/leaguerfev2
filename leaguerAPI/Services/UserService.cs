@@ -202,7 +202,8 @@ namespace leaguerAPI.Services
             {
                 var team = await _context.Teams
                     .AsNoTracking()
-                    .Include(t => t.League.LeagueUsers)
+                    .Include(t => t.League.LeagueUsers
+                            .Where(lu => lu.Status == LeagueUserStatus.Member || lu.Status == LeagueUserStatus.Manager))
                         .ThenInclude(lu => lu.User)
                     .Include(t => t.TeamUsers)
                         .ThenInclude(tu => tu.User)

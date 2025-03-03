@@ -105,7 +105,7 @@ export const useLeagueApi = () => {
       searchTerm: string,
       page: number,
       pageSize: number
-    ): Promise<PagedResult> => {
+    ): Promise<PagedResult<League>> => {
       let url = `${API_BASE_URL}/league`;
       const params = new URLSearchParams();
       if (searchTerm) {
@@ -233,6 +233,15 @@ export const useLeagueApi = () => {
       return result.data; // Extract the boolean from Response<bool>
     },
 
+    deleteLeague: async (leagueId: string): Promise<boolean> => {
+      const response = await fetch(`${API_BASE_URL}/league/${leagueId}`, {
+        method: 'DELETE',
+        headers: await getAuthHeader(),
+      });
+      if (!response.ok) throw new Error('Failed to delete league');
+      return response.json();
+    },
+
     //events
     createEvent: async (
       eventData: Omit<Event, 'id' | 'createdBy' | 'users' | 'teams'>
@@ -246,6 +255,31 @@ export const useLeagueApi = () => {
       });
 
       if (!response.ok) throw new Error('Failed to create league');
+      return response.json();
+    },
+
+    getMyUpcomingEvents: async (
+      page: number,
+      pageSize: number
+    ): Promise<PagedResult<Event>> => {
+      let url = `${API_BASE_URL}/event/my-upcoming`;
+      const params = new URLSearchParams();
+
+      if (page) {
+        params.append('page', page.toString());
+      }
+      if (pageSize) {
+        params.append('pageSize', pageSize.toString());
+      }
+
+      if (params.toString()) {
+        url += `?${params.toString()}`;
+      }
+      const response = await fetch(url, {
+        headers: await getAuthHeader(),
+      });
+
+      if (!response.ok) throw new Error('Failed to fetch leagues');
       return response.json();
     },
 
@@ -306,7 +340,7 @@ export const useLeagueApi = () => {
       searchTerm: string,
       page: number = 1,
       pageSize: number = 10
-    ): Promise<PagedResult> => {
+    ): Promise<PagedResult<User>> => {
       let url = `${API_BASE_URL}/user/search`;
       const params = new URLSearchParams();
       params.append('leagueId', leagueId);
@@ -339,7 +373,7 @@ export const useLeagueApi = () => {
       searchTerm: string,
       page: number = 1,
       pageSize: number = 10
-    ): Promise<PagedResult> => {
+    ): Promise<PagedResult<User>> => {
       let url = `${API_BASE_URL}/user/search-team`;
       const params = new URLSearchParams();
       params.append('teamId', teamId);
@@ -513,6 +547,23 @@ export const useLeagueApi = () => {
         headers: await getAuthHeader(),
       });
       if (!response.ok) throw new Error('Failed to leave team');
+      return response.json();
+    },
+
+    rejectTeamRequest: async (teamId: string): Promise<boolean> => {
+      const response = await fetch(`${API_BASE_URL}/team/reject/${teamId}`, {
+        method: 'POST',
+        headers: await getAuthHeader(),
+      });
+      if (!response.ok) throw new Error('Failed to reject team request');
+      return response.json();
+    },
+
+    getMyJoinedTeams: async (): Promise<Team[]> => {
+      const response = await fetch(`${API_BASE_URL}/team/my-joined-teams`, {
+        headers: await getAuthHeader(),
+      });
+      if (!response.ok) throw new Error('Failed to fetch my joined teams');
       return response.json();
     },
   };

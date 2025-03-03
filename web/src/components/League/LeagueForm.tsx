@@ -4,54 +4,72 @@ import { useSearchParams } from 'react-router-dom';
 import styled from 'styled-components';
 import { useLeagueApi } from '../../api/useLeagueApi';
 import { League } from '../../models/League';
-import { Sport } from '../../models/Sport'; // Add Sport type import
+import { Sport } from '../../models/Sport';
 import BackButton from '../General/BackButton';
 
 const LeagueForm = () => {
+  const [isEditing, setIsEditing] = useState<boolean>(true);
+  const [id, setId] = useState<string | null>('');
+  const [sports, setSports] = useState<Sport[]>([]);
+  const [isLoading, setIsLoading] = useState<boolean>(true);
+  const { getAllSports, editLeague, createLeague } = useLeagueApi();
+  const [searchParams] = useSearchParams();
+
+  // Form setup happens after sports are loaded
   const {
     register,
     handleSubmit,
+    reset,
     formState: { errors },
   } = useForm<League>({
     defaultValues: {
-      sport: 'Basketball',
       isPublic: true,
       isCompetitive: false,
     },
   });
 
-  const [isEditing, setIsEditing] = useState<boolean>(true);
-  const [id, setId] = useState<string | null>('');
-  const [sports, setSports] = useState<Sport[]>([]); // State for sports
-  const { getAllSports, editLeague, createLeague } = useLeagueApi();
-  const [searchParams] = useSearchParams();
-
   useEffect(() => {
     const id = searchParams.get('id');
     setId(id);
-    fetchSports(); // Fetch sports when component mounts
+    fetchSports();
   }, [searchParams]);
 
   const fetchSports = async () => {
+    setIsLoading(true);
     try {
       const sportsData = await getAllSports();
       setSports(sportsData);
+
+      // Set the default sport value to the first sport in the list
+      if (sportsData.length > 0) {
+        reset({
+          sport: sportsData[0].name,
+          isPublic: true,
+          isCompetitive: false,
+        });
+      }
     } catch (error) {
       console.error('Error fetching sports:', error);
-      // Handle error (maybe show a toast/message to user)
+    } finally {
+      setIsLoading(false);
     }
   };
 
   const onSubmit = async (data: League) => {
     try {
       const sport = sports.find((s) => s.name === data.sport);
+      if (!sport) {
+        console.error('Selected sport not found');
+        return;
+      }
+
       if (id) {
         data.id = id;
-        data.isTeamLeague = sport?.isTeamSport!;
+        data.isTeamLeague = sport.isTeamSport;
         await editLeague(data);
         setIsEditing(false);
       } else {
-        data.isTeamLeague = sport?.isTeamSport!;
+        data.isTeamLeague = sport.isTeamSport;
         const createdLeague = await createLeague(data);
         setId(createdLeague.id);
         setIsEditing(false);
@@ -65,6 +83,10 @@ const LeagueForm = () => {
     e.preventDefault();
     setIsEditing(true);
   };
+
+  if (isLoading) {
+    return <div>Loading sports...</div>;
+  }
 
   return (
     <StyledContainer>
@@ -81,7 +103,7 @@ const LeagueForm = () => {
             <StyledSelect
               disabled={!isEditing}
               id='sport'
-              {...register('sport')}
+              {...register('sport', { required: 'Sport is required' })}
             >
               {sports.map((sport) => (
                 <option key={sport.id} value={sport.name}>
@@ -89,6 +111,7 @@ const LeagueForm = () => {
                 </option>
               ))}
             </StyledSelect>
+            {errors.sport && <StyledError>{errors.sport.message}</StyledError>}
           </div>
 
           {/* Rest of the form remains the same */}
@@ -138,7 +161,7 @@ const LeagueForm = () => {
 
 export default LeagueForm;
 
-// Styled components at the bottom
+// Styled components remain the same
 const StyledContainer = styled.div`
   position: relative;
   max-width: 42rem;

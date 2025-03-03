@@ -31,5 +31,17 @@ namespace leaguerAPI.Controllers.v1
 
             return CreatedAtAction(nameof(CreateEvent), new { id = result.Data.Id }, result.Data);
         }
+
+        [HttpGet("my-upcoming")]
+        public async Task<IActionResult> GetMyUpcomingEvents(int page, int pageSize)
+        {
+            var userId = User.GetObjectId();
+            var result = await _eventService.GetMyUpcomingEvents(userId, page, pageSize);
+            if (!result.Success)
+            {
+                return BadRequest(new { message = result.ErrorMessage });
+            }
+            return Ok(result.Data);
+        }
     }
 }

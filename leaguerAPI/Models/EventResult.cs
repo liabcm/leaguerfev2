@@ -2,6 +2,7 @@
 {
     public class EventResult
     {
+        public Guid Id { get; set; }
         public Guid EventId { get; set; }
         public Guid? WinningTeamId { get; set; }
         public Guid? WinningUserId { get; set; }

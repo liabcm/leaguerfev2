@@ -166,6 +166,12 @@ namespace leaguerAPI.Services
             {
                 return Response<bool>.FailureResult("User not in league");
             }
+
+            if (leagueUser.League.CreatedBy == userId)
+            {
+                return Response<bool>.FailureResult("League creator cannot leave league");
+            }
+
             leagueUser.IsDeleted = true;
 
             if (leagueUser.League.IsTeamLeague)
@@ -193,6 +199,8 @@ namespace leaguerAPI.Services
                                             .Include(lu => lu.Events)
                                                 .ThenInclude(e => e.EventTeams)
                                                 .ThenInclude(et => et.Team)
+                                            .Include(l => l.Events)
+                                                .ThenInclude(e => e.EventResult)
                                             .Include(l => l.LeagueUsers)
                                                 .ThenInclude(lu => lu.User)
                                             .Include(l => l.Teams)
@@ -307,6 +315,39 @@ namespace leaguerAPI.Services
                 };
                 await _context.LeagueUsers.AddAsync(newRecord);
             }
+
+            await _context.SaveChangesAsync();
+            return Response<bool>.SuccessResult(true);
+        }
+
+        public async Task<Response<bool>> DeleteAsync(Guid leagueId, Guid currentUserId)
+        {
+            var league = await _context.Leagues.IgnoreQueryFilters()
+                                                .Include(l => l.LeagueUsers)
+                                                .Include(l => l.Teams)
+                                                    .ThenInclude(t => t.TeamUsers)
+                                                .Include(l => l.Teams)
+                                                    .ThenInclude(t => t.EventTeams)
+                                                .Include(l => l.Events)
+                                                    .ThenInclude(e => e.EventUsers)
+                                                .FirstOrDefaultAsync(l => l.Id == leagueId);
+            if (league == null)
+            {
+                return Response<bool>.FailureResult("League not found");
+            }
+            var isCreator = league.CreatedBy == currentUserId;
+            if (!isCreator)
+            {
+                return Response<bool>.FailureResult("User is not authorized to delete this league");
+            }
+
+            _context.RemoveRange(league.Teams.SelectMany(t => t.EventTeams));
+            _context.RemoveRange(league.Teams.SelectMany(t => t.TeamUsers));
+            _context.RemoveRange(league.Events.SelectMany(e => e.EventUsers));
+            _context.RemoveRange(league.Teams);
+            _context.RemoveRange(league.Events);
+            _context.RemoveRange(league.LeagueUsers);
+            _context.Remove(league);
 
             await _context.SaveChangesAsync();
             return Response<bool>.SuccessResult(true);

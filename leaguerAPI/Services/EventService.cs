@@ -111,5 +111,29 @@ namespace leaguerAPI.Services
                 };
             }
         }
+
+        public async Task<Response<PagedResult<EventDTO>>> GetMyUpcomingEvents(Guid userId, int page, int pageSize)
+        {
+            var query = _context.Events.AsNoTracking().Where(e => (e.EventUsers.Any(eu => eu.UserId == userId)
+                                    || e.EventTeams.Any(et => et.Team.TeamUsers.Any(tu => tu.UserId == userId
+                                                                                    && (tu.Status == TeamUserStatus.Manager
+                                                                                    || tu.Status == TeamUserStatus.Member))))
+                                    && e.EventTime > DateTime.Now);
+
+            var totalCount = await query.CountAsync();
+
+            var events = await query.OrderBy(e => e.EventTime)
+                                    .Skip((page - 1) * pageSize)
+                                    .Take(pageSize)
+                                    .ToListAsync();
+
+            return Response<PagedResult<EventDTO>>.SuccessResult(new PagedResult<EventDTO>
+            {
+                Items = events.Select(e => new EventDTO(e)),
+                TotalCount = totalCount,
+                PageNumber = page,
+                PageSize = pageSize
+            });
+        }
     }
 }

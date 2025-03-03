@@ -99,7 +99,6 @@ namespace leaguerAPI.Controllers.v1
         }
 
         [HttpPost("invite-user")]
-        [Authorize]
         public async Task<IActionResult> InviteUser([FromQuery] Guid leagueId, [FromQuery] Guid userId, [FromQuery] bool isInvite)
         {
             var currentUserId = User.GetObjectId();
@@ -111,6 +110,17 @@ namespace leaguerAPI.Controllers.v1
             }
 
             return Ok(result.Data);
+        }
+
+        [HttpDelete("{id:guid}")]
+        public async Task<IActionResult> DeleteLeague(Guid id)
+        {
+            var response = await _leagueService.DeleteAsync(id, User.GetObjectId());
+            if (!response.Success)
+            {
+                return BadRequest(response.ErrorMessage);
+            }
+            return Ok(response.Data);
         }
     }
 }

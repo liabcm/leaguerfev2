@@ -3,7 +3,6 @@ import { useNavigate } from 'react-router-dom';
 import styled from 'styled-components';
 import { useLeagueApi } from '../../api/useLeagueApi';
 import { League } from '../../models/League';
-import BackButton from '../General/BackButton';
 import {
   StyledErrorMessage,
   StyledLoadingContainer,
@@ -39,9 +38,6 @@ const MyLeagues = () => {
   return (
     <PageContainer>
       <FixedHeader>
-        <BackButtonContainer>
-          <BackButton />
-        </BackButtonContainer>
         <HeaderContent>
           <StyledHeading>My Leagues</StyledHeading>
         </HeaderContent>

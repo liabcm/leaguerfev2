@@ -15,5 +15,7 @@ namespace leaguerAPI.Services.Interfaces
         Task<Response<bool>> DeclineInviteOrRequest(Guid teamId, Guid userId, Guid currentUserId);
         Task<Response<bool>> AcceptRequestOrInvite(Guid teamId, Guid userId, Guid currentUserId);
         Task<Response<bool>> LeaveTeam(Guid teamId, Guid currentUserId, Guid userIdToKick);
+        Task<Response<bool>> RejectTeamCreation(Guid teamId, Guid currentUserId);
+        Task<Response<List<TeamDTO>>> GetMyJoinedTeams(Guid userId);
     }
 }

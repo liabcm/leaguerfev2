@@ -1,8 +1,8 @@
 export interface EventResult {
   id: string;
   eventId: string;
-  teamId: string;
-  location: string;
+  winningTeamId?: string;
+  winningUserId?: string;
   score: string;
-  date: Date;
+  starPlayerUserId?: string;
 }

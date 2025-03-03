@@ -139,7 +139,7 @@ namespace leaguerAPI.Database
 
             modelBuilder.Entity<EventResult>(entity =>
             {
-                entity.HasKey(er => er.EventId);
+                entity.HasKey(er => er.Id);
 
                 entity.Property(er => er.Score).HasMaxLength(50);
 

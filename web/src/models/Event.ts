@@ -1,3 +1,4 @@
+import { EventResult } from './EventResult';
 import { Team } from './Team';
 import { User } from './User';
 
@@ -9,5 +10,6 @@ export interface Event {
   createdBy: string;
   users: User[];
   teams: Team[];
+  eventResult: EventResult;
   opponentIds?: string[] | null;
 }

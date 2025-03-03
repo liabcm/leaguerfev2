@@ -1,13 +1,19 @@
-// components/EventList.tsx
 import styled from 'styled-components';
 import { Event } from '../../models/Event';
 
 interface EventListProps {
   events: Event[];
   isTeamEvents: boolean;
+  isCompletedSection?: boolean;
+  onLogResult?: (event: Event) => void;
 }
 
-const EventList = ({ events, isTeamEvents }: EventListProps) => {
+const EventList = ({
+  events,
+  isTeamEvents,
+  isCompletedSection,
+  onLogResult,
+}: EventListProps) => {
   if (!events || events.length === 0) {
     return <NoEventsMessage>No events yet.</NoEventsMessage>;
   }
@@ -32,6 +38,11 @@ const EventList = ({ events, isTeamEvents }: EventListProps) => {
               ? event.teams?.map((t) => t.name).join(' vs ')
               : event.users?.map((u) => u.name).join(' vs ') || 'TBD'}
           </Opponents>
+          {isCompletedSection && !event.eventResult && (
+            <LogResultButton onClick={() => onLogResult?.(event)}>
+              Log Result
+            </LogResultButton>
+          )}
         </StyledEventItem>
       ))}
     </StyledEventList>
@@ -39,6 +50,21 @@ const EventList = ({ events, isTeamEvents }: EventListProps) => {
 };
 
 export default EventList;
+
+const LogResultButton = styled.button`
+  margin-top: 0.5rem;
+  padding: 0.25rem 0.5rem;
+  background-color: #4f46e5;
+  color: white;
+  border: none;
+  border-radius: 0.25rem;
+  cursor: pointer;
+  font-size: 0.875rem;
+
+  &:hover {
+    background-color: #4338ca;
+  }
+`;
 
 const StyledEventList = styled.ul`
   list-style: none;

@@ -8,6 +8,7 @@ import { Team } from '../../models/Team';
 import { TeamUser } from '../../models/TeamUser';
 import { User } from '../../models/User';
 import EventResultsSection from '../Events/EventResultsSection';
+import BackButton from '../General/BackButton';
 import LeagueEventsSection from '../League/LeagueEventsSection';
 import LeagueMembersSection from '../League/LeagueMembersSection';
 import SearchUsersModal from '../League/SearchUsersModal';
@@ -84,7 +85,7 @@ const ManageTeams = () => {
   const handleSearchUsers = async (
     query: string,
     pageNum: number
-  ): Promise<PagedResult> => {
+  ): Promise<PagedResult<User>> => {
     return await searchUsersForTeamInvite(selectedTeam?.id!, query, pageNum);
   };
 
@@ -171,7 +172,7 @@ const ManageTeams = () => {
           if (team.id === selectedTeam?.id) {
             const updatedTeam = {
               ...team,
-              teamMembers: [...team.teamUsers, member],
+              teamUsers: [...team.teamUsers, member],
               teamRequests: team.teamRequests.filter(
                 (user) => user.userId !== member.userId
               ),
@@ -189,6 +190,7 @@ const ManageTeams = () => {
 
   return (
     <Container>
+      <BackButton />
       <Select onChange={handleTeamSelect}>
         <option value=''>Select a team</option>
         {teams.map((team) => (

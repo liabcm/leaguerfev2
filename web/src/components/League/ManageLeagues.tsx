@@ -1,4 +1,4 @@
-import { Trophy, User as UserIcon, Users } from 'lucide-react';
+import { Trash, User as UserIcon, Users } from 'lucide-react';
 import { useEffect, useState } from 'react';
 import { useNavigate, useSearchParams } from 'react-router-dom';
 import styled from 'styled-components';
@@ -9,6 +9,8 @@ import { LeagueUserStatus } from '../../models/LeagueUserStatusEnum';
 import { PagedResult } from '../../models/PagedResult';
 import { Team } from '../../models/Team';
 import { User } from '../../models/User';
+import BackButton from '../General/BackButton';
+import ConfirmationModal from '../General/ConfirmationModal';
 import LeagueEventsSection from './LeagueEventsSection';
 import LeagueMembersSection from './LeagueMembersSection';
 import LeaguePendingSection from './LeaguePendingSection';
@@ -37,11 +39,14 @@ const ManageLeagues = () => {
     acceptInvite,
     declineInvite,
     acceptTeamRequest,
+    rejectTeamRequest,
     searchUsers,
+    deleteLeague,
   } = useLeagueApi();
   const navigate = useNavigate();
   const [searchParams, setSearchParams] = useSearchParams();
   const [showSearchUsersModal, setShowSearchUsersModal] = useState(false);
+  const [showDeleteModal, setShowDeleteModal] = useState(false);
 
   useEffect(() => {
     const fetchLeagues = async () => {
@@ -72,6 +77,27 @@ const ManageLeagues = () => {
     const leagueId = e.target.value;
     setSearchParams(leagueId ? { leagueId } : {});
     setSelectedLeague(leagues.find((l) => l.id === leagueId) || null);
+  };
+
+  const handleDeleteLeague = async () => {
+    try {
+      await deleteLeague(selectedLeague?.id!);
+
+      // Update state by removing the deleted league
+      const updatedLeagues = leagues.filter(
+        (league) => league.id !== selectedLeague?.id
+      );
+      setLeagues(updatedLeagues);
+
+      // Clear the selected league and URL parameter
+      setSelectedLeague(null);
+      setSearchParams({});
+
+      // Close the modal
+      setShowDeleteModal(false);
+    } catch (error) {
+      console.error('Error deleting league:', error);
+    }
   };
 
   const handleInviteUser = async (user: User) => {
@@ -207,6 +233,7 @@ const ManageLeagues = () => {
 
   const onDeclineTeam = async (member: LeagueUser) => {
     try {
+      await rejectTeamRequest(member.userId);
       setLeagues((prevLeagues) => {
         const updatedLeagues = prevLeagues.map((league) => {
           if (league.id === selectedLeague?.id) {
@@ -255,7 +282,7 @@ const ManageLeagues = () => {
   const handleSearchUsers = async (
     query: string,
     pageNum: number
-  ): Promise<PagedResult> => {
+  ): Promise<PagedResult<User>> => {
     const users = await searchUsers(selectedLeague?.id!, query, pageNum);
     return users;
   };
@@ -266,6 +293,7 @@ const ManageLeagues = () => {
 
   return (
     <Container>
+      <BackButton />
       <Select onChange={handleLeagueSelect}>
         <option value=''>Select a league</option>
         {leagues.map((league) => (
@@ -279,16 +307,21 @@ const ManageLeagues = () => {
         <Card>
           <Header>
             <Title>{selectedLeague.name}</Title>
-            <Badge $isPublic={selectedLeague.isPublic}>
-              {selectedLeague.isPublic ? 'Public' : 'Private'}
-            </Badge>
+            <HeaderActions>
+              <Badge $isPublic={selectedLeague.isPublic}>
+                {selectedLeague.isPublic ? 'Public' : 'Private'}
+              </Badge>
+              <TrashButton onClick={() => setShowDeleteModal(true)}>
+                <Trash size={18} />
+              </TrashButton>
+            </HeaderActions>
           </Header>
 
           <InfoContainer>
             <InfoItem>
-              <Trophy size={20} />
               <span>
                 {selectedLeague.isCompetitive ? 'Competitive' : 'Casual'}
+                <Trash onClick={() => setShowDeleteModal(true)} size={18} />
               </span>
             </InfoItem>
             <InfoItem>
@@ -386,6 +419,14 @@ const ManageLeagues = () => {
           onSearchUsers={handleSearchUsers}
         />
       )}
+
+      <ConfirmationModal
+        isOpen={showDeleteModal}
+        onClose={() => setShowDeleteModal(false)}
+        onConfirm={handleDeleteLeague}
+        entityName={selectedLeague?.name || 'league'}
+        action='Delete'
+      />
     </Container>
   );
 };
@@ -414,4 +455,27 @@ const InfoContainer = styled.div`
   gap: clamp(0.5rem, 2vw, 1rem);
   margin-bottom: clamp(1rem, 3vw, 1.5rem);
   padding: 0 clamp(0.25rem, 2vw, 2rem);
+`;
+
+const HeaderActions = styled.div`
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+`;
+
+const TrashButton = styled.button`
+  background: none;
+  border: none;
+  color: #ef4444;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 0.25rem;
+  border-radius: 0.25rem;
+  transition: background-color 0.2s;
+
+  &:hover {
+    background-color: rgba(239, 68, 68, 0.1);
+  }
 `;
