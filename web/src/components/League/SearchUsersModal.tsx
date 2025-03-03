@@ -7,7 +7,7 @@ interface SearchUsersModalProps {
   isOpen: boolean;
   onClose: () => void;
   onInviteUser: (user: User) => Promise<void>;
-  onSearchUsers: (query: string, pageNum: number) => Promise<PagedResult>;
+  onSearchUsers: (query: string, pageNum: number) => Promise<PagedResult<User>>;
 }
 
 const SearchUsersModal = ({

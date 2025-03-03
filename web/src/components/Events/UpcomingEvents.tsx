@@ -40,6 +40,7 @@ const UpcomingEvents: React.FC = () => {
         //setNearbyEvents(response.items);
         //setTotalPages(response.totalPages);
         //setTotalCount(response.totalCount);
+        setNearbyEvents([]);
       }
     } catch (error) {
       console.error('Error fetching events:', error);

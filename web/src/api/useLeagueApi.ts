@@ -244,7 +244,10 @@ export const useLeagueApi = () => {
 
     //events
     createEvent: async (
-      eventData: Omit<Event, 'id' | 'createdBy' | 'users' | 'teams'>
+      eventData: Omit<
+        Event,
+        'id' | 'createdBy' | 'users' | 'teams' | 'eventResult'
+      >
     ): Promise<Event> => {
       const response = await fetch(`${API_BASE_URL}/event`, {
         method: 'POST',

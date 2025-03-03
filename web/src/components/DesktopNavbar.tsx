@@ -44,7 +44,6 @@ const DesktopNavbar = () => {
   const handleHomeClick = () => navigate('/');
   const handleProfileClick = () => navigate('/profile');
   const handleManageLeaguesClick = () => navigate('/manager');
-  const handleManageTeamsClick = () => navigate('/manage-teams');
   const handleInvitesClick = () => navigate('/invites');
   const handleUpcomingEventsClick = () => navigate('/upcoming-events');
   const handleMyLeaguesClick = () => navigate('/my-leagues');

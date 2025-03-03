@@ -33,7 +33,7 @@ const EventResultsSection = ({ eventResults }: EventResultsSectionProps) => {
               <ResultDetails>
                 <ResultDetail>
                   <Calendar size={16} />
-                  <span>{new Date(result.date).toLocaleDateString()}</span>
+                  <span>{new Date(result.eventTime).toLocaleDateString()}</span>
                 </ResultDetail>
                 <ResultDetail>
                   <span>Location: {result.location}</span>

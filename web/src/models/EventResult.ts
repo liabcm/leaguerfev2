@@ -5,4 +5,6 @@ export interface EventResult {
   winningUserId?: string;
   score: string;
   starPlayerUserId?: string;
+  location: string;
+  eventTime: string;
 }

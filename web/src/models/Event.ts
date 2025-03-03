@@ -10,6 +10,6 @@ export interface Event {
   createdBy: string;
   users: User[];
   teams: Team[];
-  eventResult: EventResult;
+  eventResult?: EventResult;
   opponentIds?: string[] | null;
 }

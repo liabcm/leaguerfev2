@@ -113,10 +113,6 @@ const FixedHeader = styled.div`
   border-bottom: 1px solid #e0e0e0;
 `;
 
-const BackButtonContainer = styled.div`
-  margin-bottom: 20px;
-`;
-
 const HeaderContent = styled.div`
   text-align: center;
 `;
