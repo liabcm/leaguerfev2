@@ -38,6 +38,16 @@ namespace leaguerAPI.Services
                     return Response<EventResultDTO>.FailureResult("You are not allowed to add result");
                 }
 
+                if (eventResultDto.WinningTeamId != null)
+                {
+                    var winningTeam = await _context.Teams.FirstOrDefaultAsync(u => u.Id == eventResultDto.WinningTeamId);
+                    if (winningTeam == null)
+                    {
+                        return Response<EventResultDTO>.FailureResult("Winner team not found");
+                    }
+                    winningTeam.Wins++;
+                }
+
                 var eventResult = new EventResult
                 {
                     EventId = eventResultDto.EventId,
@@ -47,6 +57,7 @@ namespace leaguerAPI.Services
                 };
 
                 var eventCreated = await _context.EventResults.AddAsync(eventResult);
+                await _context.SaveChangesAsync();
                 return Response<EventResultDTO>.SuccessResult(new EventResultDTO(eventCreated.Entity));
             }
             catch (Exception ex)

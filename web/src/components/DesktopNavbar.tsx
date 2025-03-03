@@ -3,7 +3,6 @@ import { UserRound } from 'lucide-react';
 import { useEffect, useRef, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import styled from 'styled-components';
-import { useLeagueApi } from '../api/useLeagueApi';
 import { LeagueUserStatus } from '../models/LeagueUserStatusEnum';
 import { TeamUserStatus } from '../models/TeamUserStatusEnum';
 import { useAppContext } from '../provider/AppContext';
@@ -15,31 +14,11 @@ interface PopupMenuProps {
 const DesktopNavbar = () => {
   const [isMenuOpen, setIsMenuOpen] = useState(false);
   const [isOffScreen, setIsOffScreen] = useState(false);
-  const { invites, setInvites, teamInvites, setTeamInvites } = useAppContext();
+  const { invites, teamInvites } = useAppContext();
   const navigate = useNavigate();
   const popupMenuRef = useRef<HTMLDivElement>(null);
   const avatarContainerRef = useRef<HTMLDivElement>(null);
-  const { getCurrentUserInvites, getCurrentUserTeamInvites } = useLeagueApi();
-  const { instance, accounts } = useMsal();
-
-  useEffect(() => {
-    const fetchInvites = async () => {
-      try {
-        const userInvites = await getCurrentUserInvites();
-        setInvites(userInvites);
-        const teamInvites = await getCurrentUserTeamInvites();
-        setTeamInvites(teamInvites);
-      } catch (error) {
-        console.error('Failed to fetch invites:', error);
-      }
-    };
-
-    if (accounts.length > 0) {
-      fetchInvites();
-      const intervalId = setInterval(fetchInvites, 120000);
-      return () => clearInterval(intervalId);
-    }
-  }, [accounts]);
+  const { instance } = useMsal();
 
   const handleHomeClick = () => navigate('/');
   const handleProfileClick = () => navigate('/profile');
