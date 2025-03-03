@@ -20,12 +20,12 @@ const MobileNavbar = () => {
       <NavIcon onClick={() => navigate('/upcoming-events')}>📅</NavIcon>
       <NavIcon onClick={() => navigate('/my-leagues')}>🥇</NavIcon>
       <NavIcon onClick={() => navigate('/my-teams')}>👥</NavIcon>
-      <NavIcon onClick={() => navigate('/manager')}>⚙️</NavIcon>
-      <NavIcon onClick={() => navigate('/profile')}>👤</NavIcon>
       <NavIconWithBadge onClick={() => navigate('/invites')}>
         📨
         {inviteCount > 0 && <Badge>{inviteCount}</Badge>}
       </NavIconWithBadge>
+      <NavIcon onClick={() => navigate('/profile')}>👤</NavIcon>
+      <NavIcon onClick={() => navigate('/manager')}>⚙️</NavIcon>
     </MobileNavbarContainer>
   );
 };
