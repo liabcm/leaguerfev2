@@ -190,7 +190,7 @@ const ManageTeams = () => {
 
   return (
     <Container>
-      <BackButton />
+      <BackButton navigateTo='/manager' />
       <Select onChange={handleTeamSelect}>
         <option value=''>Select a team</option>
         {teams.map((team) => (

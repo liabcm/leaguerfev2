@@ -5,6 +5,7 @@ import { Route, Routes } from 'react-router-dom';
 import { useLeagueApi } from '../api/useLeagueApi';
 
 // Components
+import EventCard from './Events/EventCard';
 import EventForm from './Events/EventForm';
 import UpcomingEvents from './Events/UpcomingEvents';
 import GetStarted from './GetStarted';
@@ -54,7 +55,8 @@ function Pages() {
         <Route path='/profile' element={<Profile />} />
         <Route path='league/:id' element={<LeagueCard />} />
         <Route path='manage-leagues' element={<ManageLeagues />} />
-        <Route path='event/:leagueId' element={<EventForm />} />
+        <Route path='event-create/:leagueId' element={<EventForm />} />
+        <Route path='event/:id' element={<EventCard />} />
         <Route path='my-leagues' element={<MyLeagues />} />
         <Route path='sport' element={<SportForm />} />
         <Route path='/invites' element={<InvitesPage />} />

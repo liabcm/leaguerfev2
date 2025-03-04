@@ -200,38 +200,22 @@ namespace leaguerAPI.Services
 
             try
             {
-                var team = await _context.Teams
-                    .AsNoTracking()
-                    .Include(t => t.League.LeagueUsers
-                            .Where(lu => lu.Status == LeagueUserStatus.Member || lu.Status == LeagueUserStatus.Manager))
-                        .ThenInclude(lu => lu.User)
-                    .Include(t => t.TeamUsers)
-                        .ThenInclude(tu => tu.User)
-                    .FirstOrDefaultAsync(t => t.Id == teamId);
+                var query = _context.Users.AsNoTracking()
+                                    .Where(u => (u.Name.Contains(searchTerm) || u.Email.Contains(searchTerm))
+                                                    && _context.ConfirmedLeagueUsers.Any(lu => lu.UserId == u.Id
+                                                    && lu.League.Teams.Any(t => t.Id == teamId)
+                                                    && !lu.League.Teams.SelectMany(t => t.TeamUsers).Any(tu => tu.UserId == u.Id)))
+                                    .Select(u => new UserDTO(u));
 
-                if (team == null)
-                    return Response<PagedResult<UserDTO>>.FailureResult("Team Not Found");
-
-                searchTerm = searchTerm.Trim().ToLowerInvariant();
-
-                var query = team.League.LeagueUsers
-                    .Select(lu => new UserDTO(lu.User))
-                    .Where(user => !team.TeamUsers.Any(tu => tu.User.Id == user.Id))
-                    .Where(user =>
-                        (user.Email?.ToLowerInvariant().Contains(searchTerm) == true) ||
-                        (user.Name?.ToLowerInvariant().Contains(searchTerm) == true));
-
-                var totalCount = await Task.FromResult(query.Count()); // This needs to be adjusted based on your ORM
-
-                var items = await Task.FromResult(query
+                var items = await query
                     .Skip((page - 1) * pageSize)
                     .Take(pageSize)
-                    .ToList());
+                    .ToListAsync();
 
                 var result = new PagedResult<UserDTO>
                 {
                     Items = items,
-                    TotalCount = totalCount,
+                    TotalCount = items.Count(),
                     PageNumber = page,
                     PageSize = pageSize
                 };

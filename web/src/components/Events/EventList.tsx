@@ -38,8 +38,8 @@ const EventList = ({
               ? event.teams?.map((t) => t.name).join(' vs ')
               : event.users?.map((u) => u.name).join(' vs ') || 'TBD'}
           </Opponents>
-          {isCompletedSection && !event.eventResult && (
-            <LogResultButton onClick={() => onLogResult?.(event)}>
+          {isCompletedSection && !event.eventResult && onLogResult && (
+            <LogResultButton onClick={() => onLogResult(event)}>
               Log Result
             </LogResultButton>
           )}

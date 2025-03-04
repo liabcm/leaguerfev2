@@ -22,11 +22,21 @@ const Profile = () => {
 
   // Check if the user is authenticated
   const isAuthenticated = !!user;
-  console.log('Active Account:', user);
+
+  const handleLogout = async () => {
+    try {
+      await instance.logoutRedirect({
+        postLogoutRedirectUri: window.location.origin,
+      });
+    } catch (error) {
+      console.error('Logout Error:', error);
+    }
+  };
 
   return (
     isAuthenticated && (
       <div>
+        <button onClick={handleLogout}>Logout</button>
         <p>Welcome, {user?.name}!</p>
         <p>Email: {user?.username}</p>
       </div>

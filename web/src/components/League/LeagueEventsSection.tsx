@@ -1,7 +1,5 @@
 import { Calendar } from 'lucide-react';
-import { useState } from 'react';
 import EventList from '../Events/EventList';
-import LogResultModal from '../Events/LogResultModal';
 import {
   ActionContainer,
   Button,
@@ -15,6 +13,7 @@ interface LeagueEventsSectionProps {
   isTeamEvents: boolean;
   showCreateButton?: boolean;
   onCreateEvent?: () => void;
+  onLogResult?: (event: any) => void;
 }
 
 const LeagueEventsSection = ({
@@ -22,10 +21,8 @@ const LeagueEventsSection = ({
   isTeamEvents,
   showCreateButton,
   onCreateEvent,
+  onLogResult,
 }: LeagueEventsSectionProps) => {
-  const [selectedEvent, setSelectedEvent] = useState<any>(null);
-  const [isModalOpen, setIsModalOpen] = useState(false);
-
   const currentTime = new Date();
   const upcomingEvents = events.filter(
     (event) => new Date(event.eventTime) > currentTime
@@ -33,22 +30,6 @@ const LeagueEventsSection = ({
   const completedEvents = events.filter(
     (event) => new Date(event.eventTime) <= currentTime
   );
-
-  const handleLogResult = (event: any) => {
-    setSelectedEvent(event);
-    setIsModalOpen(true);
-  };
-
-  const handleSubmitResult = (formData: {
-    winningTeam: string;
-    score: string;
-    starPlayerUserId: string;
-  }) => {
-    console.log({
-      ...formData,
-      eventId: selectedEvent?.id,
-    });
-  };
 
   return (
     <>
@@ -81,18 +62,10 @@ const LeagueEventsSection = ({
             events={completedEvents}
             isTeamEvents={isTeamEvents}
             isCompletedSection
-            onLogResult={handleLogResult}
+            onLogResult={onLogResult}
           />
         </EventsSection>
       )}
-
-      {/* Log Result Modal */}
-      <LogResultModal
-        isOpen={isModalOpen}
-        onClose={() => setIsModalOpen(false)}
-        event={selectedEvent}
-        onSubmit={handleSubmitResult}
-      />
     </>
   );
 };

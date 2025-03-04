@@ -35,7 +35,7 @@ const TeamCard = () => {
     'roster'
   );
 
-  const { getTeamById, inviteOrRequestUserToTeam } = useLeagueApi();
+  const { getTeamById, inviteOrRequestUserToTeam, leaveTeam } = useLeagueApi();
 
   const user = accounts[0];
 
@@ -99,7 +99,7 @@ const TeamCard = () => {
     if (!id || !team) return;
     try {
       setActionLoading(true);
-      //await leaveTeam(id);
+      await leaveTeam(id);
 
       // Update local state to reflect the change
       setTeam({

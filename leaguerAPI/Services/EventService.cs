@@ -83,8 +83,11 @@ namespace leaguerAPI.Services
         {
             try
             {
-                var eventEntity = await _context.Events
-                    .FirstOrDefaultAsync(e => e.Id == eventId);
+                var eventEntity = await _context.Events.Include(e => e.EventUsers)
+                                                            .ThenInclude(eu => eu.User)
+                                                        .Include(e => e.EventTeams)
+                                                            .ThenInclude(et => et.Team)
+                                                       .FirstOrDefaultAsync(e => e.Id == eventId);
 
                 if (eventEntity == null)
                 {

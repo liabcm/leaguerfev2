@@ -43,5 +43,16 @@ namespace leaguerAPI.Controllers.v1
             }
             return Ok(result.Data);
         }
+
+        [HttpGet("{id:guid}")]
+        public async Task<IActionResult> GetEventAsync(Guid id)
+        {
+            var response = await _eventService.GetEventById(id);
+            if (!response.Success)
+            {
+                return BadRequest(response.ErrorMessage);
+            }
+            return Ok(response.Data);
+        }
     }
 }

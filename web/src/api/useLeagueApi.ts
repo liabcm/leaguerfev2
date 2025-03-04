@@ -261,6 +261,14 @@ export const useLeagueApi = () => {
       return response.json();
     },
 
+    getEventById: async (id: string): Promise<Event> => {
+      const response = await fetch(`${API_BASE_URL}/event/${id}`, {
+        headers: await getAuthHeader(),
+      });
+      if (!response.ok) throw new Error('Failed to fetch event');
+      return response.json();
+    },
+
     getMyUpcomingEvents: async (
       page: number,
       pageSize: number

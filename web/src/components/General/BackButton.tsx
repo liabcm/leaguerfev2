@@ -1,11 +1,15 @@
 import { useNavigate } from 'react-router-dom';
 
-const BackButton = () => {
+const BackButton = ({ navigateTo }: { navigateTo?: string }) => {
   const navigate = useNavigate();
 
   const handleBack = (e: React.MouseEvent) => {
     e.preventDefault();
-    navigate(-1);
+    if (navigateTo) {
+      navigate(navigateTo);
+    } else {
+      navigate(-1);
+    }
   };
 
   return (

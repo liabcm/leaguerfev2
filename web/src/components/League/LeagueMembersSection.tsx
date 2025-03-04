@@ -37,7 +37,13 @@ const LeagueMembersSection = ({
         {league.leagueMembers.map((member) => (
           <MemberRow
             key={member.userId}
-            member={member}
+            member={{
+              userId: member.userId,
+              parentId: member.leagueId,
+              parentName: member.leagueName,
+              name: member.name,
+              email: member.email,
+            }}
             isManaged={isManaged}
             onRemove={onRemove}
           />

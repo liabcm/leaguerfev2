@@ -1,7 +1,7 @@
 import { X } from 'lucide-react';
 import { useState } from 'react';
 import styled from 'styled-components';
-import { LeagueUser } from '../../models/LeagueUser';
+import { MemberModel } from '../../models/MemberModel';
 import ConfirmRemoveModal from '../General/ConfirmationModal';
 
 const RemoveButton = styled.button`
@@ -33,7 +33,7 @@ const MemberName = styled.span`
 `;
 
 interface MemberRowProps {
-  member: LeagueUser;
+  member: MemberModel;
   isManaged?: boolean;
   onRemove?: (memberId: string) => void;
 }

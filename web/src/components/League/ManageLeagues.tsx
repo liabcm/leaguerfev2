@@ -9,6 +9,7 @@ import { LeagueUserStatus } from '../../models/LeagueUserStatusEnum';
 import { PagedResult } from '../../models/PagedResult';
 import { Team } from '../../models/Team';
 import { User } from '../../models/User';
+import LogResultModal from '../Events/LogResultModal';
 import BackButton from '../General/BackButton';
 import ConfirmationModal from '../General/ConfirmationModal';
 import LeagueEventsSection from './LeagueEventsSection';
@@ -47,6 +48,8 @@ const ManageLeagues = () => {
   const [searchParams, setSearchParams] = useSearchParams();
   const [showSearchUsersModal, setShowSearchUsersModal] = useState(false);
   const [showDeleteModal, setShowDeleteModal] = useState(false);
+  const [selectedEvent, setSelectedEvent] = useState<any>(null);
+  const [isModalOpen, setIsModalOpen] = useState(false);
 
   useEffect(() => {
     const fetchLeagues = async () => {
@@ -70,7 +73,23 @@ const ManageLeagues = () => {
   }, [selectedLeague?.id]);
 
   const handleCreateEvent = () => {
-    selectedLeague && navigate(`/event/${selectedLeague.id}`);
+    selectedLeague && navigate(`/event-create/${selectedLeague.id}`);
+  };
+
+  const handleLogResult = (event: any) => {
+    setSelectedEvent(event);
+    setIsModalOpen(true);
+  };
+
+  const handleSubmitResult = (formData: {
+    winningTeam: string;
+    score: string;
+    starPlayerUserId: string;
+  }) => {
+    console.log({
+      ...formData,
+      eventId: selectedEvent?.id,
+    });
   };
 
   const handleLeagueSelect = (e: React.ChangeEvent<HTMLSelectElement>) => {
@@ -293,7 +312,7 @@ const ManageLeagues = () => {
 
   return (
     <Container>
-      <BackButton />
+      <BackButton navigateTo='/manager' />
       <Select onChange={handleLeagueSelect}>
         <option value=''>Select a league</option>
         {leagues.map((league) => (
@@ -406,6 +425,7 @@ const ManageLeagues = () => {
               isTeamEvents={selectedLeague.isTeamLeague}
               showCreateButton={true}
               onCreateEvent={handleCreateEvent}
+              onLogResult={handleLogResult}
             />
           )}
         </Card>
@@ -426,6 +446,12 @@ const ManageLeagues = () => {
         onConfirm={handleDeleteLeague}
         entityName={selectedLeague?.name || 'league'}
         action='Delete'
+      />
+      <LogResultModal
+        isOpen={isModalOpen}
+        onClose={() => setIsModalOpen(false)}
+        event={selectedEvent}
+        onSubmit={handleSubmitResult}
       />
     </Container>
   );
