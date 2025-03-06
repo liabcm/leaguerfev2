@@ -7,7 +7,6 @@ import { PagedResult } from '../../models/PagedResult';
 import { Team } from '../../models/Team';
 import { TeamUser } from '../../models/TeamUser';
 import { User } from '../../models/User';
-import EventResultsSection from '../Events/EventResultsSection';
 import BackButton from '../General/BackButton';
 import LeagueEventsSection from '../League/LeagueEventsSection';
 import LeagueMembersSection from '../League/LeagueMembersSection';
@@ -20,6 +19,7 @@ import {
   Tabs,
   Title,
 } from '../League/SharedLeagueStyles';
+import { StyledSpinner } from '../SharedStyles';
 import TeamPendingSection from './TeamPendingSection';
 
 const ManageTeams = () => {
@@ -29,6 +29,7 @@ const ManageTeams = () => {
     'roster'
   );
   const [showSearchUsersModal, setShowSearchUsersModal] = useState(false);
+  const [isLoading, setIsLoading] = useState(false);
   const {
     getMyTeams,
     searchUsersForTeamInvite,
@@ -42,6 +43,7 @@ const ManageTeams = () => {
   useEffect(() => {
     const fetchTeams = async () => {
       try {
+        setIsLoading(true);
         const data = await getMyTeams();
         setTeams(data);
         const teamId = searchParams.get('teamId');
@@ -51,6 +53,8 @@ const ManageTeams = () => {
         }
       } catch (error) {
         console.error('Error fetching teams:', error);
+      } finally {
+        setIsLoading(false);
       }
     };
     fetchTeams();
@@ -188,6 +192,10 @@ const ManageTeams = () => {
     }
   };
 
+  if (isLoading) {
+    return <StyledSpinner />;
+  }
+
   return (
     <Container>
       <BackButton navigateTo='/manager' />
@@ -232,13 +240,7 @@ const ManageTeams = () => {
               $active={activeTab === 'upcoming'}
               onClick={() => setActiveTab('upcoming')}
             >
-              Upcoming Events
-            </TabButton>
-            <TabButton
-              $active={activeTab === 'results'}
-              onClick={() => setActiveTab('results')}
-            >
-              Event Results
+              Events
             </TabButton>
           </Tabs>
 
@@ -271,12 +273,6 @@ const ManageTeams = () => {
               events={selectedTeam.eventTeams.map((et) => et.event) || []}
               isTeamEvents={true}
               showCreateButton={false}
-            />
-          )}
-
-          {activeTab === 'results' && (
-            <EventResultsSection
-              eventResults={selectedTeam.eventResults || []}
             />
           )}
         </Card>

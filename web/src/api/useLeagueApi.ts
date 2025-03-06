@@ -3,6 +3,7 @@ import { InteractionRequiredAuthError } from '@azure/msal-browser';
 import { useMsal } from '@azure/msal-react';
 import { apiScopes } from '../authConfig';
 import { Event } from '../models/Event';
+import { EventResult } from '../models/EventResult';
 import { League } from '../models/League';
 import { PagedResult } from '../models/PagedResult';
 import { Sport } from '../models/Sport';
@@ -11,8 +12,7 @@ import { TeamCreateDTO, TeamUpdateDTO } from '../models/TeamCreateDTO';
 import { TeamUser } from '../models/TeamUser';
 import { User } from '../models/User';
 
-const API_BASE_URL =
-  'https://leaguerapi-e3ekc8h6crcsd8ea.canadacentral-01.azurewebsites.net/api/v1';
+const API_BASE_URL = 'https://localhost:44378/api/v1';
 
 export const useLeagueApi = () => {
   const { instance } = useMsal();
@@ -291,6 +291,43 @@ export const useLeagueApi = () => {
       });
 
       if (!response.ok) throw new Error('Failed to fetch leagues');
+      return response.json();
+    },
+
+    createEventResult: async ({
+      winningId,
+      score,
+      starPlayerUserId,
+      eventId,
+      losingId,
+    }: {
+      winningId: string;
+      score: string;
+      starPlayerUserId: string;
+      eventId: string;
+      losingId: string;
+    }): Promise<EventResult> => {
+      console.log({ winningId, score, starPlayerUserId, eventId, losingId });
+      const response = await fetch(`${API_BASE_URL}/eventResult`, {
+        method: 'POST',
+        headers: await getAuthHeader(),
+        body: JSON.stringify({
+          winningId,
+          score,
+          starPlayerUserId,
+          eventId,
+          losingId,
+        }),
+      });
+      if (!response.ok) throw new Error('Failed to create event result');
+      return response.json();
+    },
+
+    getEventResult: async (id: string): Promise<EventResult> => {
+      const response = await fetch(`${API_BASE_URL}/eventResult/${id}`, {
+        headers: await getAuthHeader(),
+      });
+      if (!response.ok) throw new Error('Failed to fetch event result');
       return response.json();
     },
 

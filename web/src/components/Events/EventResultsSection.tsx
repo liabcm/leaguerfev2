@@ -28,15 +28,17 @@ const EventResultsSection = ({ eventResults }: EventResultsSectionProps) => {
           eventResults.map((result) => (
             <ResultItem key={result.id}>
               <ResultHeader>
-                <ResultTitle>{result.location}</ResultTitle>
+                <ResultTitle>{result.event.location}</ResultTitle>
               </ResultHeader>
               <ResultDetails>
                 <ResultDetail>
                   <Calendar size={16} />
-                  <span>{new Date(result.eventTime).toLocaleDateString()}</span>
+                  <span>
+                    {new Date(result.event.eventTime).toLocaleDateString()}
+                  </span>
                 </ResultDetail>
                 <ResultDetail>
-                  <span>Location: {result.location}</span>
+                  <span>Location: {result.event.location}</span>
                 </ResultDetail>
                 <ResultDetail>
                   <span>Result: {result.score}</span>

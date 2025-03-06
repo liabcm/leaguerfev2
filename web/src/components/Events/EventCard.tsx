@@ -142,6 +142,10 @@ const EventCard: React.FC = () => {
   const [error, setError] = useState<string | null>(null);
   const { getEventById } = useLeagueApi();
 
+  const members = event?.users?.length
+    ? event.users
+    : event?.teams?.map((t) => ({ id: t.teamId, name: t.name }));
+
   useEffect(() => {
     const fetchEvent = async () => {
       try {
@@ -201,11 +205,11 @@ const EventCard: React.FC = () => {
         {event.teams && event.teams.length > 0 ? (
           <TeamsContainer>
             {event.teams.map((team, index) => (
-              <React.Fragment key={team.id}>
+              <React.Fragment key={team.teamId}>
                 <TeamBox>
                   <TeamName>{team.name}</TeamName>
                 </TeamBox>
-                {index < event.teams.length - 1 && <VS>VS</VS>}
+                {index < event.teams!.length - 1 && <VS>VS</VS>}
               </React.Fragment>
             ))}
           </TeamsContainer>
@@ -224,15 +228,13 @@ const EventCard: React.FC = () => {
             <InfoContent>{formatEventTime(event.eventTime)}</InfoContent>
           </TimeContainer>
         </LocationTimeSection>
-        parentId
         <MembersSection
-          members={event.users.map((u) => {
+          members={members!.map((u) => {
             return {
               userId: u.id,
               parentId: event.id,
               parentName: event.location,
               name: u.name,
-              email: u.email,
             };
           })}
         />

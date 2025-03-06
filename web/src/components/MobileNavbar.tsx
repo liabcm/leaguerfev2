@@ -1,3 +1,12 @@
+import {
+  Calendar,
+  Home,
+  Mail,
+  Server,
+  Trophy,
+  User,
+  Users,
+} from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
 import styled from 'styled-components';
 import { LeagueUserStatus } from '../models/LeagueUserStatusEnum';
@@ -16,16 +25,28 @@ const MobileNavbar = () => {
 
   return (
     <MobileNavbarContainer>
-      <NavIcon onClick={() => navigate('/')}>🏠</NavIcon>
-      <NavIcon onClick={() => navigate('/upcoming-events')}>📅</NavIcon>
-      <NavIcon onClick={() => navigate('/my-leagues')}>🥇</NavIcon>
-      <NavIcon onClick={() => navigate('/my-teams')}>👥</NavIcon>
+      <NavIcon onClick={() => navigate('/')}>
+        <Home />
+      </NavIcon>
+      <NavIcon onClick={() => navigate('/upcoming-events')}>
+        <Calendar />
+      </NavIcon>
+      <NavIcon onClick={() => navigate('/my-leagues')}>
+        <Trophy />
+      </NavIcon>
+      <NavIcon onClick={() => navigate('/my-teams')}>
+        <Users />
+      </NavIcon>
       <NavIconWithBadge onClick={() => navigate('/invites')}>
-        📨
+        <Mail />
         {inviteCount > 0 && <Badge>{inviteCount}</Badge>}
       </NavIconWithBadge>
-      <NavIcon onClick={() => navigate('/profile')}>👤</NavIcon>
-      <NavIcon onClick={() => navigate('/manager')}>⚙️</NavIcon>
+      <NavIcon onClick={() => navigate('/manager')}>
+        <Server />
+      </NavIcon>
+      <NavIcon onClick={() => navigate('/profile')}>
+        <User />
+      </NavIcon>
     </MobileNavbarContainer>
   );
 };
@@ -37,7 +58,7 @@ const MobileNavbarContainer = styled.nav`
   justify-content: space-around;
   align-items: center;
   padding: 1rem;
-  background-color: #ffffff;
+  background-color: rgb(214, 243, 251);
   box-shadow: 0 -2px 4px rgba(0, 0, 0, 0.1);
   position: fixed;
   bottom: 0;

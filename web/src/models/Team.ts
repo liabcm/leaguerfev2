@@ -1,4 +1,5 @@
 import { EventResult } from './EventResult';
+import { EventTeam } from './EventTeam';
 import { TeamUser } from './TeamUser';
 
 export interface Team {
@@ -17,10 +18,4 @@ export interface Team {
   isPending: boolean;
   eventResults: EventResult[];
   eventTeams: EventTeam[];
-}
-
-export interface EventTeam {
-  eventId: string;
-  teamId: string;
-  event: Event;
 }

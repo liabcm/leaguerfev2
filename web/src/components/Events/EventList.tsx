@@ -1,3 +1,4 @@
+import { useNavigate } from 'react-router-dom';
 import styled from 'styled-components';
 import { Event } from '../../models/Event';
 
@@ -17,6 +18,7 @@ const EventList = ({
   if (!events || events.length === 0) {
     return <NoEventsMessage>No events yet.</NoEventsMessage>;
   }
+  const navigate = useNavigate();
 
   return (
     <StyledEventList>
@@ -38,9 +40,17 @@ const EventList = ({
               ? event.teams?.map((t) => t.name).join(' vs ')
               : event.users?.map((u) => u.name).join(' vs ') || 'TBD'}
           </Opponents>
+          <Opponents>Score: {event.eventResult?.score}</Opponents>
           {isCompletedSection && !event.eventResult && onLogResult && (
             <LogResultButton onClick={() => onLogResult(event)}>
               Log Result
+            </LogResultButton>
+          )}
+          {isCompletedSection && event.eventResult && (
+            <LogResultButton
+              onClick={() => navigate(`/event-result/${event.eventResult!.id}`)}
+            >
+              View Result
             </LogResultButton>
           )}
         </StyledEventItem>

@@ -2,6 +2,9 @@
 {
     public class UserDTO
     {
+        public UserDTO()
+        {
+        }
         public UserDTO(User user)
         {
             Id = user.Id;

@@ -3,5 +3,4 @@ export interface MemberModel {
   parentId: string;
   parentName: string;
   name: string;
-  email: string;
 }

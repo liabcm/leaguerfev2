@@ -1,6 +1,6 @@
 ﻿using leaguerAPI.Extensions;
 using leaguerAPI.Models.DTOs;
-using leaguerAPI.Services;
+using leaguerAPI.Services.Interfaces;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 
@@ -11,9 +11,9 @@ namespace leaguerAPI.Controllers.v1
     [Route("api/v1/[controller]")]
     public class EventResultController : ControllerBase
     {
-        private readonly EventResultService _eventResultService;
+        private readonly IEventResultService _eventResultService;
 
-        public EventResultController(EventResultService eventResultService)
+        public EventResultController(IEventResultService eventResultService)
         {
             _eventResultService = eventResultService;
         }
@@ -51,10 +51,14 @@ namespace leaguerAPI.Controllers.v1
         }
 
         [HttpGet("{id}")]
-        public async Task<IActionResult> GetById([FromRoute] int id)
+        public async Task<IActionResult> GetById(Guid id)
         {
-            // TODO: Implement get by ID logic
-            return Ok();
+            var response = await _eventResultService.GetByIdAsync(id);
+            if (!response.Success)
+            {
+                return BadRequest(new { message = response.ErrorMessage });
+            }
+            return Ok(response.Data);
         }
     }
 }

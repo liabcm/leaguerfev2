@@ -1,5 +1,5 @@
-// components/LogResultModal.tsx
 import { useEffect, useState } from 'react';
+import Select from 'react-select';
 import styled from 'styled-components';
 import { Event } from '../../models/Event';
 import { Button } from '../League/SharedLeagueStyles';
@@ -9,10 +9,18 @@ interface LogResultModalProps {
   onClose: () => void;
   event: Event | null;
   onSubmit: (formData: {
-    winningTeam: string;
+    winningId: string;
     score: string;
     starPlayerUserId: string;
+    eventId: string;
+    losingId: string;
   }) => void;
+}
+
+// Define the option type for react-select
+interface SelectOption {
+  value: string;
+  label: string;
 }
 
 const LogResultModal = ({
@@ -22,7 +30,7 @@ const LogResultModal = ({
   onSubmit,
 }: LogResultModalProps) => {
   const [formData, setFormData] = useState({
-    winningTeam: '',
+    winningId: '',
     score: '',
     starPlayerUserId: '',
   });
@@ -31,7 +39,7 @@ const LogResultModal = ({
   useEffect(() => {
     if (isOpen) {
       setFormData({
-        winningTeam: '',
+        winningId: '',
         score: '',
         starPlayerUserId: '',
       });
@@ -40,9 +48,26 @@ const LogResultModal = ({
 
   if (!isOpen || !event) return null;
 
+  const winningOptions: SelectOption[] = event.teams?.length
+    ? event.teams.map((team) => ({ value: team.teamId, label: team.name }))
+    : event.users?.length
+    ? event.users.map((user) => ({ value: user.id, label: user.name }))
+    : [];
+
+  const starPlayerOptions = event.users?.length
+    ? event.users.map((u) => ({ value: u.id, label: u.name }))
+    : event.teamPlayers?.map((u) => ({ value: u.id, label: u.name }));
+
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
-    onSubmit(formData);
+    const losingId = winningOptions.find(
+      (id) => id.value !== formData.winningId
+    );
+    onSubmit({
+      ...formData,
+      eventId: event.id,
+      losingId: losingId?.value || '',
+    });
     onClose();
   };
 
@@ -52,12 +77,23 @@ const LogResultModal = ({
         <h3>Log Result for {event.location}</h3>
         <form onSubmit={handleSubmit}>
           <FormGroup>
-            <label>Winning Team:</label>
-            <input
-              value={formData.winningTeam}
-              onChange={(e) =>
-                setFormData({ ...formData, winningTeam: e.target.value })
+            <label>Winning {event.teams ? 'Team' : 'User'}:</label>
+            <Select
+              options={winningOptions}
+              placeholder={`Select a ${event.teams ? 'Team' : 'User'}`}
+              value={
+                winningOptions.find(
+                  (option) => option.value === formData.winningId
+                ) || null
               }
+              onChange={(selectedOption) => {
+                console.log(selectedOption);
+                setFormData({
+                  ...formData,
+                  winningId: selectedOption ? selectedOption.value : '',
+                });
+              }}
+              isSearchable={true}
               required
             />
           </FormGroup>
@@ -72,12 +108,21 @@ const LogResultModal = ({
             />
           </FormGroup>
           <FormGroup>
-            <label>Star Player User ID:</label>
-            <input
-              value={formData.starPlayerUserId}
-              onChange={(e) =>
-                setFormData({ ...formData, starPlayerUserId: e.target.value })
+            <Select
+              options={starPlayerOptions}
+              placeholder={`Select a star player`}
+              value={
+                starPlayerOptions!.find(
+                  (option) => option.value === formData.starPlayerUserId
+                ) || null
               }
+              onChange={(selectedOption) => {
+                setFormData({
+                  ...formData,
+                  starPlayerUserId: selectedOption ? selectedOption.value : '',
+                });
+              }}
+              isSearchable={true}
               required
             />
           </FormGroup>

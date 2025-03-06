@@ -158,6 +158,16 @@ namespace leaguerAPI.Database
                     .HasForeignKey(er => er.WinningUserId)
                     .OnDelete(DeleteBehavior.Restrict);
 
+                entity.HasOne(er => er.LosingTeam)
+                    .WithMany()
+                    .HasForeignKey(er => er.LosingTeamId)
+                    .OnDelete(DeleteBehavior.Restrict);
+
+                entity.HasOne(er => er.LosingUser)
+                    .WithMany()
+                    .HasForeignKey(er => er.LosingUserId)
+                    .OnDelete(DeleteBehavior.Restrict);
+
                 entity.HasOne(er => er.StarPlayerUser)
                     .WithMany()
                     .HasForeignKey(er => er.StarPlayerUserId)

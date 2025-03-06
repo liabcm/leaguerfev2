@@ -292,6 +292,7 @@ namespace leaguerAPI.Services
                     .ThenInclude(et => et.Event)
                 .Include(t => t.League)
                 .Select(t => new TeamDTO(t))
+                .AsSplitQuery()
                 .ToListAsync();
 
             return Response<List<TeamDTO>>.SuccessResult(teams);

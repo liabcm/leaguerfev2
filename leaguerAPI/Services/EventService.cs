@@ -41,6 +41,15 @@ namespace leaguerAPI.Services
                     };
                 }
 
+                if (eventDto.OpponentIds.Count < 2)
+                {
+                    return new Response<EventDTO>
+                    {
+                        Success = false,
+                        ErrorMessage = "Event must have at least 2 parties"
+                    };
+                }
+
                 var newEvent = new Event
                 {
                     Id = Guid.NewGuid(),

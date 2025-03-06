@@ -69,12 +69,18 @@ namespace leaguerAPI.Migrations
                     b.Property<Guid>("EventId")
                         .HasColumnType("uniqueidentifier");
 
+                    b.Property<Guid?>("LosingTeamId")
+                        .HasColumnType("uniqueidentifier");
+
+                    b.Property<Guid?>("LosingUserId")
+                        .HasColumnType("uniqueidentifier");
+
                     b.Property<string>("Score")
                         .IsRequired()
                         .HasMaxLength(50)
                         .HasColumnType("nvarchar(50)");
 
-                    b.Property<Guid>("StarPlayerUserId")
+                    b.Property<Guid?>("StarPlayerUserId")
                         .HasColumnType("uniqueidentifier");
 
                     b.Property<Guid?>("WinningTeamId")
@@ -87,6 +93,10 @@ namespace leaguerAPI.Migrations
 
                     b.HasIndex("EventId")
                         .IsUnique();
+
+                    b.HasIndex("LosingTeamId");
+
+                    b.HasIndex("LosingUserId");
 
                     b.HasIndex("StarPlayerUserId");
 
@@ -346,11 +356,20 @@ namespace leaguerAPI.Migrations
                         .OnDelete(DeleteBehavior.Restrict)
                         .IsRequired();
 
+                    b.HasOne("leaguerAPI.Models.Team", "LosingTeam")
+                        .WithMany()
+                        .HasForeignKey("LosingTeamId")
+                        .OnDelete(DeleteBehavior.Restrict);
+
+                    b.HasOne("leaguerAPI.Models.User", "LosingUser")
+                        .WithMany()
+                        .HasForeignKey("LosingUserId")
+                        .OnDelete(DeleteBehavior.Restrict);
+
                     b.HasOne("leaguerAPI.Models.User", "StarPlayerUser")
                         .WithMany()
                         .HasForeignKey("StarPlayerUserId")
-                        .OnDelete(DeleteBehavior.Restrict)
-                        .IsRequired();
+                        .OnDelete(DeleteBehavior.Restrict);
 
                     b.HasOne("leaguerAPI.Models.Team", "WinningTeam")
                         .WithMany()
@@ -363,6 +382,10 @@ namespace leaguerAPI.Migrations
                         .OnDelete(DeleteBehavior.Restrict);
 
                     b.Navigation("Event");
+
+                    b.Navigation("LosingTeam");
+
+                    b.Navigation("LosingUser");
 
                     b.Navigation("StarPlayerUser");
 

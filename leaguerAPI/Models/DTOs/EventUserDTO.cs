@@ -2,6 +2,9 @@
 {
     public class EventUserDTO
     {
+        public EventUserDTO()
+        {
+        }
         public EventUserDTO(EventUser eventUser)
         {
             UserId = eventUser.UserId;

@@ -18,7 +18,7 @@ namespace leaguerAPI.Services
         {
             try
             {
-                if (eventResultDto.WinningUserId == null && eventResultDto.WinningTeamId == null)
+                if (eventResultDto?.WinningId == null)
                 {
                     return Response<EventResultDTO>.FailureResult("Winner is required");
                 }
@@ -26,6 +26,7 @@ namespace leaguerAPI.Services
                 var existingEvent = await _context.Events
                                                     .Include(e => e.League)
                                                         .ThenInclude(l => l.LeagueUsers)
+                                                    .Include(e => e.EventTeams)
                                                     .FirstOrDefaultAsync(x => x.Id == eventResultDto.EventId);
                 if (existingEvent == null)
                 {
@@ -37,24 +38,36 @@ namespace leaguerAPI.Services
                 {
                     return Response<EventResultDTO>.FailureResult("You are not allowed to add result");
                 }
+                var eventResult = new EventResult();
 
-                if (eventResultDto.WinningTeamId != null)
+                if (existingEvent.League.IsTeamLeague)
                 {
-                    var winningTeam = await _context.Teams.FirstOrDefaultAsync(u => u.Id == eventResultDto.WinningTeamId);
+                    var winningTeam = await _context.Teams.FirstOrDefaultAsync(u => u.Id == eventResultDto.WinningId);
+                    var losingTeam = await _context.Teams.FirstOrDefaultAsync(u => u.Id == eventResultDto.LosingId);
+
                     if (winningTeam == null)
                     {
                         return Response<EventResultDTO>.FailureResult("Winner team not found");
                     }
+                    if (losingTeam == null)
+                    {
+                        return Response<EventResultDTO>.FailureResult("Loser team not found");
+                    }
                     winningTeam.Wins++;
+                    losingTeam.Losses++;
+
+                    eventResult.WinningTeamId = eventResultDto.WinningId;
+                    eventResult.LosingTeamId = eventResultDto.LosingId;
+                }
+                else
+                {
+                    eventResult.WinningUserId = eventResultDto.WinningId;
                 }
 
-                var eventResult = new EventResult
-                {
-                    EventId = eventResultDto.EventId,
-                    WinningUserId = eventResultDto.WinningUserId,
-                    WinningTeamId = eventResultDto.WinningTeamId,
-                    Score = eventResultDto.Score
-                };
+                eventResult.EventId = eventResultDto.EventId;
+                eventResult.Score = eventResultDto.Score;
+                eventResult.StarPlayerUserId = eventResultDto.StarPlayerUserId;
+
 
                 var eventCreated = await _context.EventResults.AddAsync(eventResult);
                 await _context.SaveChangesAsync();
@@ -66,9 +79,36 @@ namespace leaguerAPI.Services
             }
         }
 
-        public Task<Response<EventResultDTO>> GetByIdAsync(int id)
+        public async Task<Response<EventResultDTO>> GetByIdAsync(Guid id)
         {
-            throw new NotImplementedException();
+            try
+            {
+                var eventResult = await _context.EventResults.Select(er => new EventResultDTO
+                {
+                    Id = er.Id,
+                    Event = new EventDTO
+                    {
+                        Location = er.Event.Location,
+                        EventTime = er.Event.EventTime,
+                    },
+                    Score = er.Score,
+                    StarPlayerUser = er.StarPlayerUser,
+                    WinningTeam = er.WinningTeam != null ? new TeamDTO { Name = er.WinningTeam.Name } : null,
+                    LosingTeam = er.LosingTeam != null ? new TeamDTO { Name = er.LosingTeam.Name } : null,
+                    WinningUser = er.WinningUser != null ? new UserDTO { Name = er.WinningUser.Name } : null,
+                    LosingUser = er.LosingUser != null ? new UserDTO { Name = er.LosingUser.Name } : null,
+                }).FirstOrDefaultAsync();
+
+                if (eventResult == null)
+                {
+                    return Response<EventResultDTO>.FailureResult("Event result not found");
+                }
+                return Response<EventResultDTO>.SuccessResult(eventResult);
+            }
+            catch (Exception ex)
+            {
+                return Response<EventResultDTO>.FailureResult(ex.Message);
+            }
         }
 
         public Task<Response<PagedResult<EventResultDTO>>> GetByLeagueIdAsync(int leagueId, int pageNumber, int pageSize)

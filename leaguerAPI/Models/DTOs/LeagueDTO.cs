@@ -2,6 +2,10 @@
 {
     public class LeagueDTO
     {
+        public LeagueDTO()
+        {
+
+        }
         public LeagueDTO(League league)
         {
             Id = league.Id;

@@ -7,6 +7,7 @@ import { useLeagueApi } from '../api/useLeagueApi';
 // Components
 import EventCard from './Events/EventCard';
 import EventForm from './Events/EventForm';
+import EventResultCard from './Events/EventResultCard';
 import UpcomingEvents from './Events/UpcomingEvents';
 import GetStarted from './GetStarted';
 import InvitesPage from './InvitesPage';
@@ -66,6 +67,7 @@ function Pages() {
         <Route path='/upcoming-events' element={<UpcomingEvents />} />
         <Route path='/manager' element={<Manager />} />
         <Route path='/my-teams' element={<MyTeams />} />
+        <Route path='/event-result/:id' element={<EventResultCard />} />
       </Route>
     </Routes>
   );

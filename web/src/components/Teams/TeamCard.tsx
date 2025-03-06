@@ -5,7 +5,6 @@ import { useParams } from 'react-router-dom';
 import styled from 'styled-components';
 import { useLeagueApi } from '../../api/useLeagueApi';
 import { Team } from '../../models/Team';
-import EventResultsSection from '../Events/EventResultsSection';
 import BackButton from '../General/BackButton';
 import ConfirmationModal from '../General/ConfirmationModal';
 import LoadingButton from '../General/LoadingButton';
@@ -183,13 +182,7 @@ const TeamCard = () => {
             $active={activeTab === 'upcoming'}
             onClick={() => setActiveTab('upcoming')}
           >
-            Upcoming Events
-          </TabButton>
-          <TabButton
-            $active={activeTab === 'results'}
-            onClick={() => setActiveTab('results')}
-          >
-            Event Results
+            Events
           </TabButton>
         </Tabs>
 
@@ -203,10 +196,6 @@ const TeamCard = () => {
             isTeamEvents={true}
             showCreateButton={false}
           />
-        )}
-
-        {activeTab === 'results' && (
-          <EventResultsSection eventResults={team.eventResults || []} />
         )}
       </Card>
 

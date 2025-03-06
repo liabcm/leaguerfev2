@@ -12,6 +12,7 @@ import { User } from '../../models/User';
 import LogResultModal from '../Events/LogResultModal';
 import BackButton from '../General/BackButton';
 import ConfirmationModal from '../General/ConfirmationModal';
+import { StyledSpinner } from '../SharedStyles';
 import LeagueEventsSection from './LeagueEventsSection';
 import LeagueMembersSection from './LeagueMembersSection';
 import LeaguePendingSection from './LeaguePendingSection';
@@ -43,6 +44,7 @@ const ManageLeagues = () => {
     rejectTeamRequest,
     searchUsers,
     deleteLeague,
+    createEventResult,
   } = useLeagueApi();
   const navigate = useNavigate();
   const [searchParams, setSearchParams] = useSearchParams();
@@ -50,10 +52,12 @@ const ManageLeagues = () => {
   const [showDeleteModal, setShowDeleteModal] = useState(false);
   const [selectedEvent, setSelectedEvent] = useState<any>(null);
   const [isModalOpen, setIsModalOpen] = useState(false);
+  const [isLoading, setIsLoading] = useState(false);
 
   useEffect(() => {
     const fetchLeagues = async () => {
       try {
+        setIsLoading(true);
         const data = await getMyLeagues();
         setLeagues(data);
         const leagueId = searchParams.get('leagueId');
@@ -63,6 +67,8 @@ const ManageLeagues = () => {
         }
       } catch (error) {
         console.error('Error fetching leagues:', error);
+      } finally {
+        setIsLoading(false);
       }
     };
     fetchLeagues();
@@ -81,15 +87,52 @@ const ManageLeagues = () => {
     setIsModalOpen(true);
   };
 
-  const handleSubmitResult = (formData: {
-    winningTeam: string;
+  const handleSubmitResult = async (formData: {
+    winningId: string;
     score: string;
     starPlayerUserId: string;
+    eventId: string;
+    losingId: string;
   }) => {
-    console.log({
-      ...formData,
-      eventId: selectedEvent?.id,
-    });
+    try {
+      const newEventResult = await createEventResult(formData);
+
+      setSelectedLeague((prevLeague) => {
+        if (!prevLeague) return prevLeague;
+
+        // Create a deep copy of the league
+        const updatedLeague = { ...prevLeague };
+
+        // Find the event to update
+        const eventIndex = updatedLeague.events.findIndex(
+          (event) => event.id === formData.eventId
+        );
+
+        if (eventIndex !== -1) {
+          // Create a new event object with the result
+          updatedLeague.events[eventIndex] = {
+            ...updatedLeague.events[eventIndex],
+            eventResult: {
+              id: newEventResult?.id || '',
+              eventId: formData.eventId,
+              winningTeamId: formData.winningId.startsWith('team_')
+                ? formData.winningId.substring(5)
+                : undefined,
+              winningUserId: formData.winningId.startsWith('user_')
+                ? formData.winningId.substring(5)
+                : undefined,
+              score: formData.score,
+              starPlayerUserId: formData.starPlayerUserId,
+              event: updatedLeague.events[eventIndex],
+            },
+          };
+        }
+
+        return updatedLeague;
+      });
+    } catch (error) {
+      console.error('Error creating event result:', error);
+    }
   };
 
   const handleLeagueSelect = (e: React.ChangeEvent<HTMLSelectElement>) => {
@@ -309,6 +352,10 @@ const ManageLeagues = () => {
   const handleAddTeam = () => {
     navigate(`/league/${selectedLeague?.id}/team`);
   };
+
+  if (isLoading) {
+    return <StyledSpinner />;
+  }
 
   return (
     <Container>

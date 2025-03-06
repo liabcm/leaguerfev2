@@ -72,10 +72,12 @@ namespace leaguerAPI.Services
                     .Take(pageSize)
                     .ToListAsync();
 
+                var totalCount = await query.CountAsync();
+
                 var result = new PagedResult<UserDTO>
                 {
                     Items = items,
-                    TotalCount = items.Count(),
+                    TotalCount = totalCount,
                     PageNumber = page,
                     PageSize = pageSize
                 };
@@ -212,10 +214,12 @@ namespace leaguerAPI.Services
                     .Take(pageSize)
                     .ToListAsync();
 
+                var totalCount = await query.CountAsync();
+
                 var result = new PagedResult<UserDTO>
                 {
                     Items = items,
-                    TotalCount = items.Count(),
+                    TotalCount = totalCount,
                     PageNumber = page,
                     PageSize = pageSize
                 };

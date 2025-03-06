@@ -60,6 +60,7 @@ namespace leaguerAPI.Services
                         .ThenInclude(lu => lu.User)
                     .Include(l => l.Teams)
                     .ThenInclude(t => t.TeamUsers)
+                .AsSplitQuery()
                 .FirstOrDefaultAsync(l => l.Id == id);
 
             return new LeagueDTO(league);
@@ -199,6 +200,8 @@ namespace leaguerAPI.Services
                                             .Include(lu => lu.Events)
                                                 .ThenInclude(e => e.EventTeams)
                                                 .ThenInclude(et => et.Team)
+                                                .ThenInclude(t => t.TeamUsers)
+                                                .ThenInclude(tu => tu.User)
                                             .Include(l => l.Events)
                                                 .ThenInclude(e => e.EventResult)
                                             .Include(l => l.LeagueUsers)
@@ -206,6 +209,7 @@ namespace leaguerAPI.Services
                                             .Include(l => l.Teams)
                                         .Where(l => l.CreatedBy == userId)
                                         .Select(l => new LeagueDTO(l))
+                                        .AsSplitQuery()
                                         .ToListAsync();
 
                 return new Response<List<LeagueDTO>>()

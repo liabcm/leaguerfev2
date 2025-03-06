@@ -2,6 +2,10 @@
 {
     public class TeamDTO
     {
+        public TeamDTO()
+        {
+
+        }
         public TeamDTO(Team team)
         {
             Id = team.Id;

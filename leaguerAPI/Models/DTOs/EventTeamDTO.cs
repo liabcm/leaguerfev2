@@ -2,6 +2,9 @@
 {
     public class EventTeamDTO
     {
+        public EventTeamDTO()
+        {
+        }
         public EventTeamDTO(EventTeam eventTeam, bool includeEvents = true)
         {
             TeamId = eventTeam.TeamId;

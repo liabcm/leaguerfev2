@@ -7,9 +7,4 @@ export default defineConfig({
     outDir: 'dist', // This should match Azure's output_location
   },
   plugins: [react()],
-  server: {
-    allowedHosts: [
-      '6e43-2607-fb90-b5a4-44ff-3cbb-f6f8-74f1-b8e.ngrok-free.app', // Add your ngrok host here
-    ],
-  },
 });
