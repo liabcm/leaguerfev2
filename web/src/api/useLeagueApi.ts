@@ -12,7 +12,8 @@ import { TeamCreateDTO, TeamUpdateDTO } from '../models/TeamCreateDTO';
 import { TeamUser } from '../models/TeamUser';
 import { User } from '../models/User';
 
-const API_BASE_URL = 'https://localhost:44378/api/v1';
+const API_BASE_URL =
+  'https://leaguerapi-e3ekc8h6crcsd8ea.canadacentral-01.azurewebsites.net/api/v1';
 
 export const useLeagueApi = () => {
   const { instance } = useMsal();
