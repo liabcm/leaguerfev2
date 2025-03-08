@@ -234,8 +234,6 @@ namespace leaguerAPI.Services
             {
                 var leagues = await _context.Leagues
                     .AsNoTracking()
-                    .Include(l => l.LeagueUsers)
-                    .ThenInclude(lu => lu.User)
                     .Where(l => l.LeagueUsers.Any(lu => lu.UserId == userId && (lu.Status == LeagueUserStatus.Member || lu.Status == LeagueUserStatus.Manager)))
                     .Select(l => new LeagueDTO(l))
                     .ToListAsync();
@@ -253,6 +251,23 @@ namespace leaguerAPI.Services
                     ErrorMessage = ex.Message,
                     Success = false
                 };
+            }
+        }
+
+        public async Task<Response<List<LeagueDTO>>> GetMyManagedLeaguesAsync(Guid userId)
+        {
+            try
+            {
+                var leagues = await _context.Leagues
+                    .AsNoTracking()
+                    .Where(l => l.LeagueUsers.Any(lu => lu.UserId == userId && lu.Status == LeagueUserStatus.Manager))
+                    .Select(l => new LeagueDTO(l))
+                    .ToListAsync();
+                return Response<List<LeagueDTO>>.SuccessResult(leagues);
+            }
+            catch (Exception ex)
+            {
+                return Response<List<LeagueDTO>>.FailureResult(ex.Message);
             }
         }
 

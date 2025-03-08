@@ -102,6 +102,17 @@ export const useLeagueApi = () => {
       return response.json();
     },
 
+    getMyManagedLeagues: async (): Promise<League[]> => {
+      const response = await fetch(
+        `${API_BASE_URL}/league/my-managed-leagues`,
+        {
+          headers: await getAuthHeader(),
+        }
+      );
+      if (!response.ok) throw new Error('Failed to fetch league');
+      return response.json();
+    },
+
     getAllLeagues: async (
       searchTerm: string,
       page: number,

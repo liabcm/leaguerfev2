@@ -1,6 +1,6 @@
 import { Trash, User as UserIcon, Users } from 'lucide-react';
 import { useEffect, useState } from 'react';
-import { useNavigate, useSearchParams } from 'react-router-dom';
+import { useNavigate, useParams } from 'react-router-dom';
 import styled from 'styled-components';
 import { useLeagueApi } from '../../api/useLeagueApi';
 import { League } from '../../models/League';
@@ -29,13 +29,12 @@ import {
 } from './SharedLeagueStyles';
 
 const ManageLeagues = () => {
-  const [leagues, setLeagues] = useState<League[]>([]);
-  const [selectedLeague, setSelectedLeague] = useState<League | null>(null);
+  const [league, setLeague] = useState<League | null>(null);
   const [activeTab, setActiveTab] = useState<'members' | 'teams' | 'events'>(
     'members'
   );
   const {
-    getMyLeagues,
+    getLeagueById,
     kickFromLeague,
     inviteUserToLeague,
     acceptInvite,
@@ -47,7 +46,7 @@ const ManageLeagues = () => {
     createEventResult,
   } = useLeagueApi();
   const navigate = useNavigate();
-  const [searchParams, setSearchParams] = useSearchParams();
+  const { id } = useParams<{ id: string }>();
   const [showSearchUsersModal, setShowSearchUsersModal] = useState(false);
   const [showDeleteModal, setShowDeleteModal] = useState(false);
   const [selectedEvent, setSelectedEvent] = useState<any>(null);
@@ -55,31 +54,24 @@ const ManageLeagues = () => {
   const [isLoading, setIsLoading] = useState(false);
 
   useEffect(() => {
-    const fetchLeagues = async () => {
+    const fetchLeague = async () => {
       try {
-        setIsLoading(true);
-        const data = await getMyLeagues();
-        setLeagues(data);
-        const leagueId = searchParams.get('leagueId');
-        if (leagueId) {
-          const league = data.find((l) => l.id === leagueId);
-          setSelectedLeague(league || null);
+        if (id) {
+          setIsLoading(true);
+          const data = await getLeagueById(id);
+          setLeague(data);
         }
       } catch (error) {
-        console.error('Error fetching leagues:', error);
+        console.error('Error fetching league:', error);
       } finally {
         setIsLoading(false);
       }
     };
-    fetchLeagues();
-  }, []);
-
-  useEffect(() => {
-    setActiveTab('members');
-  }, [selectedLeague?.id]);
+    fetchLeague();
+  }, [id]);
 
   const handleCreateEvent = () => {
-    selectedLeague && navigate(`/event-create/${selectedLeague.id}`);
+    league && navigate(`/event-create/${league.id}`);
   };
 
   const handleLogResult = (event: any) => {
@@ -97,7 +89,7 @@ const ManageLeagues = () => {
     try {
       const newEventResult = await createEventResult(formData);
 
-      setSelectedLeague((prevLeague) => {
+      setLeague((prevLeague) => {
         if (!prevLeague) return prevLeague;
 
         // Create a deep copy of the league
@@ -135,28 +127,10 @@ const ManageLeagues = () => {
     }
   };
 
-  const handleLeagueSelect = (e: React.ChangeEvent<HTMLSelectElement>) => {
-    const leagueId = e.target.value;
-    setSearchParams(leagueId ? { leagueId } : {});
-    setSelectedLeague(leagues.find((l) => l.id === leagueId) || null);
-  };
-
   const handleDeleteLeague = async () => {
     try {
-      await deleteLeague(selectedLeague?.id!);
-
-      // Update state by removing the deleted league
-      const updatedLeagues = leagues.filter(
-        (league) => league.id !== selectedLeague?.id
-      );
-      setLeagues(updatedLeagues);
-
-      // Clear the selected league and URL parameter
-      setSelectedLeague(null);
-      setSearchParams({});
-
-      // Close the modal
-      setShowDeleteModal(false);
+      await deleteLeague(league?.id!);
+      navigate(-1);
     } catch (error) {
       console.error('Error deleting league:', error);
     }
@@ -164,31 +138,23 @@ const ManageLeagues = () => {
 
   const handleInviteUser = async (user: User) => {
     try {
-      await inviteUserToLeague(selectedLeague?.id!, user.id, true);
-      setLeagues(
-        leagues.map((league) => {
-          if (league.id === selectedLeague?.id) {
-            const updatedLeague = {
-              ...league,
-              leagueInvites: [
-                ...league.leagueInvites,
-                {
-                  userId: user.id,
-                  name: user.name,
-                  leagueId: selectedLeague.id,
-                  leagueName: selectedLeague.name,
-                  email: user.email,
-                  isManager: false,
-                  status: LeagueUserStatus.Invited,
-                },
-              ],
-            };
-            setSelectedLeague(updatedLeague);
-            return updatedLeague;
-          }
-          return league;
-        })
-      );
+      await inviteUserToLeague(league?.id!, user.id, true);
+      const updatedLeague = {
+        ...league,
+        leagueInvites: [
+          ...league!.leagueInvites,
+          {
+            userId: user.id,
+            name: user.name,
+            leagueId: league!.id,
+            leagueName: league!.name,
+            email: user.email,
+            isManager: false,
+            status: LeagueUserStatus.Invited,
+          },
+        ],
+      } as League;
+      setLeague(updatedLeague);
     } catch (error) {
       console.error('Error inviting user:', error);
     }
@@ -196,23 +162,15 @@ const ManageLeagues = () => {
 
   const handleRemoveMember = async (memberId: string) => {
     try {
-      const leagueId = selectedLeague?.id!;
+      const leagueId = league?.id!;
       await kickFromLeague(leagueId, memberId);
-      setLeagues(
-        leagues.map((league) => {
-          if (league.id === leagueId) {
-            const updatedLeague = {
-              ...league,
-              leagueMembers: league.leagueMembers.filter(
-                (user) => user.userId !== memberId
-              ),
-            };
-            setSelectedLeague(updatedLeague);
-            return updatedLeague;
-          }
-          return league;
-        })
-      );
+      const updatedLeague = {
+        ...league,
+        leagueMembers: league!.leagueMembers.filter(
+          (user) => user.userId !== memberId
+        ),
+      } as League;
+      setLeague(updatedLeague);
     } catch (error) {
       console.error('Error removing member:', error);
     }
@@ -220,23 +178,15 @@ const ManageLeagues = () => {
 
   const onAccept = async (member: LeagueUser) => {
     try {
-      await acceptInvite(selectedLeague?.id!, member.userId);
-      setLeagues(
-        leagues.map((league) => {
-          if (league.id === selectedLeague?.id) {
-            const updatedLeague = {
-              ...league,
-              leagueMembers: [...league.leagueMembers, member],
-              leagueRequests: league.leagueRequests.filter(
-                (user) => user.userId !== member.userId
-              ),
-            };
-            setSelectedLeague(updatedLeague);
-            return updatedLeague;
-          }
-          return league;
-        })
-      );
+      await acceptInvite(league?.id!, member.userId);
+      const updatedLeague = {
+        ...league,
+        leagueMembers: [...league!.leagueMembers, member],
+        leagueRequests: league!.leagueRequests.filter(
+          (user) => user.userId !== member.userId
+        ),
+      } as League;
+      setLeague(updatedLeague);
     } catch (error) {
       console.error('Error accepting request:', error);
     }
@@ -245,25 +195,14 @@ const ManageLeagues = () => {
   const onAcceptTeam = async (item: LeagueUser) => {
     try {
       await acceptTeamRequest(item.userId);
-      setLeagues(
-        leagues.map((league) => {
-          if (league.id === selectedLeague?.id) {
-            const updatedLeague = {
-              ...league,
-              teams: [
-                ...league.teams,
-                { id: item.userId, name: item.name } as Team,
-              ],
-              teamRequests: league.teamRequests.filter(
-                (team) => item.userId !== team.id
-              ),
-            };
-            setSelectedLeague(updatedLeague);
-            return updatedLeague;
-          }
-          return league;
-        })
-      );
+      const updatedLeague = {
+        ...league,
+        teams: [...league!.teams, { id: item.userId, name: item.name } as Team],
+        teamRequests: league!.teamRequests.filter(
+          (team) => item.userId !== team.id
+        ),
+      } as League;
+      setLeague(updatedLeague);
     } catch (error) {
       console.error('Error accepting request:', error);
     }
@@ -271,23 +210,14 @@ const ManageLeagues = () => {
 
   const onDecline = async (member: LeagueUser) => {
     try {
-      await declineInvite(selectedLeague?.id!, member.userId);
-      setLeagues((prevLeagues) => {
-        const updatedLeagues = prevLeagues.map((league) => {
-          if (league.id === selectedLeague?.id) {
-            const updatedLeague = {
-              ...league,
-              leagueRequests: league.leagueRequests.filter(
-                (user) => user.userId !== member.userId
-              ),
-            };
-            setSelectedLeague(updatedLeague);
-            return updatedLeague;
-          }
-          return league;
-        });
-        return updatedLeagues;
-      });
+      await declineInvite(league?.id!, member.userId);
+      const updatedLeague = {
+        ...league,
+        leagueRequests: league!.leagueRequests.filter(
+          (user) => user.userId !== member.userId
+        ),
+      } as League;
+      setLeague(updatedLeague);
     } catch (error) {
       console.error('Error declining request:', error);
     }
@@ -296,22 +226,13 @@ const ManageLeagues = () => {
   const onDeclineTeam = async (member: LeagueUser) => {
     try {
       await rejectTeamRequest(member.userId);
-      setLeagues((prevLeagues) => {
-        const updatedLeagues = prevLeagues.map((league) => {
-          if (league.id === selectedLeague?.id) {
-            const updatedLeague = {
-              ...league,
-              teamRequests: league.teamRequests.filter(
-                (team) => team.id !== member.userId
-              ),
-            };
-            setSelectedLeague(updatedLeague);
-            return updatedLeague;
-          }
-          return league;
-        });
-        return updatedLeagues;
-      });
+      const updatedLeague = {
+        ...league,
+        teamRequests: league!.teamRequests.filter(
+          (team) => team.id !== member.userId
+        ),
+      } as League;
+      setLeague(updatedLeague);
     } catch (error) {
       console.error('Error declining request:', error);
     }
@@ -319,23 +240,14 @@ const ManageLeagues = () => {
 
   const onRemoveInvite = async (member: LeagueUser) => {
     try {
-      await declineInvite(selectedLeague?.id!, member.userId);
-      setLeagues((prevLeagues) => {
-        const updatedLeagues = prevLeagues.map((league) => {
-          if (league.id === selectedLeague?.id) {
-            const updatedLeague = {
-              ...league,
-              leagueInvites: league.leagueInvites.filter(
-                (user) => user.userId !== member.userId
-              ),
-            };
-            setSelectedLeague(updatedLeague);
-            return updatedLeague;
-          }
-          return league;
-        });
-        return updatedLeagues;
-      });
+      await declineInvite(league?.id!, member.userId);
+      const updatedLeague = {
+        ...league,
+        leagueInvites: league!.leagueInvites.filter(
+          (user) => user.userId !== member.userId
+        ),
+      } as League;
+      setLeague(updatedLeague);
     } catch (error) {
       console.error('Error removing invite:', error);
     }
@@ -345,12 +257,12 @@ const ManageLeagues = () => {
     query: string,
     pageNum: number
   ): Promise<PagedResult<User>> => {
-    const users = await searchUsers(selectedLeague?.id!, query, pageNum);
+    const users = await searchUsers(league?.id!, query, pageNum);
     return users;
   };
 
   const handleAddTeam = () => {
-    navigate(`/league/${selectedLeague?.id}/team`);
+    navigate(`/league/${league?.id}/team`);
   };
 
   if (isLoading) {
@@ -360,22 +272,13 @@ const ManageLeagues = () => {
   return (
     <Container>
       <BackButton navigateTo='/manager' />
-      <Select onChange={handleLeagueSelect}>
-        <option value=''>Select a league</option>
-        {leagues.map((league) => (
-          <option key={league.id} value={league.id}>
-            {league.name}
-          </option>
-        ))}
-      </Select>
-
-      {selectedLeague && (
+      {league && (
         <Card>
           <Header>
-            <Title>{selectedLeague.name}</Title>
+            <Title>{league.name}</Title>
             <HeaderActions>
-              <Badge $isPublic={selectedLeague.isPublic}>
-                {selectedLeague.isPublic ? 'Public' : 'Private'}
+              <Badge $isPublic={league.isPublic}>
+                {league.isPublic ? 'Public' : 'Private'}
               </Badge>
               <TrashButton onClick={() => setShowDeleteModal(true)}>
                 <Trash size={18} />
@@ -386,17 +289,17 @@ const ManageLeagues = () => {
           <InfoContainer>
             <InfoItem>
               <span>
-                {selectedLeague.isCompetitive ? 'Competitive' : 'Casual'}
+                {league.isCompetitive ? 'Competitive' : 'Casual'}
                 <Trash onClick={() => setShowDeleteModal(true)} size={18} />
               </span>
             </InfoItem>
             <InfoItem>
-              {selectedLeague.isTeamLeague ? (
+              {league.isTeamLeague ? (
                 <Users size={20} />
               ) : (
                 <UserIcon size={20} />
               )}
-              <span>{selectedLeague.sport}</span>
+              <span>{league.sport}</span>
             </InfoItem>
           </InfoContainer>
 
@@ -407,7 +310,7 @@ const ManageLeagues = () => {
             >
               Members
             </TabButton>
-            {selectedLeague.isTeamLeague && (
+            {league.isTeamLeague && (
               <TabButton
                 $active={activeTab === 'teams'}
                 onClick={() => setActiveTab('teams')}
@@ -426,20 +329,20 @@ const ManageLeagues = () => {
           {activeTab === 'members' && (
             <>
               <LeagueMembersSection
-                league={selectedLeague}
+                league={league}
                 isManaged={true}
                 onRemove={handleRemoveMember}
                 onSearchUsers={() => setShowSearchUsersModal(true)}
               />
               <LeaguePendingSection
                 title='Pending Invites'
-                items={selectedLeague.leagueInvites}
+                items={league.leagueInvites}
                 onDecline={onRemoveInvite}
                 type='invite'
               />
               <LeaguePendingSection
                 title='Join Requests'
-                items={selectedLeague.leagueRequests}
+                items={league.leagueRequests}
                 onAccept={onAccept}
                 onDecline={onDecline}
                 type='request'
@@ -447,16 +350,16 @@ const ManageLeagues = () => {
             </>
           )}
 
-          {activeTab === 'teams' && selectedLeague.isTeamLeague && (
+          {activeTab === 'teams' && league.isTeamLeague && (
             <>
               <LeagueTeamsSection
-                league={selectedLeague}
+                league={league}
                 isManaged={true}
                 onAddTeam={handleAddTeam}
               />
               <LeaguePendingSection
                 title='Team Requests'
-                items={selectedLeague.teamRequests.map(
+                items={league.teamRequests.map(
                   (tr) => ({ userId: tr.id, name: tr.name } as LeagueUser)
                 )}
                 onDecline={onDeclineTeam}
@@ -468,8 +371,8 @@ const ManageLeagues = () => {
 
           {activeTab === 'events' && (
             <LeagueEventsSection
-              events={selectedLeague.events || []}
-              isTeamEvents={selectedLeague.isTeamLeague}
+              events={league.events || []}
+              isTeamEvents={league.isTeamLeague}
               showCreateButton={true}
               onCreateEvent={handleCreateEvent}
               onLogResult={handleLogResult}
@@ -478,7 +381,7 @@ const ManageLeagues = () => {
         </Card>
       )}
 
-      {showSearchUsersModal && selectedLeague && (
+      {showSearchUsersModal && league && (
         <SearchUsersModal
           isOpen={showSearchUsersModal}
           onClose={() => setShowSearchUsersModal(false)}
@@ -491,7 +394,7 @@ const ManageLeagues = () => {
         isOpen={showDeleteModal}
         onClose={() => setShowDeleteModal(false)}
         onConfirm={handleDeleteLeague}
-        entityName={selectedLeague?.name || 'league'}
+        entityName={league?.name || 'league'}
         action='Delete'
       />
       <LogResultModal

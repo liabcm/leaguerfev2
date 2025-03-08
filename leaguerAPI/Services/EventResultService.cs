@@ -69,9 +69,24 @@ namespace leaguerAPI.Services
                 eventResult.StarPlayerUserId = eventResultDto.StarPlayerUserId;
 
 
-                var eventCreated = await _context.EventResults.AddAsync(eventResult);
+                var eventAdded = await _context.EventResults.AddAsync(eventResult);
+                var eventCreated = eventAdded.Entity;
                 await _context.SaveChangesAsync();
-                return Response<EventResultDTO>.SuccessResult(new EventResultDTO(eventCreated.Entity));
+                return Response<EventResultDTO>.SuccessResult(new EventResultDTO
+                {
+                    Id = eventCreated.Id,
+                    Event = new EventDTO
+                    {
+                        Location = eventCreated.Event.Location,
+                        EventTime = eventCreated.Event.EventTime,
+                    },
+                    Score = eventCreated.Score,
+                    StarPlayerUserId = eventCreated.StarPlayerUserId,
+                    WinningTeam = eventCreated.WinningTeam != null ? new TeamDTO { Name = eventCreated.WinningTeam.Name } : null,
+                    LosingTeam = eventCreated.LosingTeam != null ? new TeamDTO { Name = eventCreated.LosingTeam.Name } : null,
+                    WinningUser = eventCreated.WinningUser != null ? new UserDTO { Name = eventCreated.WinningUser.Name } : null,
+                    LosingUser = eventCreated.LosingUser != null ? new UserDTO { Name = eventCreated.LosingUser.Name } : null,
+                });
             }
             catch (Exception ex)
             {
