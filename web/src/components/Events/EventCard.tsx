@@ -143,7 +143,7 @@ const EventCard: React.FC = () => {
   const { getEventById } = useLeagueApi();
 
   const members = event?.users?.length
-    ? event.users
+    ? event.users.map((u) => ({ id: u.userId, name: u.name }))
     : event?.teams?.map((t) => ({ id: t.teamId, name: t.name }));
 
   useEffect(() => {
