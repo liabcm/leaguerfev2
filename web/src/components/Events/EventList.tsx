@@ -46,7 +46,7 @@ const EventList = ({
               Log Result
             </LogResultButton>
           )}
-          {isCompletedSection && event.eventResult && (
+          {isCompletedSection && !!event.eventResult && (
             <LogResultButton
               onClick={() => navigate(`/event-result/${event.eventResult!.id}`)}
             >

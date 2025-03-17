@@ -14,6 +14,7 @@ namespace leaguerAPI.Services.Interfaces
         Task<Response<List<LeagueDTO>>> GetJoinedLeaguesAsync(Guid userId);
         Task<Response<bool>> InviteUserToLeagueAsync(Guid leagueId, Guid invitedUserId, Guid currentUserId, bool isInvite);
         Task<Response<bool>> DeleteAsync(Guid leagueId, Guid currentUserId);
+        Task<Response<List<LeagueDTO>>> GetMyManagedLeaguesAsync(Guid userId);
 
     }
 }

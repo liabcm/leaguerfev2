@@ -16,11 +16,13 @@ import LeagueForm from './League/LeagueForm';
 import LeagueList from './League/LeagueList';
 import ManageLeagues from './League/ManageLeagues';
 import MyLeagues from './League/MyLeagues';
+import MyManagedLeagues from './League/MyManagedLeagues';
 import Manager from './Manager';
 import Profile from './Profile';
 import ProtectedRoute from './ProtectedRoute';
 import SportForm from './Sport/SportForm';
 import ManageTeams from './Teams/ManageTeams';
+import MyManagedTeams from './Teams/MyManagedTeams';
 import MyTeams from './Teams/MyTeams';
 import TeamCard from './Teams/TeamCard';
 import TeamForm from './Teams/TeamForm';
@@ -55,19 +57,21 @@ function Pages() {
         <Route path='/leagues' element={<LeagueList />} />
         <Route path='/profile' element={<Profile />} />
         <Route path='league/:id' element={<LeagueCard />} />
-        <Route path='manage-leagues' element={<ManageLeagues />} />
+        <Route path='manage-leagues/:id' element={<ManageLeagues />} />
         <Route path='event-create/:leagueId' element={<EventForm />} />
         <Route path='event/:id' element={<EventCard />} />
         <Route path='my-leagues' element={<MyLeagues />} />
         <Route path='sport' element={<SportForm />} />
         <Route path='/invites' element={<InvitesPage />} />
         <Route path='league/:leagueId/team' element={<TeamForm />} />
-        <Route path='/manage-teams' element={<ManageTeams />} />
+        <Route path='/my-managed-teams' element={<MyManagedTeams />} />
+        <Route path='/manage-teams/:id' element={<ManageTeams />} />
         <Route path='/team/:id' element={<TeamCard />} />
         <Route path='/upcoming-events' element={<UpcomingEvents />} />
         <Route path='/manager' element={<Manager />} />
         <Route path='/my-teams' element={<MyTeams />} />
         <Route path='/event-result/:id' element={<EventResultCard />} />
+        <Route path='/my-managed-leagues' element={<MyManagedLeagues />} />
       </Route>
     </Routes>
   );

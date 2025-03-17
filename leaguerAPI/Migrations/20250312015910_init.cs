@@ -6,7 +6,7 @@ using Microsoft.EntityFrameworkCore.Migrations;
 namespace leaguerAPI.Migrations
 {
     /// <inheritdoc />
-    public partial class initafterdelete : Migration
+    public partial class init : Migration
     {
         /// <inheritdoc />
         protected override void Up(MigrationBuilder migrationBuilder)
@@ -15,15 +15,15 @@ namespace leaguerAPI.Migrations
                 name: "Leagues",
                 columns: table => new
                 {
-                    Id = table.Column<Guid>(type: "uniqueidentifier", nullable: false),
-                    Name = table.Column<string>(type: "nvarchar(100)", maxLength: 100, nullable: false),
-                    Sport = table.Column<string>(type: "nvarchar(50)", maxLength: 50, nullable: false),
-                    CreatedDate = table.Column<DateTime>(type: "datetime2", nullable: false, defaultValueSql: "GETUTCDATE()"),
-                    ModifiedDate = table.Column<DateTime>(type: "datetime2", nullable: false, defaultValueSql: "GETUTCDATE()"),
-                    isPublic = table.Column<bool>(type: "bit", nullable: false, defaultValue: false),
-                    isCompetitive = table.Column<bool>(type: "bit", nullable: false, defaultValue: false),
-                    CreatedBy = table.Column<Guid>(type: "uniqueidentifier", nullable: false),
-                    IsTeamLeague = table.Column<bool>(type: "bit", nullable: false, defaultValue: false)
+                    Id = table.Column<Guid>(type: "uuid", nullable: false),
+                    Name = table.Column<string>(type: "character varying(100)", maxLength: 100, nullable: false),
+                    Sport = table.Column<string>(type: "character varying(50)", maxLength: 50, nullable: false),
+                    CreatedDate = table.Column<DateTime>(type: "timestamp with time zone", nullable: false, defaultValueSql: "CURRENT_TIMESTAMP"),
+                    ModifiedDate = table.Column<DateTime>(type: "timestamp with time zone", nullable: false, defaultValueSql: "CURRENT_TIMESTAMP"),
+                    isPublic = table.Column<bool>(type: "boolean", nullable: false, defaultValue: false),
+                    isCompetitive = table.Column<bool>(type: "boolean", nullable: false, defaultValue: false),
+                    CreatedBy = table.Column<Guid>(type: "uuid", nullable: false),
+                    IsTeamLeague = table.Column<bool>(type: "boolean", nullable: false, defaultValue: false)
                 },
                 constraints: table =>
                 {
@@ -34,10 +34,10 @@ namespace leaguerAPI.Migrations
                 name: "Sports",
                 columns: table => new
                 {
-                    Id = table.Column<Guid>(type: "uniqueidentifier", nullable: false),
-                    Name = table.Column<string>(type: "nvarchar(100)", maxLength: 100, nullable: false),
-                    IsTeamSport = table.Column<bool>(type: "bit", nullable: false),
-                    Description = table.Column<string>(type: "nvarchar(500)", maxLength: 500, nullable: false)
+                    Id = table.Column<Guid>(type: "uuid", nullable: false),
+                    Name = table.Column<string>(type: "character varying(100)", maxLength: 100, nullable: false),
+                    IsTeamSport = table.Column<bool>(type: "boolean", nullable: false),
+                    Description = table.Column<string>(type: "character varying(500)", maxLength: 500, nullable: false)
                 },
                 constraints: table =>
                 {
@@ -48,9 +48,9 @@ namespace leaguerAPI.Migrations
                 name: "Users",
                 columns: table => new
                 {
-                    Id = table.Column<Guid>(type: "uniqueidentifier", nullable: false),
-                    Name = table.Column<string>(type: "nvarchar(100)", maxLength: 100, nullable: false),
-                    Email = table.Column<string>(type: "nvarchar(255)", maxLength: 255, nullable: false)
+                    Id = table.Column<Guid>(type: "uuid", nullable: false),
+                    Name = table.Column<string>(type: "character varying(100)", maxLength: 100, nullable: false),
+                    Email = table.Column<string>(type: "character varying(255)", maxLength: 255, nullable: false)
                 },
                 constraints: table =>
                 {
@@ -61,12 +61,12 @@ namespace leaguerAPI.Migrations
                 name: "Teams",
                 columns: table => new
                 {
-                    Id = table.Column<Guid>(type: "uniqueidentifier", nullable: false),
-                    LeagueId = table.Column<Guid>(type: "uniqueidentifier", nullable: false),
-                    Name = table.Column<string>(type: "nvarchar(100)", maxLength: 100, nullable: false),
-                    Wins = table.Column<int>(type: "int", nullable: false, defaultValue: 0),
-                    Losses = table.Column<int>(type: "int", nullable: false, defaultValue: 0),
-                    IsPending = table.Column<bool>(type: "bit", nullable: false, defaultValue: false)
+                    Id = table.Column<Guid>(type: "uuid", nullable: false),
+                    LeagueId = table.Column<Guid>(type: "uuid", nullable: false),
+                    Name = table.Column<string>(type: "character varying(100)", maxLength: 100, nullable: false),
+                    Wins = table.Column<int>(type: "integer", nullable: false, defaultValue: 0),
+                    Losses = table.Column<int>(type: "integer", nullable: false, defaultValue: 0),
+                    IsPending = table.Column<bool>(type: "boolean", nullable: false, defaultValue: false)
                 },
                 constraints: table =>
                 {
@@ -83,13 +83,13 @@ namespace leaguerAPI.Migrations
                 name: "Events",
                 columns: table => new
                 {
-                    Id = table.Column<Guid>(type: "uniqueidentifier", nullable: false),
-                    Location = table.Column<string>(type: "nvarchar(max)", nullable: false),
-                    LeagueId = table.Column<Guid>(type: "uniqueidentifier", nullable: false),
-                    EventTime = table.Column<DateTime>(type: "datetime2", nullable: false),
-                    IsConfirmed = table.Column<bool>(type: "bit", nullable: false, defaultValue: false),
-                    Createdby = table.Column<Guid>(type: "uniqueidentifier", nullable: false),
-                    IsCompleted = table.Column<bool>(type: "bit", nullable: false, defaultValue: false)
+                    Id = table.Column<Guid>(type: "uuid", nullable: false),
+                    Location = table.Column<string>(type: "text", nullable: false),
+                    LeagueId = table.Column<Guid>(type: "uuid", nullable: false),
+                    EventTime = table.Column<DateTime>(type: "timestamp with time zone", nullable: false),
+                    IsConfirmed = table.Column<bool>(type: "boolean", nullable: false, defaultValue: false),
+                    Createdby = table.Column<Guid>(type: "uuid", nullable: false),
+                    IsCompleted = table.Column<bool>(type: "boolean", nullable: false, defaultValue: false)
                 },
                 constraints: table =>
                 {
@@ -112,15 +112,15 @@ namespace leaguerAPI.Migrations
                 name: "LeagueUsers",
                 columns: table => new
                 {
-                    UserId = table.Column<Guid>(type: "uniqueidentifier", nullable: false),
-                    LeagueId = table.Column<Guid>(type: "uniqueidentifier", nullable: false),
-                    Status = table.Column<int>(type: "int", nullable: false),
-                    IsDeleted = table.Column<bool>(type: "bit", nullable: false, defaultValue: false)
+                    UserId = table.Column<Guid>(type: "uuid", nullable: false),
+                    LeagueId = table.Column<Guid>(type: "uuid", nullable: false),
+                    Status = table.Column<int>(type: "integer", nullable: false),
+                    IsDeleted = table.Column<bool>(type: "boolean", nullable: false, defaultValue: false)
                 },
                 constraints: table =>
                 {
                     table.PrimaryKey("PK_LeagueUsers", x => new { x.UserId, x.LeagueId });
-                    table.CheckConstraint("CK_LeagueUsers_Status", "Status BETWEEN 0 AND 4");
+                    table.CheckConstraint("CK_LeagueUsers_Status", "\"Status\" BETWEEN 0 AND 4");
                     table.ForeignKey(
                         name: "FK_LeagueUsers_Leagues_LeagueId",
                         column: x => x.LeagueId,
@@ -139,15 +139,15 @@ namespace leaguerAPI.Migrations
                 name: "TeamUsers",
                 columns: table => new
                 {
-                    TeamId = table.Column<Guid>(type: "uniqueidentifier", nullable: false),
-                    UserId = table.Column<Guid>(type: "uniqueidentifier", nullable: false),
-                    IsDeleted = table.Column<bool>(type: "bit", nullable: false),
-                    Status = table.Column<int>(type: "int", nullable: false)
+                    TeamId = table.Column<Guid>(type: "uuid", nullable: false),
+                    UserId = table.Column<Guid>(type: "uuid", nullable: false),
+                    IsDeleted = table.Column<bool>(type: "boolean", nullable: false),
+                    Status = table.Column<int>(type: "integer", nullable: false)
                 },
                 constraints: table =>
                 {
                     table.PrimaryKey("PK_TeamUsers", x => new { x.TeamId, x.UserId });
-                    table.CheckConstraint("CK_TeamUsers_Status", "Status BETWEEN 0 AND 4");
+                    table.CheckConstraint("CK_TeamUsers_Status", "\"Status\" BETWEEN 0 AND 4");
                     table.ForeignKey(
                         name: "FK_TeamUsers_Teams_TeamId",
                         column: x => x.TeamId,
@@ -166,15 +166,18 @@ namespace leaguerAPI.Migrations
                 name: "EventResults",
                 columns: table => new
                 {
-                    EventId = table.Column<Guid>(type: "uniqueidentifier", nullable: false),
-                    WinningTeamId = table.Column<Guid>(type: "uniqueidentifier", nullable: true),
-                    WinningUserId = table.Column<Guid>(type: "uniqueidentifier", nullable: true),
-                    Score = table.Column<string>(type: "nvarchar(50)", maxLength: 50, nullable: false),
-                    StarPlayerUserId = table.Column<Guid>(type: "uniqueidentifier", nullable: false)
+                    Id = table.Column<Guid>(type: "uuid", nullable: false),
+                    EventId = table.Column<Guid>(type: "uuid", nullable: false),
+                    WinningTeamId = table.Column<Guid>(type: "uuid", nullable: true),
+                    WinningUserId = table.Column<Guid>(type: "uuid", nullable: true),
+                    LosingTeamId = table.Column<Guid>(type: "uuid", nullable: true),
+                    LosingUserId = table.Column<Guid>(type: "uuid", nullable: true),
+                    Score = table.Column<string>(type: "character varying(50)", maxLength: 50, nullable: false),
+                    StarPlayerUserId = table.Column<Guid>(type: "uuid", nullable: true)
                 },
                 constraints: table =>
                 {
-                    table.PrimaryKey("PK_EventResults", x => x.EventId);
+                    table.PrimaryKey("PK_EventResults", x => x.Id);
                     table.ForeignKey(
                         name: "FK_EventResults_Events_EventId",
                         column: x => x.EventId,
@@ -182,9 +185,21 @@ namespace leaguerAPI.Migrations
                         principalColumn: "Id",
                         onDelete: ReferentialAction.Restrict);
                     table.ForeignKey(
+                        name: "FK_EventResults_Teams_LosingTeamId",
+                        column: x => x.LosingTeamId,
+                        principalTable: "Teams",
+                        principalColumn: "Id",
+                        onDelete: ReferentialAction.Restrict);
+                    table.ForeignKey(
                         name: "FK_EventResults_Teams_WinningTeamId",
                         column: x => x.WinningTeamId,
                         principalTable: "Teams",
+                        principalColumn: "Id",
+                        onDelete: ReferentialAction.Restrict);
+                    table.ForeignKey(
+                        name: "FK_EventResults_Users_LosingUserId",
+                        column: x => x.LosingUserId,
+                        principalTable: "Users",
                         principalColumn: "Id",
                         onDelete: ReferentialAction.Restrict);
                     table.ForeignKey(
@@ -205,8 +220,8 @@ namespace leaguerAPI.Migrations
                 name: "EventTeams",
                 columns: table => new
                 {
-                    EventId = table.Column<Guid>(type: "uniqueidentifier", nullable: false),
-                    TeamId = table.Column<Guid>(type: "uniqueidentifier", nullable: false)
+                    EventId = table.Column<Guid>(type: "uuid", nullable: false),
+                    TeamId = table.Column<Guid>(type: "uuid", nullable: false)
                 },
                 constraints: table =>
                 {
@@ -229,8 +244,8 @@ namespace leaguerAPI.Migrations
                 name: "EventUsers",
                 columns: table => new
                 {
-                    UserId = table.Column<Guid>(type: "uniqueidentifier", nullable: false),
-                    EventId = table.Column<Guid>(type: "uniqueidentifier", nullable: false)
+                    UserId = table.Column<Guid>(type: "uuid", nullable: false),
+                    EventId = table.Column<Guid>(type: "uuid", nullable: false)
                 },
                 constraints: table =>
                 {
@@ -248,6 +263,22 @@ namespace leaguerAPI.Migrations
                         principalColumn: "Id",
                         onDelete: ReferentialAction.Restrict);
                 });
+
+            migrationBuilder.CreateIndex(
+                name: "IX_EventResults_EventId",
+                table: "EventResults",
+                column: "EventId",
+                unique: true);
+
+            migrationBuilder.CreateIndex(
+                name: "IX_EventResults_LosingTeamId",
+                table: "EventResults",
+                column: "LosingTeamId");
+
+            migrationBuilder.CreateIndex(
+                name: "IX_EventResults_LosingUserId",
+                table: "EventResults",
+                column: "LosingUserId");
 
             migrationBuilder.CreateIndex(
                 name: "IX_EventResults_StarPlayerUserId",

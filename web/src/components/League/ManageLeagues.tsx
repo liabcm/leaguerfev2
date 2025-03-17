@@ -271,7 +271,7 @@ const ManageLeagues = () => {
 
   return (
     <Container>
-      <BackButton navigateTo='/manager' />
+      <BackButton />
       {league && (
         <Card>
           <Header>
@@ -402,6 +402,7 @@ const ManageLeagues = () => {
         onClose={() => setIsModalOpen(false)}
         event={selectedEvent}
         onSubmit={handleSubmitResult}
+        isTeamEvent={league?.isTeamLeague || false}
       />
     </Container>
   );
@@ -414,16 +415,6 @@ const Container = styled.div`
   max-width: 768px;
   margin: 0 auto;
   padding: clamp(1rem, 5vw, 3rem) 1rem;
-`;
-
-const Select = styled.select`
-  width: 100%;
-  max-width: 25rem;
-  padding: clamp(0.5rem, 2vw, 0.75rem);
-  margin-bottom: clamp(1rem, 3vw, 1.5rem);
-  border: 1px solid #e5e7eb;
-  border-radius: 0.375rem;
-  font-size: clamp(0.875rem, 2.5vw, 1rem);
 `;
 
 const InfoContainer = styled.div`

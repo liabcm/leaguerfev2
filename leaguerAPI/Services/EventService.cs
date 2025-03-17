@@ -130,7 +130,7 @@ namespace leaguerAPI.Services
                                     || e.EventTeams.Any(et => et.Team.TeamUsers.Any(tu => tu.UserId == userId
                                                                                     && (tu.Status == TeamUserStatus.Manager
                                                                                     || tu.Status == TeamUserStatus.Member))))
-                                    && e.EventTime > DateTime.Now);
+                                    && e.EventTime > DateTime.UtcNow);
 
             var totalCount = await query.CountAsync();
 

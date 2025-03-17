@@ -112,7 +112,7 @@ namespace leaguerAPI.Services
                     LosingTeam = er.LosingTeam != null ? new TeamDTO { Name = er.LosingTeam.Name } : null,
                     WinningUser = er.WinningUser != null ? new UserDTO { Name = er.WinningUser.Name } : null,
                     LosingUser = er.LosingUser != null ? new UserDTO { Name = er.LosingUser.Name } : null,
-                }).FirstOrDefaultAsync();
+                }).FirstOrDefaultAsync(er => er.Id == id);
 
                 if (eventResult == null)
                 {

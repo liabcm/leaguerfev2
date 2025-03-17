@@ -150,6 +150,7 @@ namespace leaguerAPI.Services
                         .ThenInclude(tu => tu.User)
                     .Include(t => t.EventTeams)
                         .ThenInclude(et => et.Event)
+                        .ThenInclude(e => e.EventResult)
                     .Include(t => t.League)
                     .FirstOrDefaultAsync(t => t.Id == teamId);
 
@@ -285,15 +286,12 @@ namespace leaguerAPI.Services
                 return Response<List<TeamDTO>>.FailureResult("Invalid User Id");
 
             var teams = await _context.Teams.AsNoTracking()
-                .Where(t => t.TeamUsers.Any(tu => tu.UserId == userId && tu.Status == TeamUserStatus.Manager))
-                .Include(t => t.TeamUsers)
-                    .ThenInclude(tu => tu.User)
-                .Include(t => t.EventTeams)
-                    .ThenInclude(et => et.Event)
-                .Include(t => t.League)
-                .Select(t => new TeamDTO(t))
-                .AsSplitQuery()
-                .ToListAsync();
+                    .Where(t => t.TeamUsers
+                    .Any(tu => tu.UserId == userId
+                               && tu.Status == TeamUserStatus.Manager))
+                    .Include(t => t.League)
+                    .Select(t => new TeamDTO(t))
+                    .ToListAsync();
 
             return Response<List<TeamDTO>>.SuccessResult(teams);
         }
@@ -458,7 +456,7 @@ namespace leaguerAPI.Services
                 var teams = await _context.Teams.AsNoTracking()
                     .Where(t => t.TeamUsers.Any(tu => tu.UserId == userId
                                             && (tu.Status == TeamUserStatus.Member
-                                                            || tu.Status == TeamUserStatus.Manager)))
+                                                || tu.Status == TeamUserStatus.Manager)))
                     .Include(t => t.League)
                     .Select(t => new TeamDTO(t))
                     .ToListAsync();

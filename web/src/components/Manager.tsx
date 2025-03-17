@@ -83,11 +83,11 @@ const Manager: React.FC = () => {
   const navigate = useNavigate();
 
   const handleManageLeagues = () => {
-    navigate('/manage-leagues');
+    navigate('/my-managed-leagues');
   };
 
   const handleManageTeams = () => {
-    navigate('/manage-teams');
+    navigate('/my-managed-teams');
   };
 
   const handleCreateLeague = () => {

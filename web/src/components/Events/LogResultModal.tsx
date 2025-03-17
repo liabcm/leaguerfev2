@@ -8,6 +8,7 @@ interface LogResultModalProps {
   isOpen: boolean;
   onClose: () => void;
   event: Event | null;
+  isTeamEvent: boolean;
   onSubmit: (formData: {
     winningId: string;
     score: string;
@@ -28,6 +29,7 @@ const LogResultModal = ({
   onClose,
   event,
   onSubmit,
+  isTeamEvent,
 }: LogResultModalProps) => {
   const [formData, setFormData] = useState({
     winningId: '',
@@ -48,15 +50,17 @@ const LogResultModal = ({
 
   if (!isOpen || !event) return null;
 
-  const winningOptions: SelectOption[] = event.teams?.length
-    ? event.teams.map((team) => ({ value: team.teamId, label: team.name }))
-    : event.users?.length
-    ? event.users.map((user) => ({ value: user.id, label: user.name }))
-    : [];
+  const winningOptions: SelectOption[] =
+    isTeamEvent && event.teams
+      ? event.teams?.map((team) => ({ value: team.teamId, label: team.name }))
+      : event.users
+      ? event.users.map((user) => ({ value: user.userId, label: user.name }))
+      : [];
 
-  const starPlayerOptions = event.users?.length
-    ? event.users.map((u) => ({ value: u.id, label: u.name }))
-    : event.teamPlayers?.map((u) => ({ value: u.id, label: u.name }));
+  const starPlayerOptions =
+    !isTeamEvent && event.users
+      ? event.users.map((u) => ({ value: u.userId, label: u.name }))
+      : event.teamPlayers?.map((u) => ({ value: u.id, label: u.name }));
 
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
@@ -77,10 +81,10 @@ const LogResultModal = ({
         <h3>Log Result for {event.location}</h3>
         <form onSubmit={handleSubmit}>
           <FormGroup>
-            <label>Winning {event.teams ? 'Team' : 'User'}:</label>
+            <label>Winning {isTeamEvent ? 'Team' : 'User'}:</label>
             <Select
               options={winningOptions}
-              placeholder={`Select a ${event.teams ? 'Team' : 'User'}`}
+              placeholder={`Select a ${isTeamEvent ? 'Team' : 'User'}`}
               value={
                 winningOptions.find(
                   (option) => option.value === formData.winningId

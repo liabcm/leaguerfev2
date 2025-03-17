@@ -43,11 +43,11 @@ namespace leaguerAPI.Database
                     .HasMaxLength(50);
 
                 entity.Property(l => l.CreatedDate)
-                    .HasDefaultValueSql("GETUTCDATE()")
+                    .HasDefaultValueSql("CURRENT_TIMESTAMP")
                     .ValueGeneratedOnAdd();
 
                 entity.Property(l => l.ModifiedDate)
-                    .HasDefaultValueSql("GETUTCDATE()")
+                    .HasDefaultValueSql("CURRENT_TIMESTAMP")
                     .ValueGeneratedOnAddOrUpdate();
 
                 entity.Property(l => l.isPublic)
@@ -95,9 +95,9 @@ namespace leaguerAPI.Database
                     .HasConversion<int>()
                     .IsRequired();
 
-                // Modern syntax for CHECK constraint and table configuration
+                // PostgreSQL CHECK constraint syntax
                 entity.ToTable("LeagueUsers", tb =>
-                    tb.HasCheckConstraint("CK_LeagueUsers_Status", "Status BETWEEN 0 AND 4"));
+                    tb.HasCheckConstraint("CK_LeagueUsers_Status", "\"Status\" BETWEEN 0 AND 4"));
 
                 // Add index on Status for performance
                 entity.HasIndex(lu => lu.Status)
@@ -238,7 +238,7 @@ namespace leaguerAPI.Database
                     .IsRequired();
 
                 entity.ToTable("TeamUsers", tb =>
-                    tb.HasCheckConstraint("CK_TeamUsers_Status", "Status BETWEEN 0 AND 4"));
+                    tb.HasCheckConstraint("CK_TeamUsers_Status", "\"Status\" BETWEEN 0 AND 4"));
 
                 entity.HasIndex(lu => lu.Status)
                     .HasDatabaseName("IX_TeamUsers_Status");

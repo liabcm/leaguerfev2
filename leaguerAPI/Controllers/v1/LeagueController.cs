@@ -122,5 +122,17 @@ namespace leaguerAPI.Controllers.v1
             }
             return Ok(response.Data);
         }
+
+        [HttpGet("my-managed-leagues")]
+        public async Task<IActionResult> GetMyManagedLeagues()
+        {
+            var userId = User.GetObjectId();
+            var result = await _leagueService.GetMyManagedLeaguesAsync(userId);
+            if (!result.Success)
+            {
+                return BadRequest(new { message = result.ErrorMessage });
+            }
+            return Ok(result.Data);
+        }
     }
 }

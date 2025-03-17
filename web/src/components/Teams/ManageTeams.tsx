@@ -1,6 +1,6 @@
 import { Trophy, Users } from 'lucide-react';
 import { useEffect, useState } from 'react';
-import { useSearchParams } from 'react-router-dom';
+import { useParams } from 'react-router-dom';
 import styled from 'styled-components';
 import { useLeagueApi } from '../../api/useLeagueApi';
 import { PagedResult } from '../../models/PagedResult';
@@ -23,52 +23,36 @@ import { StyledSpinner } from '../SharedStyles';
 import TeamPendingSection from './TeamPendingSection';
 
 const ManageTeams = () => {
-  const [teams, setTeams] = useState<Team[]>([]);
-  const [selectedTeam, setSelectedTeam] = useState<Team | null>(null);
+  const [team, setTeam] = useState<Team | null>(null);
   const [activeTab, setActiveTab] = useState<'roster' | 'upcoming' | 'results'>(
     'roster'
   );
   const [showSearchUsersModal, setShowSearchUsersModal] = useState(false);
   const [isLoading, setIsLoading] = useState(false);
+  const { id } = useParams<{ id: string }>();
   const {
-    getMyTeams,
     searchUsersForTeamInvite,
     inviteOrRequestUserToTeam,
     declineTeamInvite,
     acceptTeamInvite,
     leaveTeam,
+    getTeamById,
   } = useLeagueApi();
-  const [searchParams, setSearchParams] = useSearchParams();
 
   useEffect(() => {
-    const fetchTeams = async () => {
+    const fetchTeam = async () => {
       try {
         setIsLoading(true);
-        const data = await getMyTeams();
-        setTeams(data);
-        const teamId = searchParams.get('teamId');
-        if (teamId) {
-          const team = data.find((t) => t.id === teamId);
-          setSelectedTeam(team || null);
-        }
+        const data = await getTeamById(id!);
+        setTeam(data);
       } catch (error) {
         console.error('Error fetching teams:', error);
       } finally {
         setIsLoading(false);
       }
     };
-    fetchTeams();
+    fetchTeam();
   }, []);
-
-  useEffect(() => {
-    setActiveTab('roster');
-  }, [selectedTeam?.id]);
-
-  const handleTeamSelect = (e: React.ChangeEvent<HTMLSelectElement>) => {
-    const teamId = e.target.value;
-    setSearchParams(teamId ? { teamId } : {});
-    setSelectedTeam(teams.find((t) => t.id === teamId) || null);
-  };
 
   const teamToLeague = (team: Team) => {
     return {
@@ -80,7 +64,7 @@ const ManageTeams = () => {
 
   const handleInviteUserToTeam = async (user: User): Promise<void> => {
     try {
-      await inviteOrRequestUserToTeam(selectedTeam?.id!, user.id, true);
+      await inviteOrRequestUserToTeam(team?.id!, user.id, true);
     } catch (error) {
       console.error('Error inviting user to team:', error);
     }
@@ -90,31 +74,21 @@ const ManageTeams = () => {
     query: string,
     pageNum: number
   ): Promise<PagedResult<User>> => {
-    return await searchUsersForTeamInvite(selectedTeam?.id!, query, pageNum);
+    return await searchUsersForTeamInvite(team?.id!, query, pageNum);
   };
 
   const handleRemoveMember = async (memberId: string) => {
     try {
-      const teamId = selectedTeam?.id!;
+      const teamId = team?.id!;
       await leaveTeam(teamId, memberId);
-      setTeams(
-        teams.map((team) => {
-          if (team.id === teamId) {
-            const updatedTeam = {
-              ...team,
-              teamUsers: team.teamUsers.filter(
-                (user) => user.userId !== memberId
-              ),
-              teamManagers: team.teamManagers.filter(
-                (user) => user.userId !== memberId
-              ),
-            };
-            setSelectedTeam(updatedTeam);
-            return updatedTeam;
-          }
-          return team;
-        })
-      );
+      const updatedTeam = {
+        ...team,
+        teamUsers: team!.teamUsers.filter((user) => user.userId !== memberId),
+        teamManagers: team!.teamManagers.filter(
+          (user) => user.userId !== memberId
+        ),
+      } as Team;
+      setTeam(updatedTeam);
     } catch (error) {
       console.error('Error removing member:', error);
     }
@@ -122,23 +96,14 @@ const ManageTeams = () => {
 
   const onDecline = async (member: TeamUser) => {
     try {
-      await declineTeamInvite(selectedTeam?.id!, member.userId);
-      setTeams((prevTeams) => {
-        const updatedTeams = prevTeams.map((team) => {
-          if (team.id === selectedTeam?.id) {
-            const updatedTeam = {
-              ...team,
-              teamRequests: team.teamRequests.filter(
-                (user) => user.userId !== member.userId
-              ),
-            };
-            setSelectedTeam(updatedTeam);
-            return updatedTeam;
-          }
-          return team;
-        });
-        return updatedTeams;
-      });
+      await declineTeamInvite(team?.id!, member.userId);
+      const updatedTeam = {
+        ...team,
+        teamRequests: team!.teamRequests.filter(
+          (user) => user.userId !== member.userId
+        ),
+      } as Team;
+      setTeam(updatedTeam);
     } catch (error) {
       console.error('Error declining request:', error);
     }
@@ -146,23 +111,14 @@ const ManageTeams = () => {
 
   const onRemoveInvite = async (member: TeamUser) => {
     try {
-      await declineTeamInvite(selectedTeam?.id!, member.userId);
-      setTeams((prevTeams) => {
-        const updatedTeams = prevTeams.map((team) => {
-          if (team.id === selectedTeam?.id) {
-            const updatedTeam = {
-              ...team,
-              teamInvites: team.teamInvites.filter(
-                (user) => user.userId !== member.userId
-              ),
-            };
-            setSelectedTeam(updatedTeam);
-            return updatedTeam;
-          }
-          return team;
-        });
-        return updatedTeams;
-      });
+      await declineTeamInvite(team?.id!, member.userId);
+      const updatedTeam = {
+        ...team,
+        teamInvites: team!.teamInvites.filter(
+          (user) => user.userId !== member.userId
+        ),
+      } as Team;
+      setTeam(updatedTeam);
     } catch (error) {
       console.error('Error removing invite:', error);
     }
@@ -170,23 +126,15 @@ const ManageTeams = () => {
 
   const onAccept = async (member: TeamUser) => {
     try {
-      await acceptTeamInvite(selectedTeam?.id!, member.userId);
-      setTeams(
-        teams.map((team) => {
-          if (team.id === selectedTeam?.id) {
-            const updatedTeam = {
-              ...team,
-              teamUsers: [...team.teamUsers, member],
-              teamRequests: team.teamRequests.filter(
-                (user) => user.userId !== member.userId
-              ),
-            };
-            setSelectedTeam(updatedTeam);
-            return updatedTeam;
-          }
-          return team;
-        })
-      );
+      await acceptTeamInvite(team?.id!, member.userId);
+      const updatedTeam = {
+        ...team,
+        teamUsers: [...team!.teamUsers, member],
+        teamRequests: team!.teamRequests.filter(
+          (user) => user.userId !== member.userId
+        ),
+      } as Team;
+      setTeam(updatedTeam);
     } catch (error) {
       console.error('Error accepting request:', error);
     }
@@ -198,33 +146,25 @@ const ManageTeams = () => {
 
   return (
     <Container>
-      <BackButton navigateTo='/manager' />
-      <Select onChange={handleTeamSelect}>
-        <option value=''>Select a team</option>
-        {teams.map((team) => (
-          <option key={team.id} value={team.id}>
-            {team.name}
-          </option>
-        ))}
-      </Select>
+      <BackButton />
 
-      {selectedTeam && (
+      {team && (
         <Card>
           <Header>
             <Title>
-              {selectedTeam.name} - {selectedTeam.leagueName}
+              {team.name} - {team.leagueName}
             </Title>
           </Header>
 
           <InfoContainer>
             <InfoItem>
               <Trophy size={20} />
-              <span>Rank: {selectedTeam.rank}</span>
+              <span>Rank: {team.rank}</span>
             </InfoItem>
             <InfoItem>
               <Users size={20} />
               <span>
-                Record: {selectedTeam.wins}W - {selectedTeam.losses}L
+                Record: {team.wins}W - {team.losses}L
               </span>
             </InfoItem>
           </InfoContainer>
@@ -247,20 +187,20 @@ const ManageTeams = () => {
           {activeTab === 'roster' && (
             <>
               <LeagueMembersSection
-                league={teamToLeague(selectedTeam)}
+                league={teamToLeague(team)}
                 isManaged={true}
                 onSearchUsers={() => setShowSearchUsersModal(true)}
                 onRemove={handleRemoveMember}
               />
               <TeamPendingSection
                 title='Pending Invites'
-                items={selectedTeam.teamInvites}
+                items={team.teamInvites}
                 onDecline={onRemoveInvite}
                 type='invite'
               />
               <TeamPendingSection
                 title='Join Requests'
-                items={selectedTeam.teamRequests}
+                items={team.teamRequests}
                 onAccept={onAccept}
                 onDecline={onDecline}
                 type='request'
@@ -270,7 +210,7 @@ const ManageTeams = () => {
 
           {activeTab === 'upcoming' && (
             <LeagueEventsSection
-              events={selectedTeam.eventTeams.map((et) => et.event) || []}
+              events={team.eventTeams.map((et) => et.event) || []}
               isTeamEvents={true}
               showCreateButton={false}
             />
@@ -278,7 +218,7 @@ const ManageTeams = () => {
         </Card>
       )}
 
-      {showSearchUsersModal && selectedTeam && (
+      {showSearchUsersModal && team && (
         <SearchUsersModal
           isOpen={showSearchUsersModal}
           onClose={() => setShowSearchUsersModal(false)}
@@ -297,16 +237,6 @@ const Container = styled.div`
   max-width: 768px;
   margin: 0 auto;
   padding: clamp(1rem, 5vw, 3rem) 1rem;
-`;
-
-const Select = styled.select`
-  width: 100%;
-  max-width: 25rem;
-  padding: clamp(0.5rem, 2vw, 0.75rem);
-  margin-bottom: clamp(1rem, 3vw, 1.5rem);
-  border: 1px solid #e5e7eb;
-  border-radius: 0.375rem;
-  font-size: clamp(0.875rem, 2.5vw, 1rem);
 `;
 
 const InfoContainer = styled.div`
