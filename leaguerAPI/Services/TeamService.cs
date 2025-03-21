@@ -1,6 +1,7 @@
 ﻿using leaguerAPI.Database;
 using leaguerAPI.Models;
 using leaguerAPI.Models.DTOs;
+using leaguerAPI.Models.Enums;
 using leaguerAPI.Services.Interfaces;
 using Microsoft.EntityFrameworkCore;
 
@@ -14,49 +15,62 @@ namespace leaguerAPI.Services
         {
             _context = context;
         }
-
-        public async Task<Response<TeamDTO>> CreateTeamAsync(TeamCreateDTO teamDTO, Guid leagueManagerId)
+        //this either needs to be updated to createTeamFromLeague or updated to support leagueless team creation
+        public async Task<Response<TeamDTO>> CreateTeamAsync(TeamCreateDTO teamDTO, Guid leagueManagerId, Guid? leagueId = null)
         {
             try
             {
-                bool canAddTeam = await _context.LeagueUsers.AnyAsync(lu =>
-                    lu.UserId == leagueManagerId &&
-                    lu.LeagueId == teamDTO.LeagueId &&
-                    lu.Status == LeagueUserStatus.Manager);
+                var combinedUserIds = teamDTO.TeamManagerIds
+                    .Concat(teamDTO.TeamUserIds ?? Enumerable.Empty<Guid>())
+                    .ToList();
 
-                if (!canAddTeam)
-                    return Response<TeamDTO>.FailureResult("You do not have permission to add a team to this league");
+                if (leagueId != null)
+                {
+                    bool canAddTeam = await _context.LeagueUsers.AnyAsync(lu =>
+                        lu.UserId == leagueManagerId &&
+                        lu.LeagueId == leagueId &&
+                        lu.IsManager);
+
+                    if (!canAddTeam)
+                        return Response<TeamDTO>.FailureResult("You do not have permission to add a team to this league");
+
+                    if (!await AreUsersAvailableInLeague(combinedUserIds, leagueId.Value, null))
+                        return Response<TeamDTO>.FailureResult("One or more users are already part of a team in this league");
+
+                    if (!await ConfirmUsersExistInLeague(combinedUserIds, leagueId.Value))
+                        return Response<TeamDTO>.FailureResult("One or more users are not part of the league");
+                }
 
                 if (teamDTO.TeamManagerIds == null || !teamDTO.TeamManagerIds.Any())
                     return Response<TeamDTO>.FailureResult("At least one manager is required");
 
-                var combinedUserIds = teamDTO.TeamManagerIds
-                    .Concat(teamDTO.TeamUserIds ?? Enumerable.Empty<Guid>())
-                    .ToList();
-                if (!await AreUsersAvailable(combinedUserIds, teamDTO.LeagueId, null))
-                    return Response<TeamDTO>.FailureResult("One or more users are already part of a team in this league");
-
-                if (!await ConfirmUsersExistInLeague(combinedUserIds, teamDTO.LeagueId))
-                    return Response<TeamDTO>.FailureResult("One or more users are not part of the league");
-
                 var team = new Team
                 {
                     Id = Guid.NewGuid(),
-                    LeagueId = teamDTO.LeagueId,
                     Name = teamDTO.Name,
                     Wins = 0,
                     Losses = 0,
                     TeamUsers = new List<TeamUser>()
                 };
 
-                AddTeamMembers(team, teamDTO.TeamManagerIds, TeamUserStatus.Manager);
+                if (leagueId != null)
+                {
+                    var teamLeague = new TeamLeague
+                    {
+                        TeamId = team.Id,
+                        LeagueId = leagueId.Value
+                    };
+                    _context.TeamLeagues.Add(teamLeague);
+                }
+
+                AddTeamMembers(team, teamDTO.TeamManagerIds, TeamUserStatus.Member, true);
 
                 if (teamDTO.TeamUserIds != null && teamDTO.TeamUserIds.Any())
                 {
                     if (teamDTO.TeamUserIds.Any(id => teamDTO.TeamManagerIds.Contains(id)))
                         return Response<TeamDTO>.FailureResult("Managers cannot also be users");
 
-                    AddTeamMembers(team, teamDTO.TeamUserIds, TeamUserStatus.Member);
+                    AddTeamMembers(team, teamDTO.TeamUserIds, TeamUserStatus.Member, false);
                 }
 
                 await _context.Teams.AddAsync(team);
@@ -70,6 +84,7 @@ namespace leaguerAPI.Services
             }
         }
 
+        //commented out because we shouldnt allow straight update of team users we need new endpoint for this
         public async Task<Response<TeamDTO>> UpdateTeamAsync(TeamUpdateDTO teamDTO)
         {
             try
@@ -79,59 +94,69 @@ namespace leaguerAPI.Services
                 if (team == null)
                     return Response<TeamDTO>.FailureResult("Team not found");
 
-                var combinedUserIds = teamDTO.TeamManagerIds
-                    .Concat(teamDTO.TeamUserIds ?? Enumerable.Empty<Guid>())
-                    .ToList();
+                //var combinedUserIds = teamDTO.TeamManagerIds
+                //    .Concat(teamDTO.TeamUserIds ?? Enumerable.Empty<Guid>())
+                //    .ToList();
 
-                if (!await AreUsersAvailable(combinedUserIds, team.LeagueId, team.Id))
-                    return Response<TeamDTO>.FailureResult("One or more users are already part of a team in this league");
+                //var teamLeagues = await _context.TeamLeagues.AsNoTracking().Where(tl=> tl.TeamId == team.Id).ToListAsync();
+
+                //if(teamLeagues != null && teamLeagues.Count > 0)
+                //{
+                //    foreach (var teamLeague in teamLeagues)
+                //    {
+                //        if (!await AreUsersAvailableInLeague(combinedUserIds, teamLeague.LeagueId, team.Id))
+                //            return Response<TeamDTO>.FailureResult("One or more users are already part of a team in this league");
+                //    }
+                //}
+
+
 
                 team.Name = teamDTO.Name;
 
-                if (teamDTO.TeamManagerIds == null || !teamDTO.TeamManagerIds.Any())
-                    return Response<TeamDTO>.FailureResult("At least one manager is required");
+                //if (teamDTO.TeamManagerIds == null || !teamDTO.TeamManagerIds.Any())
+                //    return Response<TeamDTO>.FailureResult("At least one manager is required");
 
-                var currentManagerIds = team.TeamUsers
-                    .Where(tu => tu.Status == TeamUserStatus.Manager)
-                    .Select(tu => tu.UserId)
-                    .OrderBy(id => id)
-                    .ToList();
-                var newManagerIds = teamDTO.TeamManagerIds.OrderBy(id => id).ToList();
+                //var currentManagerIds = team.TeamUsers
+                //    .Where(tu => tu.IsManager)
+                //    .Select(tu => tu.UserId)
+                //    .OrderBy(id => id)
+                //    .ToList();
+                //var newManagerIds = teamDTO.TeamManagerIds.OrderBy(id => id).ToList();
 
-                if (!currentManagerIds.SequenceEqual(newManagerIds))
-                {
-                    if (!await ConfirmUsersExistInLeague(teamDTO.TeamManagerIds, team.LeagueId))
-                        return Response<TeamDTO>.FailureResult("One or more users are not part of the league");
+                //if (!currentManagerIds.SequenceEqual(newManagerIds))
+                //{
+                //    if (!await ConfirmUsersExistInLeague(teamDTO.TeamManagerIds, team.LeagueId))
+                //        return Response<TeamDTO>.FailureResult("One or more users are not part of the league");
 
-                    foreach (var tu in team.TeamUsers.Where(tu => tu.Status == TeamUserStatus.Manager).ToList())
-                        team.TeamUsers.Remove(tu);
+                //    foreach (var tu in team.TeamUsers.Where(tu => tu.Status == TeamUserStatus.Manager).ToList())
+                //        team.TeamUsers.Remove(tu);
 
-                    AddTeamMembers(team, teamDTO.TeamManagerIds, TeamUserStatus.Manager);
-                }
+                //    AddTeamMembers(team, teamDTO.TeamManagerIds, TeamUserStatus.Member, true);
+                //}
 
-                var currentTeamUserIds = team.TeamUsers
-                    .Where(tu => tu.Status == TeamUserStatus.Member)
-                    .Select(tu => tu.UserId)
-                    .OrderBy(id => id)
-                    .ToList();
-                var newTeamUserIds = (teamDTO.TeamUserIds ?? new List<Guid>()).OrderBy(id => id).ToList();
+                //var currentTeamUserIds = team.TeamUsers
+                //    .Where(tu => tu.Status == TeamUserStatus.Member)
+                //    .Select(tu => tu.UserId)
+                //    .OrderBy(id => id)
+                //    .ToList();
+                //var newTeamUserIds = (teamDTO.TeamUserIds ?? new List<Guid>()).OrderBy(id => id).ToList();
 
-                if (!currentTeamUserIds.SequenceEqual(newTeamUserIds))
-                {
-                    if (teamDTO.TeamUserIds != null && teamDTO.TeamUserIds.Any(id => teamDTO.TeamManagerIds.Contains(id)))
-                        return Response<TeamDTO>.FailureResult("Managers cannot also be users");
+                //if (!currentTeamUserIds.SequenceEqual(newTeamUserIds))
+                //{
+                //    if (teamDTO.TeamUserIds != null && teamDTO.TeamUserIds.Any(id => teamDTO.TeamManagerIds.Contains(id)))
+                //        return Response<TeamDTO>.FailureResult("Managers cannot also be users");
 
-                    if (teamDTO.TeamUserIds != null && !await ConfirmUsersExistInLeague(teamDTO.TeamUserIds, team.LeagueId))
-                        return Response<TeamDTO>.FailureResult("One or more users are not part of the league");
+                //    if (teamDTO.TeamUserIds != null && !await ConfirmUsersExistInLeague(teamDTO.TeamUserIds, team.LeagueId))
+                //        return Response<TeamDTO>.FailureResult("One or more users are not part of the league");
 
-                    foreach (var tu in team.TeamUsers.Where(tu => tu.Status == TeamUserStatus.Member).ToList())
-                        team.TeamUsers.Remove(tu);
+                //    foreach (var tu in team.TeamUsers.Where(tu => tu.Status == TeamUserStatus.Member).ToList())
+                //        team.TeamUsers.Remove(tu);
 
-                    if (teamDTO.TeamUserIds != null)
-                        AddTeamMembers(team, teamDTO.TeamUserIds, TeamUserStatus.Member);
-                }
+                //    if (teamDTO.TeamUserIds != null)
+                //        AddTeamMembers(team, teamDTO.TeamUserIds, TeamUserStatus.Member, false);
+                //}
 
-                await _context.SaveChangesAsync();
+                //await _context.SaveChangesAsync();
                 return Response<TeamDTO>.SuccessResult(new TeamDTO(team));
             }
             catch (Exception ex)
@@ -151,7 +176,8 @@ namespace leaguerAPI.Services
                     .Include(t => t.EventTeams)
                         .ThenInclude(et => et.Event)
                         .ThenInclude(e => e.EventResult)
-                    .Include(t => t.League)
+                    .Include(t => t.TeamLeagues)
+                        .ThenInclude(tl => tl.League)
                     .FirstOrDefaultAsync(t => t.Id == teamId);
 
                 if (team == null)
@@ -171,7 +197,7 @@ namespace leaguerAPI.Services
             {
                 var teams = await _context.Teams
                     .AsNoTracking()
-                    .Where(t => t.LeagueId == leagueId)
+                    .Where(t => t.TeamLeagues.Any(tl => tl.LeagueId == leagueId))
                     .Include(t => t.TeamUsers)
                     .Select(t => new TeamDTO(t))
                     .ToListAsync();
@@ -184,16 +210,16 @@ namespace leaguerAPI.Services
             }
         }
 
-        private async Task<bool> AreUsersAvailable(List<Guid> userIds, Guid leagueId, Guid? teamId)
+        private async Task<bool> AreUsersAvailableInLeague(List<Guid> userIds, Guid leagueId, Guid? teamId)
         {
             var guidsBeingUsed = teamId != null
                 ? await _context.Teams
-                    .Where(t => t.LeagueId == leagueId && t.Id != teamId)
+                    .Where(t => t.TeamLeagues.Any(tl => tl.LeagueId == leagueId) && t.Id != teamId)
                     .SelectMany(t => t.TeamUsers)
                     .Select(tu => tu.UserId)
                     .ToListAsync()
                 : await _context.Teams
-                    .Where(t => t.LeagueId == leagueId)
+                    .Where(t => t.TeamLeagues.Any(tl => tl.LeagueId == leagueId))
                     .SelectMany(t => t.TeamUsers)
                     .Select(tu => tu.UserId)
                     .ToListAsync();
@@ -213,7 +239,7 @@ namespace leaguerAPI.Services
             return count == distinctUserIds.Count;
         }
 
-        private void AddTeamMembers(Team team, IEnumerable<Guid> userIds, TeamUserStatus status)
+        private void AddTeamMembers(Team team, IEnumerable<Guid> userIds, TeamUserStatus status, bool isManager)
         {
             foreach (var userId in userIds)
             {
@@ -221,7 +247,8 @@ namespace leaguerAPI.Services
                 {
                     TeamId = team.Id,
                     UserId = userId,
-                    Status = status
+                    Status = status,
+                    IsManager = isManager
                 });
             }
         }
@@ -231,7 +258,7 @@ namespace leaguerAPI.Services
             if (userId == Guid.Empty)
                 return Response<TeamDTO>.FailureResult("At least one manager is required");
 
-            if (!await AreUsersAvailable(new List<Guid> { userId }, teamDTO.LeagueId, null))
+            if (!await AreUsersAvailableInLeague(new List<Guid> { userId }, teamDTO.LeagueId, null))
                 return Response<TeamDTO>.FailureResult("One or more users are already part of a team in this league");
 
             if (!await ConfirmUsersExistInLeague(new List<Guid> { userId }, teamDTO.LeagueId))
@@ -240,7 +267,6 @@ namespace leaguerAPI.Services
             var team = new Team
             {
                 Id = Guid.NewGuid(),
-                LeagueId = teamDTO.LeagueId,
                 Name = teamDTO.TeamName,
                 Wins = 0,
                 Losses = 0,
@@ -248,9 +274,16 @@ namespace leaguerAPI.Services
                 TeamUsers = new List<TeamUser>()
             };
 
-            AddTeamMembers(team, new List<Guid> { userId }, TeamUserStatus.TeamRequested);
+            AddTeamMembers(team, new List<Guid> { userId }, TeamUserStatus.TeamRequested, false);
+
+            var teamLeague = new TeamLeague
+            {
+                TeamId = team.Id,
+                LeagueId = teamDTO.LeagueId
+            };
 
             await _context.Teams.AddAsync(team);
+            await _context.TeamLeagues.AddAsync(teamLeague);
             await _context.SaveChangesAsync();
             return Response<TeamDTO>.SuccessResult(new TeamDTO(team));
 
@@ -258,7 +291,7 @@ namespace leaguerAPI.Services
 
         public async Task<Response<TeamDTO>> AcceptTeamRequest(Guid teamId, Guid managerId)
         {
-            var canAddTeam = await _context.Teams.AnyAsync(t => t.Id == teamId && t.League.LeagueUsers.Any(lu => lu.UserId == managerId && lu.Status == LeagueUserStatus.Manager));
+            var canAddTeam = await _context.TeamLeagues.AnyAsync(t => t.TeamId == teamId && t.League.LeagueUsers.Any(lu => lu.UserId == managerId && lu.IsManager));
 
             if (!canAddTeam)
                 return Response<TeamDTO>.FailureResult("You do not have permission to admit a team to this league");
@@ -274,7 +307,8 @@ namespace leaguerAPI.Services
             team.IsPending = false;
             foreach (var item in team.TeamUsers)
             {
-                item.Status = TeamUserStatus.Manager;
+                item.Status = TeamUserStatus.Member;
+                item.IsManager = true;
             };
             await _context.SaveChangesAsync();
             return Response<TeamDTO>.SuccessResult(new TeamDTO(team));
@@ -288,8 +322,9 @@ namespace leaguerAPI.Services
             var teams = await _context.Teams.AsNoTracking()
                     .Where(t => t.TeamUsers
                     .Any(tu => tu.UserId == userId
-                               && tu.Status == TeamUserStatus.Manager))
-                    .Include(t => t.League)
+                               && tu.IsManager))
+                    .Include(t => t.TeamLeagues)
+                        .ThenInclude(tl => tl.League)
                     .Select(t => new TeamDTO(t))
                     .ToListAsync();
 
@@ -303,16 +338,20 @@ namespace leaguerAPI.Services
                 return Response<bool>.FailureResult("Team not found");
             if (isInvite)
             {
-                var isManager = team.TeamUsers.Any(tu => tu.UserId == currentUserId && tu.Status == TeamUserStatus.Manager);
+                var isManager = team.TeamUsers.Any(tu => tu.UserId == currentUserId && tu.IsManager);
                 if (!isManager)
                     return Response<bool>.FailureResult("You do not have permission to invite to this team");
             }
 
-            if (!await AreUsersAvailable(new List<Guid> { userId }, team.LeagueId, null))
-                return Response<bool>.FailureResult("One or more users are already part of a team in this league");
-
-            if (!await ConfirmUsersExistInLeague(new List<Guid> { userId }, team.LeagueId))
-                return Response<bool>.FailureResult("One or more users are not part of the league");
+            var teamLeagues = await _context.TeamLeagues.AsNoTracking().Where(tl => tl.TeamId == teamId).ToListAsync();
+            if (teamLeagues != null && teamLeagues.Count > 0)
+            {
+                foreach (var teamLeague in teamLeagues)
+                {
+                    if (!await AreUsersAvailableInLeague(new List<Guid> { userId }, teamLeague.LeagueId, teamId))
+                        return Response<bool>.FailureResult("One or more users are already part of a team in this league");
+                }
+            }
 
             team.TeamUsers.Add(new TeamUser
             {
@@ -333,7 +372,7 @@ namespace leaguerAPI.Services
 
             if (userId != currentUserId)
             {
-                var isManager = team.TeamUsers.Any(tu => tu.UserId == currentUserId && tu.Status == TeamUserStatus.Manager);
+                var isManager = team.TeamUsers.Any(tu => tu.UserId == currentUserId && tu.IsManager);
                 if (!isManager)
                     return Response<bool>.FailureResult("You do not have permission to decline this invite");
             }
@@ -345,7 +384,7 @@ namespace leaguerAPI.Services
             if (teamUser.Status == TeamUserStatus.Member)
                 return Response<bool>.FailureResult("User is already a member of this team");
 
-            if (teamUser.Status == TeamUserStatus.Manager)
+            if (teamUser.IsManager)
                 return Response<bool>.FailureResult("Cannot remove a manager from the team");
 
             team.TeamUsers.Remove(teamUser);
@@ -361,7 +400,7 @@ namespace leaguerAPI.Services
 
             if (userId != currentUserId)
             {
-                var isManager = team.TeamUsers.Any(tu => tu.UserId == currentUserId && tu.Status == TeamUserStatus.Manager);
+                var isManager = team.TeamUsers.Any(tu => tu.UserId == currentUserId && tu.IsManager);
                 if (!isManager)
                     return Response<bool>.FailureResult("You do not have permission to accept this request");
             }
@@ -370,7 +409,7 @@ namespace leaguerAPI.Services
             if (teamUser == null)
                 return Response<bool>.FailureResult("User invite/request not found");
 
-            if (teamUser.Status == TeamUserStatus.Member || teamUser.Status == TeamUserStatus.Manager)
+            if (teamUser.Status == TeamUserStatus.Member)
                 return Response<bool>.FailureResult("User is already a member of this team");
 
             if (teamUser.Status == TeamUserStatus.Requested && userId == currentUserId)
@@ -403,7 +442,7 @@ namespace leaguerAPI.Services
                 var teamUser = team.TeamUsers.FirstOrDefault(tu => tu.UserId == currentUserId);
                 if (teamUser == null)
                     return Response<bool>.FailureResult("User is not part of this team");
-                if (teamUser.Status == TeamUserStatus.Manager && team.TeamUsers.Where(tu => tu.Status == TeamUserStatus.Manager).Count() == 1)
+                if (teamUser.IsManager && team.TeamUsers.Where(tu => tu.IsManager).Count() == 1)
                     return Response<bool>.FailureResult("There must be a manager in the team");
                 team.TeamUsers.Remove(teamUser);
                 await _context.SaveChangesAsync();
@@ -411,7 +450,7 @@ namespace leaguerAPI.Services
             }
             else
             {
-                var canKick = team.TeamUsers.Any(tu => tu.UserId == currentUserId && tu.Status == TeamUserStatus.Manager);
+                var canKick = team.TeamUsers.Any(tu => tu.UserId == currentUserId && tu.IsManager);
                 if (!canKick)
                     return Response<bool>.FailureResult("You do not have permission to kick from this team");
                 var teamUser = team.TeamUsers.FirstOrDefault(tu => tu.UserId == userIdToKick);
@@ -423,15 +462,11 @@ namespace leaguerAPI.Services
             }
         }
 
-        public async Task<Response<bool>> RejectTeamCreation(Guid teamId, Guid currentUserId)
+        public async Task<Response<bool>> RejectTeamCreation(Guid teamId, Guid currentUserId, Guid leagueId)
         {
             try
             {
-                var canReject = await _context.Teams
-                                        .AnyAsync(t => t.Id == teamId
-                                                && t.League.LeagueUsers.Any(tu =>
-                                                tu.UserId == currentUserId
-                                                && tu.Status == LeagueUserStatus.Manager));
+                var canReject = await _context.LeagueUsers.AnyAsync(lu => lu.UserId == currentUserId && lu.LeagueId == leagueId && lu.IsManager);
                 if (!canReject)
                     return Response<bool>.FailureResult("You do not have permission to reject this team");
 
@@ -455,9 +490,9 @@ namespace leaguerAPI.Services
             {
                 var teams = await _context.Teams.AsNoTracking()
                     .Where(t => t.TeamUsers.Any(tu => tu.UserId == userId
-                                            && (tu.Status == TeamUserStatus.Member
-                                                || tu.Status == TeamUserStatus.Manager)))
-                    .Include(t => t.League)
+                                            && (tu.Status == TeamUserStatus.Member)))
+                    .Include(t => t.TeamLeagues)
+                        .ThenInclude(tu => tu.League)
                     .Select(t => new TeamDTO(t))
                     .ToListAsync();
                 return Response<List<TeamDTO>>.SuccessResult(teams);

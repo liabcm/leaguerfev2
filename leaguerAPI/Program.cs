@@ -19,6 +19,7 @@ builder.Services.AddScoped<IEventService, EventService>();
 builder.Services.AddScoped<IEventResultService, EventResultService>();
 builder.Services.AddScoped<ISportService, SportService>();
 builder.Services.AddScoped<ITeamService, TeamService>();
+builder.Services.AddScoped<IMatchService, MatchService>();
 
 // Learn more about configuring Swagger/OpenAPI at https://aka.ms/aspnetcore/swashbuckle
 builder.Services.AddEndpointsApiExplorer();

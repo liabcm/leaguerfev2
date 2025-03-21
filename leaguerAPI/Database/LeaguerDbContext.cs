@@ -1,4 +1,5 @@
 ﻿using leaguerAPI.Models;
+using leaguerAPI.Models.Enums;
 using Microsoft.EntityFrameworkCore;
 
 namespace leaguerAPI.Database
@@ -20,8 +21,10 @@ namespace leaguerAPI.Database
         public DbSet<EventTeam> EventTeams { get; set; }
         public DbSet<Team> Teams { get; set; }
         public DbSet<TeamUser> TeamUsers { get; set; }
+        public DbSet<TeamLeague> TeamLeagues { get; set; }
+        public DbSet<Match> Matches { get; set; }
         public IQueryable<LeagueUser> ConfirmedLeagueUsers =>
-            LeagueUsers.Where(lu => lu.Status == LeagueUserStatus.Member || lu.Status == LeagueUserStatus.Manager);
+            LeagueUsers.Where(lu => lu.Status == LeagueUserStatus.Member);
         public IQueryable<LeagueUser> LeagueUserInvites =>
             LeagueUsers.Where(lu => lu.Status == LeagueUserStatus.Invited);
         public IQueryable<LeagueUser> LeagueUserRequestsAndInvites =>
@@ -76,6 +79,7 @@ namespace leaguerAPI.Database
             modelBuilder.Entity<LeagueUser>(entity =>
             {
                 entity.HasKey(lu => new { lu.UserId, lu.LeagueId });
+                entity.Property(lu => lu.IsManager).HasDefaultValue(false);
 
                 entity.HasOne(lu => lu.User)
                     .WithMany(u => u.LeagueUsers)
@@ -90,16 +94,13 @@ namespace leaguerAPI.Database
                 entity.Property(lu => lu.IsDeleted)
                     .HasDefaultValue(false);
 
-                // Configure Status as an integer mapped to the enum
                 entity.Property(lu => lu.Status)
                     .HasConversion<int>()
                     .IsRequired();
 
-                // PostgreSQL CHECK constraint syntax
                 entity.ToTable("LeagueUsers", tb =>
                     tb.HasCheckConstraint("CK_LeagueUsers_Status", "\"Status\" BETWEEN 0 AND 4"));
 
-                // Add index on Status for performance
                 entity.HasIndex(lu => lu.Status)
                     .HasDatabaseName("IX_LeagueUsers_Status");
 
@@ -122,9 +123,24 @@ namespace leaguerAPI.Database
                 entity.HasKey(e => e.Id);
                 entity.Property(e => e.EventTime).IsRequired();
                 entity.Property(e => e.Location).IsRequired();
-                entity.Property(e => e.IsConfirmed).HasDefaultValue(false);
-                entity.Property(e => e.IsCompleted).HasDefaultValue(false);
                 entity.Property(e => e.Createdby).IsRequired();
+                entity.Property(e => e.IsTeamEvent).IsRequired();
+
+                entity.Property(e => e.EventType)
+                    .HasConversion<int>()
+                    .IsRequired();
+
+                entity.ToTable("Events", tb =>
+                    tb.HasCheckConstraint("CK_Events_EventType", "\"EventType\" BETWEEN 0 AND 3"));
+
+                entity.HasIndex(lu => lu.EventType)
+                    .HasDatabaseName("IX_Events_EventType");
+
+                entity.ToTable("Events", tb =>
+                   tb.HasCheckConstraint("CK_Events_JoinType", "\"JoinType\" BETWEEN 0 AND 3"));
+
+                entity.HasIndex(lu => lu.EventType)
+                    .HasDatabaseName("IX_Events_JoinType");
 
                 entity.HasOne(e => e.League)
                     .WithMany(l => l.Events)
@@ -212,11 +228,6 @@ namespace leaguerAPI.Database
                 entity.Property(t => t.Wins).HasDefaultValue(0);
                 entity.Property(t => t.Losses).HasDefaultValue(0);
                 entity.Property(t => t.IsPending).HasDefaultValue(false);
-
-                entity.HasOne(t => t.League)
-                    .WithMany(l => l.Teams)
-                    .HasForeignKey(t => t.LeagueId)
-                    .OnDelete(DeleteBehavior.Restrict);
             });
 
             modelBuilder.Entity<TeamUser>(entity =>
@@ -247,6 +258,39 @@ namespace leaguerAPI.Database
 
                 entity.HasIndex(lu => lu.IsDeleted)
                     .HasDatabaseName("IX_TeamUsers_IsDeleted");
+            });
+
+            modelBuilder.Entity<TeamLeague>(entity =>
+            {
+                entity.HasKey(tl => new { tl.TeamId, tl.LeagueId });
+
+                entity.HasOne(tl => tl.Team)
+                    .WithMany(t => t.TeamLeagues)
+                    .HasForeignKey(tl => tl.TeamId)
+                    .OnDelete(DeleteBehavior.Restrict);
+
+                entity.HasOne(tl => tl.League)
+                    .WithMany(l => l.TeamLeagues)
+                    .HasForeignKey(tl => tl.LeagueId)
+                    .OnDelete(DeleteBehavior.Restrict);
+            });
+
+            modelBuilder.Entity<Match>(entity =>
+            {
+                entity.HasKey(m => m.Id);
+                entity.Property(m => m.Opponent1Id).IsRequired();
+                entity.Property(m => m.Opponent2Id).IsRequired();
+                entity.Property(m => m.Round).IsRequired();
+                entity.Property(m => m.MatchNumber).IsRequired();
+
+                modelBuilder.Entity<Match>()
+                    .Property(e => e.MatchResult)
+                    .HasColumnType("jsonb");
+
+                entity.HasOne(m => m.Event)
+                    .WithMany(e => e.Matches)
+                    .HasForeignKey(m => m.EventId)
+                    .OnDelete(DeleteBehavior.Restrict);
             });
         }
     }

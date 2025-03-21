@@ -4,7 +4,7 @@ import { useParams } from 'react-router-dom';
 import Select from 'react-select';
 import styled from 'styled-components';
 import { useLeagueApi } from '../../api/useLeagueApi';
-import { Event } from '../../models/Event';
+import { Event, EventJoinType, EventType } from '../../models/Event'; // Updated import
 import { League } from '../../models/League';
 import BackButton from '../General/BackButton';
 
@@ -16,10 +16,16 @@ const EventForm = () => {
   const [location, setLocation] = useState('');
   const [eventTime, setEventTime] = useState(
     moment().format('YYYY-MM-DDTHH:mm')
-  ); // Initialize with current time
+  );
   const [selectedTeams, setSelectedTeams] = useState<string[]>([]);
   const [selectedUsers, setSelectedUsers] = useState<string[]>([]);
-  const [isEditing, setIsEditing] = useState(false); // Track if it's a new event or edit
+  const [isEditing, setIsEditing] = useState(false);
+
+  // New state variables with default values
+  const [maxParticipants, setMaxParticipants] = useState<number>(0);
+  const [isTeamEvent, setIsTeamEvent] = useState<boolean>(false);
+  const [eventType, setEventType] = useState<EventType>(EventType.Single);
+  const [joinType, setJoinType] = useState<EventJoinType>(EventJoinType.Open);
 
   useEffect(() => {
     console.log(leagueId);
@@ -27,6 +33,8 @@ const EventForm = () => {
       try {
         const data = await getLeagueById(leagueId!);
         setLeague(data);
+        // Set isTeamEvent based on league type
+        setIsTeamEvent(data.isTeamLeague);
         setLoading(false);
       } catch (error) {
         console.error('Error fetching league:', error);
@@ -41,50 +49,44 @@ const EventForm = () => {
     console.log(league);
     if (!league) return;
 
-    const eventData: Omit<
-      Event,
-      'id' | 'createdBy' | 'users' | 'teams' | 'eventResult'
-    > = {
-      eventTime: moment(eventTime).toISOString(), // Send in ISO format
+    const eventData: Partial<Event> = {
+      eventTime: moment(eventTime).toISOString(),
       leagueId: league.id,
       location: location,
-      ...(league.isTeamLeague
-        ? { opponentIds: selectedTeams }
-        : { opponentIds: selectedUsers }),
+      maxParticipants,
+      isTeamEvent,
+      eventType,
+      joinType,
+      opponentIds: league.isTeamLeague ? selectedTeams : selectedUsers,
     };
 
     try {
       if (isEditing) {
-        // Handle edit logic here (e.g., call an updateEvent API method)
         console.log('Editing event with data:', eventData);
-        // After successful edit, you might want to update the event in the league state
       } else {
         await createEvent(eventData);
-        //const newEvent = await createEvent(eventData);
-        //console.log("Event created:", newEvent);
-        setIsEditing(true); // Switch to edit mode after successful creation
-        // Optionally update the league state with the new event
+        setIsEditing(true);
       }
     } catch (error) {
       console.error('Error creating/editing event:', error);
     }
   };
 
-  // const handleTeamSelect = (event: React.ChangeEvent<HTMLSelectElement>) => {
-  //   const selectedOptions = Array.from(
-  //     event.target.selectedOptions,
-  //     (option) => option.value
-  //   );
-  //   setSelectedTeams(selectedOptions);
-  // };
+  // Event type options
+  const eventTypeOptions = [
+    { value: EventType.Single, label: 'Single' },
+    { value: EventType.MultiRound, label: 'Multi-Round' },
+    { value: EventType.FreePlay, label: 'Free Play' },
+    { value: EventType.Tournament, label: 'Tournament' },
+  ];
 
-  // const handleUserSelect = (event: React.ChangeEvent<HTMLSelectElement>) => {
-  //   const selectedOptions = Array.from(
-  //     event.target.selectedOptions,
-  //     (option) => option.value
-  //   );
-  //   setSelectedUsers(selectedOptions);
-  // };
+  // Join type options
+  const joinTypeOptions = [
+    { value: EventJoinType.AddOnly, label: 'Add Only' },
+    { value: EventJoinType.InviteOnly, label: 'Invite Only' },
+    { value: EventJoinType.Request, label: 'Request' },
+    { value: EventJoinType.Open, label: 'Open' },
+  ];
 
   if (loading || !league) {
     return <Container>Loading...</Container>;
@@ -112,11 +114,69 @@ const EventForm = () => {
         <FormGroup>
           <Label htmlFor='eventTime'>Event Time:</Label>
           <Input
-            type='datetime-local' // Use datetime-local for combined date and time
+            type='datetime-local'
             id='eventTime'
             value={eventTime}
             onChange={(e) => setEventTime(e.target.value)}
             required
+          />
+        </FormGroup>
+
+        <FormGroup>
+          <Label htmlFor='maxParticipants'>Max Participants:</Label>
+          <Input
+            type='number'
+            id='maxParticipants'
+            value={maxParticipants}
+            onChange={(e) => setMaxParticipants(parseInt(e.target.value) || 0)}
+            min='0'
+            required
+          />
+        </FormGroup>
+
+        <FormGroup>
+          <CheckboxContainer>
+            <Input
+              type='checkbox'
+              id='isTeamEvent'
+              checked={isTeamEvent}
+              onChange={(e) => setIsTeamEvent(e.target.checked)}
+              style={{ width: 'auto', marginRight: '8px' }}
+            />
+            <Label
+              htmlFor='isTeamEvent'
+              style={{ display: 'inline', marginBottom: 0 }}
+            >
+              Is Team Event
+            </Label>
+          </CheckboxContainer>
+        </FormGroup>
+
+        <FormGroup>
+          <Label htmlFor='eventType'>Event Type:</Label>
+          <Select
+            id='eventType'
+            options={eventTypeOptions}
+            value={eventTypeOptions.find(
+              (option) => option.value === eventType
+            )}
+            onChange={(selected) => {
+              if (selected) setEventType(selected.value);
+            }}
+            classNamePrefix='select'
+          />
+        </FormGroup>
+
+        <FormGroup>
+          <Label htmlFor='joinType'>Join Type:</Label>
+          <Select
+            id='joinType'
+            options={joinTypeOptions}
+            value={joinTypeOptions.find((option) => option.value === joinType)}
+            onChange={(selected) => {
+              if (selected) setJoinType(selected.value);
+            }}
+            classNamePrefix='select'
           />
         </FormGroup>
 
@@ -177,7 +237,7 @@ const EventForm = () => {
 
 export default EventForm;
 
-// Styled Components (similar to your ManageLeagues styling)
+// Styled Components
 const Container = styled.div`
   max-width: 800px;
   margin: 0 auto;
@@ -222,6 +282,11 @@ const Input = styled.input`
     outline: none;
     border-color: #0066cc;
   }
+`;
+
+const CheckboxContainer = styled.div`
+  display: flex;
+  align-items: center;
 `;
 
 export const StyledButton = styled.button<{ color?: string }>`

@@ -13,6 +13,6 @@
         public bool IsTeamLeague { get; set; }
         public ICollection<LeagueUser> LeagueUsers { get; set; }
         public ICollection<Event> Events { get; set; }
-        public ICollection<Team> Teams { get; set; }
+        public ICollection<TeamLeague> TeamLeagues { get; set; }
     }
 }

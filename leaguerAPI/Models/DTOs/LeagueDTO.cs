@@ -1,4 +1,6 @@
-﻿namespace leaguerAPI.Models.DTOs
+﻿using leaguerAPI.Models.Enums;
+
+namespace leaguerAPI.Models.DTOs
 {
     public class LeagueDTO
     {
@@ -17,12 +19,12 @@
             isCompetitive = league.isCompetitive;
             CreatedBy = league.CreatedBy;
             IsTeamLeague = league.IsTeamLeague;
-            LeagueMembers = league.LeagueUsers?.Where(lu => lu.Status == LeagueUserStatus.Member || lu.Status == LeagueUserStatus.Manager).Select(l => new LeagueUserDTO(l)).ToList();
+            LeagueMembers = league.LeagueUsers?.Where(lu => lu.Status == LeagueUserStatus.Member).Select(l => new LeagueUserDTO(l)).ToList();
             LeagueInvites = league.LeagueUsers?.Where(lu => lu.Status == LeagueUserStatus.Invited).Select(l => new LeagueUserDTO(l)).ToList();
             LeagueRequests = league.LeagueUsers?.Where(lu => lu.Status == LeagueUserStatus.Requested).Select(l => new LeagueUserDTO(l)).ToList();
             Events = league.Events?.Select(e => new EventDTO(e)).ToList();
-            Teams = league.Teams?.Where(t => !t.IsPending).Select(t => new TeamDTO(t)).ToList();
-            TeamRequests = league.Teams?.Where(t => t.IsPending).Select(t => new TeamDTO(t)).ToList();
+            Teams = league.TeamLeagues?.Where(t => !t.Team.IsPending).Select(t => new TeamDTO(t.Team)).ToList();
+            TeamRequests = league.TeamLeagues?.Where(t => t.Team.IsPending).Select(t => new TeamDTO(t.Team)).ToList();
         }
         public Guid Id { get; set; }
         public string Name { get; set; } = string.Empty;

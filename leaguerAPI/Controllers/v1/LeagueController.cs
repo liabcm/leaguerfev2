@@ -73,18 +73,6 @@ namespace leaguerAPI.Controllers.v1
             return Ok(reponse);
         }
 
-        [HttpGet("my-leagues")]
-        public async Task<IActionResult> GetMyLeagues()
-        {
-            var userId = User.GetObjectId();
-            var result = await _leagueService.GetMyLeaguesAsync(userId);
-            if (!result.Success)
-            {
-                return BadRequest(new { message = result.ErrorMessage });
-            }
-            return Ok(result.Data);
-        }
-
         [HttpGet("joined")]
         public async Task<IActionResult> GetJoinedLeagues()
         {

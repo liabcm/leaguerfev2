@@ -17,14 +17,14 @@ namespace leaguerAPI.Controllers
         }
 
         [HttpPost]
-        public async Task<IActionResult> CreateTeam([FromBody] TeamCreateDTO teamCreateDTO)
+        public async Task<IActionResult> CreateTeam([FromBody] TeamCreateDTO teamCreateDTO, Guid? leagueId)
         {
             if (teamCreateDTO == null)
             {
                 return BadRequest(Response<TeamDTO>.FailureResult("Team data is required."));
             }
 
-            var response = await _teamService.CreateTeamAsync(teamCreateDTO, User.GetObjectId());
+            var response = await _teamService.CreateTeamAsync(teamCreateDTO, User.GetObjectId(), leagueId);
             if (!response.Success)
             {
                 return BadRequest(response);
@@ -154,9 +154,9 @@ namespace leaguerAPI.Controllers
         }
 
         [HttpPost("reject/{teamId}")]
-        public async Task<IActionResult> RejectTeamCreation(Guid teamId)
+        public async Task<IActionResult> RejectTeamCreation(Guid teamId, Guid leagueId)
         {
-            var response = await _teamService.RejectTeamCreation(teamId, User.GetObjectId());
+            var response = await _teamService.RejectTeamCreation(teamId, User.GetObjectId(), leagueId);
             if (!response.Success)
             {
                 return BadRequest(response.ErrorMessage);

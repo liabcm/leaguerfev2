@@ -1,6 +1,7 @@
 ﻿using leaguerAPI.Database;
 using leaguerAPI.Models;
 using leaguerAPI.Models.DTOs;
+using leaguerAPI.Models.Enums;
 using leaguerAPI.Services.Interfaces;
 using Microsoft.EntityFrameworkCore;
 
@@ -38,7 +39,8 @@ namespace leaguerAPI.Services
             {
                 LeagueId = league.Id,
                 User = user,
-                Status = LeagueUserStatus.Manager,
+                Status = LeagueUserStatus.Member,
+                IsManager = true
             });
 
             await _context.SaveChangesAsync();
@@ -46,6 +48,7 @@ namespace leaguerAPI.Services
             return response;
         }
 
+        //you have to clean this up FORLATER
         public async Task<LeagueDTO?> GetByIdAsync(Guid id)
         {
             var league = await _context.Leagues
@@ -62,8 +65,8 @@ namespace leaguerAPI.Services
                     .ThenInclude(e => e.EventResult)
                     .Include(l => l.LeagueUsers)
                         .ThenInclude(lu => lu.User)
-                    .Include(l => l.Teams)
-                    .ThenInclude(t => t.TeamUsers)
+                    .Include(l => l.TeamLeagues)
+                        .ThenInclude(tl => tl.Team)
                 .AsSplitQuery()
                 .FirstOrDefaultAsync(l => l.Id == id);
 
@@ -160,12 +163,13 @@ namespace leaguerAPI.Services
                     return Response<bool>.FailureResult("Please dont kick yourself!");
                 }
                 var manager = await _context.LeagueUsers
-                    .FirstOrDefaultAsync(lu => lu.UserId == managerId && lu.LeagueId == leagueId && lu.Status == LeagueUserStatus.Manager);
+                    .FirstOrDefaultAsync(lu => lu.UserId == managerId && lu.LeagueId == leagueId && lu.IsManager);
                 if (manager == null)
                 {
                     return Response<bool>.FailureResult("User not authorized to kick");
                 }
             }
+
             var leagueUser = await _context.LeagueUsers.IgnoreQueryFilters().Include(lu => lu.League).FirstOrDefaultAsync(lu => lu.UserId == userId && lu.LeagueId == leagueId);
             if (leagueUser == null || leagueUser.IsDeleted)
             {
@@ -177,59 +181,34 @@ namespace leaguerAPI.Services
                 return Response<bool>.FailureResult("League creator cannot leave league");
             }
 
-            leagueUser.IsDeleted = true;
-
             if (leagueUser.League.IsTeamLeague)
             {
-                var teamUser = await _context.TeamUsers.FirstOrDefaultAsync(tu => tu.UserId == userId && tu.Team.LeagueId == leagueId);
-                if (teamUser != null)
+                var teamLeague = await _context.TeamLeagues
+                    .Include(tl => tl.Team)
+                    .ThenInclude(t => t.TeamUsers)
+                    .FirstOrDefaultAsync(tl => tl.LeagueId == leagueId && tl.Team.TeamUsers.Any(tu => tu.UserId == userId));
+                if (teamLeague != null)
                 {
-                    _context.TeamUsers.Remove(teamUser);
+                    var teamUser = teamLeague.Team.TeamUsers.FirstOrDefault(tu => tu.UserId == userId);
+                    if (teamUser != null && !teamUser.IsManager)
+                    {
+                        return Response<bool>.FailureResult("Only Team Manager can leave league");
+                    }
+                    else if (teamUser != null && teamUser.IsManager)
+                    {
+                        var leagueUsers = await _context.LeagueUsers.Where(lu => teamLeague.Team.TeamUsers.Any(tu => tu.UserId == lu.UserId) && lu.LeagueId == leagueId).ToListAsync();
+                        _context.RemoveRange(leagueUsers);
+                        _context.Remove(teamLeague);
+                        await _context.SaveChangesAsync();
+                    }
                 }
+
             }
+
+            leagueUser.IsDeleted = true;
 
             await _context.SaveChangesAsync();
             return Response<bool>.SuccessResult(true);
-        }
-
-        public async Task<Response<List<LeagueDTO>>> GetMyLeaguesAsync(Guid userId)
-        {
-            try
-            {
-                var leagues = await _context.Leagues
-                                        .AsNoTracking()
-                                            .Include(l => l.Events)
-                                                .ThenInclude(e => e.EventUsers)
-                                                .ThenInclude(eu => eu.User)
-                                            .Include(lu => lu.Events)
-                                                .ThenInclude(e => e.EventTeams)
-                                                .ThenInclude(et => et.Team)
-                                                .ThenInclude(t => t.TeamUsers)
-                                                .ThenInclude(tu => tu.User)
-                                            .Include(l => l.Events)
-                                                .ThenInclude(e => e.EventResult)
-                                            .Include(l => l.LeagueUsers)
-                                                .ThenInclude(lu => lu.User)
-                                            .Include(l => l.Teams)
-                                        .Where(l => l.CreatedBy == userId)
-                                        .Select(l => new LeagueDTO(l))
-                                        .AsSplitQuery()
-                                        .ToListAsync();
-
-                return new Response<List<LeagueDTO>>()
-                {
-                    Data = leagues,
-                    Success = true
-                };
-            }
-            catch (Exception ex)
-            {
-                return new Response<List<LeagueDTO>>()
-                {
-                    ErrorMessage = ex.Message,
-                    Success = false
-                };
-            }
         }
 
         public async Task<Response<List<LeagueDTO>>> GetJoinedLeaguesAsync(Guid userId)
@@ -238,7 +217,7 @@ namespace leaguerAPI.Services
             {
                 var leagues = await _context.Leagues
                     .AsNoTracking()
-                    .Where(l => l.LeagueUsers.Any(lu => lu.UserId == userId && (lu.Status == LeagueUserStatus.Member || lu.Status == LeagueUserStatus.Manager)))
+                    .Where(l => l.LeagueUsers.Any(lu => lu.UserId == userId && (lu.Status == LeagueUserStatus.Member)))
                     .Select(l => new LeagueDTO(l))
                     .ToListAsync();
 
@@ -264,7 +243,7 @@ namespace leaguerAPI.Services
             {
                 var leagues = await _context.Leagues
                     .AsNoTracking()
-                    .Where(l => l.LeagueUsers.Any(lu => lu.UserId == userId && lu.Status == LeagueUserStatus.Manager))
+                    .Where(l => l.LeagueUsers.Any(lu => lu.UserId == userId && lu.IsManager))
                     .Select(l => new LeagueDTO(l))
                     .ToListAsync();
                 return Response<List<LeagueDTO>>.SuccessResult(leagues);
@@ -284,7 +263,7 @@ namespace leaguerAPI.Services
                     .Include(lu => lu.League)//remove this at some point when you implement add new manager
                     .AnyAsync(lu => lu.LeagueId == leagueId
                         && lu.UserId == currentUserId
-                        && (lu.Status == LeagueUserStatus.Manager || lu.League.CreatedBy == currentUserId)
+                        && (lu.IsManager || lu.League.CreatedBy == currentUserId)
                         && !lu.IsDeleted);
 
                 if (!isManager)
@@ -347,10 +326,7 @@ namespace leaguerAPI.Services
         {
             var league = await _context.Leagues.IgnoreQueryFilters()
                                                 .Include(l => l.LeagueUsers)
-                                                .Include(l => l.Teams)
-                                                    .ThenInclude(t => t.TeamUsers)
-                                                .Include(l => l.Teams)
-                                                    .ThenInclude(t => t.EventTeams)
+                                                .Include(l => l.TeamLeagues)
                                                 .Include(l => l.Events)
                                                     .ThenInclude(e => e.EventUsers)
                                                 .FirstOrDefaultAsync(l => l.Id == leagueId);
@@ -364,12 +340,10 @@ namespace leaguerAPI.Services
                 return Response<bool>.FailureResult("User is not authorized to delete this league");
             }
 
-            _context.RemoveRange(league.Teams.SelectMany(t => t.EventTeams));
-            _context.RemoveRange(league.Teams.SelectMany(t => t.TeamUsers));
             _context.RemoveRange(league.Events.SelectMany(e => e.EventUsers));
-            _context.RemoveRange(league.Teams);
             _context.RemoveRange(league.Events);
             _context.RemoveRange(league.LeagueUsers);
+            _context.RemoveRange(league.TeamLeagues);
             _context.Remove(league);
 
             await _context.SaveChangesAsync();

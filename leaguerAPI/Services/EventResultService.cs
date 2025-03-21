@@ -33,7 +33,7 @@ namespace leaguerAPI.Services
                     return Response<EventResultDTO>.FailureResult("No event found");
                 }
 
-                var canAdd = existingEvent.League.LeagueUsers.Any(x => x.UserId == currentUserId && x.Status == LeagueUserStatus.Manager);
+                var canAdd = existingEvent.League.LeagueUsers.Any(x => x.UserId == currentUserId && x.IsManager);
                 if (!canAdd)
                 {
                     return Response<EventResultDTO>.FailureResult("You are not allowed to add result");

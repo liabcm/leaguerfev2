@@ -1,6 +1,7 @@
 ﻿using leaguerAPI.Database;
 using leaguerAPI.Models;
 using leaguerAPI.Models.DTOs;
+using leaguerAPI.Models.Enums;
 using leaguerAPI.Services.Interfaces;
 using Microsoft.EntityFrameworkCore;
 
@@ -124,7 +125,7 @@ namespace leaguerAPI.Services
             if (userId != currentUserId)
             {
                 var canDecline = await _context.ConfirmedLeagueUsers
-                    .AnyAsync(lu => lu.LeagueId == leagueId && lu.UserId == currentUserId && lu.Status == LeagueUserStatus.Manager);
+                    .AnyAsync(lu => lu.LeagueId == leagueId && lu.UserId == currentUserId && lu.IsManager);
                 if (!canDecline)
                 {
                     return Response<bool>.FailureResult("You do not have permission to decline this invite.");
@@ -154,7 +155,7 @@ namespace leaguerAPI.Services
             if (userId != currentUserId)
             {
                 var canAccept = await _context.ConfirmedLeagueUsers
-                    .AnyAsync(lu => lu.LeagueId == leagueId && lu.UserId == currentUserId && lu.Status == LeagueUserStatus.Manager);
+                    .AnyAsync(lu => lu.LeagueId == leagueId && lu.UserId == currentUserId && lu.IsManager);
                 if (!canAccept)
                 {
                     return Response<bool>.FailureResult("You do not have permission to accept this invite.");
@@ -204,9 +205,7 @@ namespace leaguerAPI.Services
             {
                 var query = _context.Users.AsNoTracking()
                                     .Where(u => (u.Name.Contains(searchTerm) || u.Email.Contains(searchTerm))
-                                                    && _context.ConfirmedLeagueUsers.Any(lu => lu.UserId == u.Id
-                                                    && lu.League.Teams.Any(t => t.Id == teamId)
-                                                    && !lu.League.Teams.SelectMany(t => t.TeamUsers).Any(tu => tu.UserId == u.Id)))
+                                                    && !_context.TeamUsers.Any(tu => tu.UserId == u.Id && tu.TeamId == teamId))
                                     .Select(u => new UserDTO(u));
 
                 var items = await query

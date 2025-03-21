@@ -110,7 +110,7 @@ const PageContainer = styled.div`
   flex-direction: column;
   max-width: 800px;
   margin: 0 auto;
-  padding-top: 60px; /* Add top padding to account for the navbar */
+  padding-top: 60px;
 `;
 
 const FixedHeader = styled.div`
@@ -155,7 +155,7 @@ const BackButton = styled.button`
 `;
 
 const ScrollableContent = styled.div`
-  margin-top: 130px; /* Adjusted to account for navbar + header */
+  margin-top: 130px;
   flex: 1;
   overflow-y: auto;
   padding: 0 20px 20px 20px;

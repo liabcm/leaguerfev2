@@ -58,7 +58,7 @@ const ManageTeams = () => {
     return {
       id: team.id,
       name: team.name,
-      leagueMembers: [...team.teamUsers, ...team.teamManagers],
+      leagueMembers: [...team.teamUsers],
     } as any;
   };
 
@@ -84,9 +84,6 @@ const ManageTeams = () => {
       const updatedTeam = {
         ...team,
         teamUsers: team!.teamUsers.filter((user) => user.userId !== memberId),
-        teamManagers: team!.teamManagers.filter(
-          (user) => user.userId !== memberId
-        ),
       } as Team;
       setTeam(updatedTeam);
     } catch (error) {
@@ -151,9 +148,7 @@ const ManageTeams = () => {
       {team && (
         <Card>
           <Header>
-            <Title>
-              {team.name} - {team.leagueName}
-            </Title>
+            <Title>{team.name}</Title>
           </Header>
 
           <InfoContainer>

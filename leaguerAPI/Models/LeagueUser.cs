@@ -1,4 +1,6 @@
-﻿namespace leaguerAPI.Models
+﻿using leaguerAPI.Models.Enums;
+
+namespace leaguerAPI.Models
 {
     public class LeagueUser
     {
@@ -8,5 +10,6 @@
         public League League { get; set; }
         public User User { get; set; }
         public bool IsDeleted { get; set; }
+        public bool IsManager { get; set; }
     }
 }

@@ -1,5 +1,4 @@
 export interface TeamCreateDTO {
-  leagueId: string;
   teamManagerIds: string[];
   name: string;
   teamUserIds: string[];

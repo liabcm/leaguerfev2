@@ -14,4 +14,22 @@ export interface Event {
   eventResult?: EventResult;
   opponentIds?: string[] | null;
   teamPlayers?: User[];
+  maxParticipants: number;
+  isTeamEvent: boolean;
+  eventType: EventType;
+  joinType: EventJoinType;
+}
+
+export enum EventType {
+  Single = 0,
+  MultiRound = 1,
+  FreePlay = 2,
+  Tournament = 3,
+}
+
+export enum EventJoinType {
+  AddOnly = 0,
+  InviteOnly = 1,
+  Request = 2,
+  Open = 3,
 }

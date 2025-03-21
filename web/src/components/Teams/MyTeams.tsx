@@ -58,7 +58,6 @@ const MyTeams = () => {
                 <FlexContainer>
                   <div>
                     <TeamName>{team.name}</TeamName>
-                    <LeagueName>{team.leagueName}</LeagueName>
                   </div>
                   <TeamStats>
                     <Stat>
@@ -160,11 +159,6 @@ const TeamName = styled.div`
   font-size: 18px;
   font-weight: 600;
   margin-bottom: 4px;
-`;
-
-const LeagueName = styled.div`
-  color: #666;
-  margin-bottom: 8px;
 `;
 
 const TeamStats = styled.div`

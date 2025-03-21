@@ -2,6 +2,9 @@
 {
     public class LeagueUserDTO
     {
+        public LeagueUserDTO()
+        {
+        }
         public LeagueUserDTO(LeagueUser leagueUser)
         {
             UserId = leagueUser.UserId;
@@ -10,6 +13,7 @@
             Name = leagueUser.User?.Name;
             Email = leagueUser.User?.Email;
             Status = ((int)leagueUser.Status);
+            IsManager = leagueUser.IsManager;
         }
         public Guid UserId { get; set; }
         public Guid LeagueId { get; set; }

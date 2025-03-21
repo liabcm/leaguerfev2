@@ -12,8 +12,7 @@ import { TeamCreateDTO, TeamUpdateDTO } from '../models/TeamCreateDTO';
 import { TeamUser } from '../models/TeamUser';
 import { User } from '../models/User';
 
-const API_BASE_URL =
-  'https://leaguerapi-e3ekc8h6crcsd8ea.canadacentral-01.azurewebsites.net/api/v1';
+const API_BASE_URL = 'https://localhost:44378/api/v1';
 
 export const useLeagueApi = () => {
   const { instance } = useMsal();
@@ -255,12 +254,7 @@ export const useLeagueApi = () => {
     },
 
     //events
-    createEvent: async (
-      eventData: Omit<
-        Event,
-        'id' | 'createdBy' | 'users' | 'teams' | 'eventResult'
-      >
-    ): Promise<Event> => {
+    createEvent: async (eventData: Partial<Event>): Promise<Event> => {
       const response = await fetch(`${API_BASE_URL}/event`, {
         method: 'POST',
         headers: await getAuthHeader(),
@@ -476,12 +470,18 @@ export const useLeagueApi = () => {
     },
 
     //TEAM SECTION
-    createTeam: async (teamData: TeamCreateDTO): Promise<Team> => {
-      const response = await fetch(`${API_BASE_URL}/team`, {
-        method: 'POST',
-        headers: await getAuthHeader(),
-        body: JSON.stringify(teamData),
-      });
+    createTeam: async (
+      teamData: TeamCreateDTO,
+      leagueId: string
+    ): Promise<Team> => {
+      const response = await fetch(
+        `${API_BASE_URL}/team?leagueId=${leagueId}`,
+        {
+          method: 'POST',
+          headers: await getAuthHeader(),
+          body: JSON.stringify(teamData),
+        }
+      );
 
       if (!response.ok) throw new Error('Failed to create team');
       return response.json();

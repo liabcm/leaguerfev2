@@ -32,7 +32,6 @@ const TeamForm = () => {
   >([]);
 
   const [formData, setFormData] = useState<TeamCreateDTO>({
-    leagueId: leagueId,
     teamManagerIds: [],
     name: '',
     teamUserIds: [],
@@ -51,7 +50,6 @@ const TeamForm = () => {
         const membersInTeam = leagueData.teams
           .concat(...leagueData.teamRequests)
           .flatMap((t) => [
-            ...t.teamManagers,
             ...t.teamUsers,
             ...t.teamInvites,
             ...t.teamRequests,
@@ -65,10 +63,9 @@ const TeamForm = () => {
                 .concat(...leagueData.teamRequests)
                 .find((t) => t.id === teamId);
               if (currentTeam) {
-                const isInCurrentTeam = [
-                  ...currentTeam.teamManagers,
-                  ...currentTeam.teamUsers,
-                ].some((tm) => tm.userId === m.userId);
+                const isInCurrentTeam = [...currentTeam.teamUsers].some(
+                  (tm) => tm.userId === m.userId
+                );
 
                 if (isInCurrentTeam) return true;
               }
@@ -91,9 +88,10 @@ const TeamForm = () => {
         try {
           const teamData = await getTeamById(teamId);
           setFormData({
-            leagueId: teamData.leagueId,
             teamManagerIds:
-              teamData.teamManagers.map((user) => user.userId) || [],
+              teamData.teamUsers
+                .filter((tu) => tu.isManager)
+                .map((tu) => tu.userId) || [],
             name: teamData.name,
             teamUserIds: teamData.teamUsers.map((user) => user.userId) || [],
           });
@@ -134,7 +132,7 @@ const TeamForm = () => {
         await updateTeam(teamUpdateDTO);
         setIsEditMode(false);
       } else {
-        const result = await createTeam(formData);
+        const result = await createTeam(formData, leagueId);
         navigate(`/league/${leagueId}/team?teamId=${result.id}`);
         setIsEditMode(false);
       }
@@ -215,8 +213,10 @@ const TeamForm = () => {
               name='teamUserIds'
               isDisabled={!isEditMode}
               value={availableLeagueMembers
-                .filter((member) =>
-                  formData.teamUserIds.includes(member.userId)
+                .filter(
+                  (member) =>
+                    formData.teamUserIds.includes(member.userId) &&
+                    !member.isManager
                 )
                 .map((member) => ({
                   value: member.userId,

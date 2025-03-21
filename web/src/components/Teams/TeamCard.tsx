@@ -50,10 +50,7 @@ const TeamCard = () => {
         const isTeamUser = data.teamUsers.some(
           (u) => u.userId === user.idTokenClaims?.sub
         );
-        const isTeamManager = data.teamManagers.some(
-          (u) => u.userId === user.idTokenClaims?.sub
-        );
-        setJoined(isTeamUser || isTeamManager);
+        setJoined(isTeamUser);
 
         // Check if user has requested to join
         setRequested(data.isPending);
@@ -67,12 +64,12 @@ const TeamCard = () => {
     fetchTeam();
   }, [id]);
 
-  // Convert team to League format for LeagueMembersSection
+  // this is dumb plz change it
   const teamToLeague = (team: Team) => {
     return {
       id: team.id,
       name: team.name,
-      leagueMembers: [...team.teamUsers, ...team.teamManagers],
+      leagueMembers: [...team.teamUsers],
     } as any;
   };
 
@@ -106,9 +103,6 @@ const TeamCard = () => {
         teamUsers: team.teamUsers.filter(
           (u) => u.userId !== user.idTokenClaims?.sub
         ),
-        teamManagers: team.teamManagers.filter(
-          (u) => u.userId !== user.idTokenClaims?.sub
-        ),
       });
 
       setJoined(false);
@@ -139,9 +133,7 @@ const TeamCard = () => {
       <BackButton />
       <Card>
         <Header>
-          <Title>
-            {team.name} - {team.leagueName}
-          </Title>
+          <Title>{team.name}</Title>
         </Header>
 
         <InfoContainer>
