@@ -9,7 +9,6 @@ namespace leaguerAPI.Models
         public LeagueUserStatus Status { get; set; }
         public League League { get; set; }
         public User User { get; set; }
-        public bool IsDeleted { get; set; }
         public bool IsManager { get; set; }
     }
 }

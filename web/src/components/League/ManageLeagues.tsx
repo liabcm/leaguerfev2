@@ -41,7 +41,7 @@ const ManageLeagues = () => {
     declineInvite,
     acceptTeamRequest,
     rejectTeamRequest,
-    searchUsers,
+    searchUsersForLeagueInvite,
     deleteLeague,
     createEventResult,
   } = useLeagueApi();
@@ -257,7 +257,7 @@ const ManageLeagues = () => {
     query: string,
     pageNum: number
   ): Promise<PagedResult<User>> => {
-    const users = await searchUsers(league?.id!, query, pageNum);
+    const users = await searchUsersForLeagueInvite(league?.id!, query, pageNum);
     return users;
   };
 
@@ -288,10 +288,7 @@ const ManageLeagues = () => {
 
           <InfoContainer>
             <InfoItem>
-              <span>
-                {league.isCompetitive ? 'Competitive' : 'Casual'}
-                <Trash onClick={() => setShowDeleteModal(true)} size={18} />
-              </span>
+              <span>{league.isCompetitive ? 'Competitive' : 'Casual'}</span>
             </InfoItem>
             <InfoItem>
               {league.isTeamLeague ? (

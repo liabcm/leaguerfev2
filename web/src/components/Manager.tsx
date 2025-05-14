@@ -2,7 +2,7 @@ import React from 'react';
 import { useNavigate } from 'react-router-dom';
 import styled from 'styled-components';
 
-// Styled components
+// Responsive Container
 const Container = styled.div`
   display: flex;
   flex-direction: column;
@@ -11,7 +11,8 @@ const Container = styled.div`
   background-color: #f8f9fa;
   border-radius: 8px;
   box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
-  max-width: 500px;
+  width: 100%;
+  max-width: 400px;
   margin: 0 auto;
 `;
 
@@ -19,17 +20,16 @@ const Title = styled.h2`
   color: #343a40;
   margin-bottom: 1.5rem;
   font-weight: 600;
+  text-align: center;
+  width: 100%;
 `;
 
+// Vertical Button Container
 const ButtonContainer = styled.div`
   display: flex;
+  flex-direction: column;
   gap: 1rem;
   width: 100%;
-  justify-content: center;
-
-  @media (max-width: 480px) {
-    flex-direction: column;
-  }
 `;
 
 const Button = styled.button`
@@ -40,7 +40,7 @@ const Button = styled.button`
   font-weight: 500;
   cursor: pointer;
   transition: all 0.2s ease-in-out;
-  min-width: 160px;
+  width: 100%;
 
   &:hover {
     transform: translateY(-2px);
@@ -70,12 +70,12 @@ const ManageTeamsButton = styled(Button)`
   }
 `;
 
-const CreateLeagueButton = styled(Button)`
-  background-color: rgb(51, 189, 44);
+const ManageEventsButton = styled(Button)`
+  background-color: rgb(194, 16, 43);
   color: white;
 
   &:hover {
-    background-color: #3ab7dc;
+    background-color: rgb(230, 89, 28);
   }
 `;
 
@@ -90,8 +90,8 @@ const Manager: React.FC = () => {
     navigate('/my-managed-teams');
   };
 
-  const handleCreateLeague = () => {
-    navigate('/league');
+  const handleManageEvents = () => {
+    navigate('/my-managed-events');
   };
 
   return (
@@ -104,9 +104,9 @@ const Manager: React.FC = () => {
         <ManageTeamsButton onClick={handleManageTeams}>
           Manage Teams
         </ManageTeamsButton>
-        <CreateLeagueButton onClick={handleCreateLeague}>
-          Create League
-        </CreateLeagueButton>
+        <ManageEventsButton onClick={handleManageEvents}>
+          Manage Events
+        </ManageEventsButton>
       </ButtonContainer>
     </Container>
   );

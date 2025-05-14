@@ -83,15 +83,6 @@ export const useLeagueApi = () => {
       return response.json();
     },
 
-    getMyLeagues: async (): Promise<League[]> => {
-      const response = await fetch(`${API_BASE_URL}/league/my-leagues`, {
-        headers: await getAuthHeader(),
-      });
-
-      if (!response.ok) throw new Error('Failed to fetch league');
-      return response.json();
-    },
-
     getJoinedLeagues: async (): Promise<League[]> => {
       const response = await fetch(`${API_BASE_URL}/league/joined`, {
         headers: await getAuthHeader(),
@@ -337,6 +328,51 @@ export const useLeagueApi = () => {
       return response.json();
     },
 
+    getMyManagedEvents: async (
+      searchTerm: string,
+      page: number,
+      pageSize: number
+    ): Promise<PagedResult<Event>> => {
+      let url = `${API_BASE_URL}/event/my-managed-events`;
+      const params = new URLSearchParams();
+      if (searchTerm) {
+        params.append('searchTerm', searchTerm);
+      }
+      if (page) {
+        params.append('page', page.toString());
+      }
+      if (pageSize) {
+        params.append('pageSize', pageSize.toString());
+      }
+
+      if (params.toString()) {
+        url += `?${params.toString()}`;
+      }
+      const response = await fetch(url, {
+        headers: await getAuthHeader(),
+      });
+
+      if (!response.ok) throw new Error('Failed to fetch events');
+      return response.json();
+    },
+
+    inviteOrRequestUserToEvent: async (
+      eventId: string,
+      userId: string,
+      isInvite: boolean
+    ): Promise<boolean> => {
+      const response = await fetch(
+        `${API_BASE_URL}/event/invite-request?eventId=${eventId}&userId=${userId}&isInvite=${isInvite}`,
+        {
+          method: 'POST',
+          headers: await getAuthHeader(),
+        }
+      );
+      if (!response.ok)
+        throw new Error('Failed to invite or request user to event');
+      return response.json();
+    },
+
     //Sport
     createSport: async (sportData: Omit<Sport, 'id'>): Promise<Sport> => {
       const response = await fetch(`${API_BASE_URL}/sport`, {
@@ -390,12 +426,42 @@ export const useLeagueApi = () => {
     },
 
     searchUsers: async (
-      leagueId: string,
       searchTerm: string,
       page: number = 1,
       pageSize: number = 10
     ): Promise<PagedResult<User>> => {
       let url = `${API_BASE_URL}/user/search`;
+      const params = new URLSearchParams();
+      if (searchTerm) {
+        params.append('q', searchTerm);
+      }
+      if (page) {
+        params.append('page', page.toString());
+      }
+      if (pageSize) {
+        params.append('pageSize', pageSize.toString());
+      }
+
+      if (params.toString()) {
+        url += `?${params.toString()}`;
+      }
+      console.log(url);
+
+      const response = await fetch(url, {
+        headers: await getAuthHeader(),
+      });
+
+      if (!response.ok) throw new Error('Failed to search users');
+      return response.json();
+    },
+
+    searchUsersForLeagueInvite: async (
+      leagueId: string,
+      searchTerm: string,
+      page: number = 1,
+      pageSize: number = 10
+    ): Promise<PagedResult<User>> => {
+      let url = `${API_BASE_URL}/user/search-league`;
       const params = new URLSearchParams();
       params.append('leagueId', leagueId);
 
@@ -431,6 +497,39 @@ export const useLeagueApi = () => {
       let url = `${API_BASE_URL}/user/search-team`;
       const params = new URLSearchParams();
       params.append('teamId', teamId);
+
+      if (searchTerm) {
+        params.append('q', searchTerm);
+      }
+      if (page) {
+        params.append('page', page.toString());
+      }
+      if (pageSize) {
+        params.append('pageSize', pageSize.toString());
+      }
+
+      if (params.toString()) {
+        url += `?${params.toString()}`;
+      }
+      console.log(url);
+
+      const response = await fetch(url, {
+        headers: await getAuthHeader(),
+      });
+
+      if (!response.ok) throw new Error('Failed to search users');
+      return response.json();
+    },
+
+    searchUsersForEventInvite: async (
+      eventId: string,
+      searchTerm: string,
+      page: number = 1,
+      pageSize: number = 10
+    ): Promise<PagedResult<User>> => {
+      let url = `${API_BASE_URL}/user/search-event`;
+      const params = new URLSearchParams();
+      params.append('eventId', eventId);
 
       if (searchTerm) {
         params.append('q', searchTerm);
@@ -503,19 +602,6 @@ export const useLeagueApi = () => {
       });
 
       if (!response.ok) throw new Error('Failed to update team');
-      return response.json();
-    },
-
-    sendTeamRequest: async (
-      teamName: string,
-      leagueId: string
-    ): Promise<boolean> => {
-      const response = await fetch(`${API_BASE_URL}/team/request`, {
-        method: 'POST',
-        headers: await getAuthHeader(),
-        body: JSON.stringify({ teamName, leagueId }),
-      });
-      if (!response.ok) throw new Error('Failed to send team request');
       return response.json();
     },
 
@@ -624,6 +710,36 @@ export const useLeagueApi = () => {
         headers: await getAuthHeader(),
       });
       if (!response.ok) throw new Error('Failed to fetch my joined teams');
+      return response.json();
+    },
+
+    searchTeams: async (
+      searchTerm: string,
+      page: number = 1,
+      pageSize: number = 10
+    ): Promise<PagedResult<User>> => {
+      let url = `${API_BASE_URL}/team/search`;
+      const params = new URLSearchParams();
+
+      if (searchTerm) {
+        params.append('q', searchTerm);
+      }
+      if (page) {
+        params.append('page', page.toString());
+      }
+      if (pageSize) {
+        params.append('pageSize', pageSize.toString());
+      }
+
+      if (params.toString()) {
+        url += `?${params.toString()}`;
+      }
+
+      const response = await fetch(url, {
+        headers: await getAuthHeader(),
+      });
+
+      if (!response.ok) throw new Error('Failed to search users');
       return response.json();
     },
   };

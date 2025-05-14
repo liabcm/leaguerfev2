@@ -36,8 +36,25 @@ namespace leaguerAPI.Controllers.v1
             return user is null ? NotFound() : Ok(user);
         }
 
-        [HttpGet("search")]
-        public async Task<IActionResult> SearchUsers(
+        [HttpGet("search-event")]
+        public async Task<IActionResult> SearchUsersForEvent(
+        [FromQuery] Guid eventId,
+        [FromQuery] string q,
+        [FromQuery] int page = 1,
+        [FromQuery] int pageSize = 10)
+        {
+            var result = await _userService.SearchUsersForEventInviteAsync(eventId, q, page, pageSize);
+
+            if (!result.Success)
+            {
+                return BadRequest(result.ErrorMessage);
+            }
+
+            return Ok(result.Data);
+        }
+
+        [HttpGet("search-league")]
+        public async Task<IActionResult> SearchUsersForLeague(
         [FromQuery] Guid leagueId,
         [FromQuery] string q,
         [FromQuery] int page = 1,

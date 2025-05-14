@@ -23,8 +23,8 @@ namespace leaguerAPI.Models.DTOs
             LeagueInvites = league.LeagueUsers?.Where(lu => lu.Status == LeagueUserStatus.Invited).Select(l => new LeagueUserDTO(l)).ToList();
             LeagueRequests = league.LeagueUsers?.Where(lu => lu.Status == LeagueUserStatus.Requested).Select(l => new LeagueUserDTO(l)).ToList();
             Events = league.Events?.Select(e => new EventDTO(e)).ToList();
-            Teams = league.TeamLeagues?.Where(t => !t.Team.IsPending).Select(t => new TeamDTO(t.Team)).ToList();
-            TeamRequests = league.TeamLeagues?.Where(t => t.Team.IsPending).Select(t => new TeamDTO(t.Team)).ToList();
+            Teams = league.TeamLeagues?.Where(tl => !tl.IsPending).Select(t => new TeamDTO(t.Team)).ToList();
+            TeamRequests = league.TeamLeagues?.Where(tl => tl.IsPending).Select(t => new TeamDTO(t.Team)).ToList();
         }
         public Guid Id { get; set; }
         public string Name { get; set; } = string.Empty;

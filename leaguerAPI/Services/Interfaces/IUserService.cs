@@ -13,6 +13,6 @@ namespace leaguerAPI.Services.Interfaces
         Task<Response<bool>> AcceptInviteAsync(Guid leagueId, Guid userId, Guid currentUserId);
         Task<Response<PagedResult<UserDTO>>> SearchUsersToInviteTeamsAsync(Guid teamId, string searchTerm, int page, int pageSize);
         Task<Response<List<TeamUserDTO>>> GetCurrentUserTeamInvitesAndRequests(Guid userId);
-
+        Task<Response<PagedResult<UserDTO>>> SearchUsersForEventInviteAsync(Guid eventId, string searchTerm, int page, int pageSize);
     }
 }

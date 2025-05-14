@@ -9,10 +9,10 @@ import { League } from '../../models/League';
 import BackButton from '../General/BackButton';
 
 const EventForm = () => {
-  const { leagueId } = useParams<{ leagueId: string }>();
+  const { leagueId } = useParams<{ leagueId?: string }>();
   const { getLeagueById, createEvent } = useLeagueApi();
   const [league, setLeague] = useState<League | null>(null);
-  const [loading, setLoading] = useState(true);
+  const [loading, setLoading] = useState(false);
   const [location, setLocation] = useState('');
   const [eventTime, setEventTime] = useState(
     moment().format('YYYY-MM-DDTHH:mm')
@@ -28,9 +28,9 @@ const EventForm = () => {
   const [joinType, setJoinType] = useState<EventJoinType>(EventJoinType.Open);
 
   useEffect(() => {
-    console.log(leagueId);
     const fetchLeague = async () => {
       try {
+        setLoading(true);
         const data = await getLeagueById(leagueId!);
         setLeague(data);
         // Set isTeamEvent based on league type
@@ -41,23 +41,24 @@ const EventForm = () => {
         setLoading(false);
       }
     };
-
-    fetchLeague();
+    if (leagueId) {
+      fetchLeague();
+    } else {
+    }
   }, [leagueId]);
 
   const handleCreateEvent = async () => {
     console.log(league);
-    if (!league) return;
 
     const eventData: Partial<Event> = {
       eventTime: moment(eventTime).toISOString(),
-      leagueId: league.id,
+      leagueId: league?.id,
       location: location,
       maxParticipants,
       isTeamEvent,
       eventType,
       joinType,
-      opponentIds: league.isTeamLeague ? selectedTeams : selectedUsers,
+      opponentIds: league?.isTeamLeague ? selectedTeams : selectedUsers,
     };
 
     try {
@@ -88,7 +89,7 @@ const EventForm = () => {
     { value: EventJoinType.Open, label: 'Open' },
   ];
 
-  if (loading || !league) {
+  if (loading) {
     return <Container>Loading...</Container>;
   }
 
@@ -135,24 +136,6 @@ const EventForm = () => {
         </FormGroup>
 
         <FormGroup>
-          <CheckboxContainer>
-            <Input
-              type='checkbox'
-              id='isTeamEvent'
-              checked={isTeamEvent}
-              onChange={(e) => setIsTeamEvent(e.target.checked)}
-              style={{ width: 'auto', marginRight: '8px' }}
-            />
-            <Label
-              htmlFor='isTeamEvent'
-              style={{ display: 'inline', marginBottom: 0 }}
-            >
-              Is Team Event
-            </Label>
-          </CheckboxContainer>
-        </FormGroup>
-
-        <FormGroup>
           <Label htmlFor='eventType'>Event Type:</Label>
           <Select
             id='eventType'
@@ -180,49 +163,50 @@ const EventForm = () => {
           />
         </FormGroup>
 
-        {league.isTeamLeague ? (
-          <FormGroup>
-            <Label htmlFor='teams'>Teams:</Label>
-            <Select
-              isMulti
-              closeMenuOnSelect={false}
-              name='teams'
-              options={league.teams?.map((team) => ({
-                value: team.id,
-                label: team.name,
-              }))}
-              onChange={(selected) => {
-                const selectedIds = selected
-                  ? selected.map((option) => option.value)
-                  : [];
-                setSelectedTeams(selectedIds);
-              }}
-              classNamePrefix='select'
-              placeholder='Select teams...'
-            />
-          </FormGroup>
-        ) : (
-          <FormGroup>
-            <Label htmlFor='users'>Users:</Label>
-            <Select
-              isMulti
-              closeMenuOnSelect={false}
-              name='users'
-              options={league.leagueMembers.map((user) => ({
-                value: user.userId,
-                label: user.name,
-              }))}
-              onChange={(selected) => {
-                const selectedIds = selected
-                  ? selected.map((option) => option.value)
-                  : [];
-                setSelectedUsers(selectedIds);
-              }}
-              classNamePrefix='select'
-              placeholder='Select users...'
-            />
-          </FormGroup>
-        )}
+        {leagueId &&
+          (league?.isTeamLeague ? (
+            <FormGroup>
+              <Label htmlFor='teams'>Teams:</Label>
+              <Select
+                isMulti
+                closeMenuOnSelect={false}
+                name='teams'
+                options={league.teams?.map((team) => ({
+                  value: team.id,
+                  label: team.name,
+                }))}
+                onChange={(selected) => {
+                  const selectedIds = selected
+                    ? selected.map((option) => option.value)
+                    : [];
+                  setSelectedTeams(selectedIds);
+                }}
+                classNamePrefix='select'
+                placeholder='Select teams...'
+              />
+            </FormGroup>
+          ) : (
+            <FormGroup>
+              <Label htmlFor='users'>Users:</Label>
+              <Select
+                isMulti
+                closeMenuOnSelect={false}
+                name='users'
+                options={league?.leagueMembers.map((user) => ({
+                  value: user.userId,
+                  label: user.name,
+                }))}
+                onChange={(selected) => {
+                  const selectedIds = selected
+                    ? selected.map((option) => option.value)
+                    : [];
+                  setSelectedUsers(selectedIds);
+                }}
+                classNamePrefix='select'
+                placeholder='Select users...'
+              />
+            </FormGroup>
+          ))}
 
         <StyledButton
           color={isEditing ? 'red' : 'blue'}
@@ -282,11 +266,6 @@ const Input = styled.input`
     outline: none;
     border-color: #0066cc;
   }
-`;
-
-const CheckboxContainer = styled.div`
-  display: flex;
-  align-items: center;
 `;
 
 export const StyledButton = styled.button<{ color?: string }>`

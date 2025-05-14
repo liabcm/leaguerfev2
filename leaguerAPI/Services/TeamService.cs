@@ -34,7 +34,7 @@ namespace leaguerAPI.Services
                     if (!canAddTeam)
                         return Response<TeamDTO>.FailureResult("You do not have permission to add a team to this league");
 
-                    if (!await AreUsersAvailableInLeague(combinedUserIds, leagueId.Value, null))
+                    if (!await AreUsersAvailableInLeague(combinedUserIds, leagueId.Value))
                         return Response<TeamDTO>.FailureResult("One or more users are already part of a team in this league");
 
                     if (!await ConfirmUsersExistInLeague(combinedUserIds, leagueId.Value))
@@ -210,15 +210,9 @@ namespace leaguerAPI.Services
             }
         }
 
-        private async Task<bool> AreUsersAvailableInLeague(List<Guid> userIds, Guid leagueId, Guid? teamId)
+        private async Task<bool> AreUsersAvailableInLeague(List<Guid> userIds, Guid leagueId)
         {
-            var guidsBeingUsed = teamId != null
-                ? await _context.Teams
-                    .Where(t => t.TeamLeagues.Any(tl => tl.LeagueId == leagueId) && t.Id != teamId)
-                    .SelectMany(t => t.TeamUsers)
-                    .Select(tu => tu.UserId)
-                    .ToListAsync()
-                : await _context.Teams
+            var guidsBeingUsed = await _context.Teams
                     .Where(t => t.TeamLeagues.Any(tl => tl.LeagueId == leagueId))
                     .SelectMany(t => t.TeamUsers)
                     .Select(tu => tu.UserId)
@@ -251,67 +245,6 @@ namespace leaguerAPI.Services
                     IsManager = isManager
                 });
             }
-        }
-
-        public async Task<Response<TeamDTO>> RequestTeamCreation(TeamRequestDTO teamDTO, Guid userId)
-        {
-            if (userId == Guid.Empty)
-                return Response<TeamDTO>.FailureResult("At least one manager is required");
-
-            if (!await AreUsersAvailableInLeague(new List<Guid> { userId }, teamDTO.LeagueId, null))
-                return Response<TeamDTO>.FailureResult("One or more users are already part of a team in this league");
-
-            if (!await ConfirmUsersExistInLeague(new List<Guid> { userId }, teamDTO.LeagueId))
-                return Response<TeamDTO>.FailureResult("One or more users are not part of the league");
-
-            var team = new Team
-            {
-                Id = Guid.NewGuid(),
-                Name = teamDTO.TeamName,
-                Wins = 0,
-                Losses = 0,
-                IsPending = true,
-                TeamUsers = new List<TeamUser>()
-            };
-
-            AddTeamMembers(team, new List<Guid> { userId }, TeamUserStatus.TeamRequested, false);
-
-            var teamLeague = new TeamLeague
-            {
-                TeamId = team.Id,
-                LeagueId = teamDTO.LeagueId
-            };
-
-            await _context.Teams.AddAsync(team);
-            await _context.TeamLeagues.AddAsync(teamLeague);
-            await _context.SaveChangesAsync();
-            return Response<TeamDTO>.SuccessResult(new TeamDTO(team));
-
-        }
-
-        public async Task<Response<TeamDTO>> AcceptTeamRequest(Guid teamId, Guid managerId)
-        {
-            var canAddTeam = await _context.TeamLeagues.AnyAsync(t => t.TeamId == teamId && t.League.LeagueUsers.Any(lu => lu.UserId == managerId && lu.IsManager));
-
-            if (!canAddTeam)
-                return Response<TeamDTO>.FailureResult("You do not have permission to admit a team to this league");
-
-            var team = await _context.Teams.Include(t => t.TeamUsers).FirstOrDefaultAsync(t => t.Id == teamId);
-
-            if (team == null)
-                return Response<TeamDTO>.FailureResult("Team not found");
-
-            if (!team.IsPending)
-                return Response<TeamDTO>.FailureResult("Team already accepted");
-
-            team.IsPending = false;
-            foreach (var item in team.TeamUsers)
-            {
-                item.Status = TeamUserStatus.Member;
-                item.IsManager = true;
-            };
-            await _context.SaveChangesAsync();
-            return Response<TeamDTO>.SuccessResult(new TeamDTO(team));
         }
 
         public async Task<Response<List<TeamDTO>>> GetMyTeamsAsync(Guid userId)
@@ -348,7 +281,7 @@ namespace leaguerAPI.Services
             {
                 foreach (var teamLeague in teamLeagues)
                 {
-                    if (!await AreUsersAvailableInLeague(new List<Guid> { userId }, teamLeague.LeagueId, teamId))
+                    if (!await AreUsersAvailableInLeague(new List<Guid> { userId }, teamLeague.LeagueId))
                         return Response<bool>.FailureResult("One or more users are already part of a team in this league");
                 }
             }
@@ -394,7 +327,10 @@ namespace leaguerAPI.Services
 
         public async Task<Response<bool>> AcceptRequestOrInvite(Guid teamId, Guid userId, Guid currentUserId)
         {
-            var team = await _context.Teams.Include(t => t.TeamUsers).FirstOrDefaultAsync(t => t.Id == teamId);
+            var team = await _context.Teams
+                .Include(t => t.TeamLeagues)
+                .Include(t => t.TeamUsers)
+                .FirstOrDefaultAsync(t => t.Id == teamId);
             if (team == null)
                 return Response<bool>.FailureResult("Team not found");
 
@@ -423,6 +359,25 @@ namespace leaguerAPI.Services
             }
 
             teamUser.Status = TeamUserStatus.Member;
+
+            if (team.TeamLeagues != null && team.TeamLeagues.Count > 0)
+            {
+                foreach (var tl in team.TeamLeagues)
+                {
+                    var leagueUser = await _context.LeagueUsers.IgnoreQueryFilters()
+                        .FirstOrDefaultAsync(lu => lu.UserId == userId && lu.LeagueId == tl.LeagueId);
+                    if (leagueUser == null)
+                    {
+                        _context.Add(new LeagueUser { LeagueId = tl.LeagueId, UserId = userId, Status = LeagueUserStatus.Member });
+                    }
+                    else
+                    {
+                        leagueUser.Status = LeagueUserStatus.Member;
+
+                    }
+                }
+            }
+
             await _context.SaveChangesAsync();
             return Response<bool>.SuccessResult(true);
         }
@@ -500,6 +455,51 @@ namespace leaguerAPI.Services
             catch (Exception ex)
             {
                 return Response<List<TeamDTO>>.FailureResult(ex.Message);
+            }
+        }
+
+        public async Task<Response<PagedResult<TeamDTO>>> SearchAsync(string searchTerm, int page, int pageSize)
+        {
+            if (string.IsNullOrWhiteSpace(searchTerm))
+            {
+                return Response<PagedResult<TeamDTO>>.FailureResult("Search term is required");
+            }
+            if (page < 1)
+            {
+                return Response<PagedResult<TeamDTO>>.FailureResult("Page must be greater than 0");
+            }
+            if (pageSize < 1 || pageSize > 50)
+            {
+                return Response<PagedResult<TeamDTO>>.FailureResult("Page size must be between 1 and 50");
+            }
+
+            try
+            {
+                var query = _context.Teams.AsNoTracking()
+                                    .Where(t => t.Name.Contains(searchTerm) || t.TeamUsers.Any(tu => tu.User.Email.Contains(searchTerm)))
+                                    .Select(u => new TeamDTO(u));
+
+                var items = await query
+                    .Skip((page - 1) * pageSize)
+                    .Take(pageSize)
+                    .ToListAsync();
+
+                var totalCount = await query.CountAsync();
+
+                var result = new PagedResult<TeamDTO>
+                {
+                    Items = items,
+                    TotalCount = totalCount,
+                    PageNumber = page,
+                    PageSize = pageSize
+                };
+
+                return Response<PagedResult<TeamDTO>>.SuccessResult(result);
+            }
+            catch (Exception ex)
+            {
+                // Consider logging the exception here
+                return Response<PagedResult<TeamDTO>>.FailureResult($"Error searching users: {ex.Message}");
             }
         }
     }

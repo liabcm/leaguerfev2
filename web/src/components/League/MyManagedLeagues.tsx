@@ -1,4 +1,4 @@
-import { ChevronLeft } from 'lucide-react';
+import { ChevronLeft, Plus } from 'lucide-react';
 import { useEffect, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import styled from 'styled-components';
@@ -53,81 +53,149 @@ const MyManagedLeagues = () => {
         </HeaderContent>
       </FixedHeader>
 
-      <ScrollableContent>
-        <ListContainer>
-          {error ? (
-            <StyledErrorMessage>{error}</StyledErrorMessage>
-          ) : loading ? (
-            <StyledLoadingContainer>
-              <StyledSpinner />
-            </StyledLoadingContainer>
-          ) : leagues.length > 0 ? (
-            leagues.map((league) => (
-              <LeagueItem
-                key={league.id}
-                onClick={() => navigate(`/manage-leagues/${league.id}`)}
-              >
-                <FlexContainer>
-                  <div>
-                    <LeagueName>{league.name}</LeagueName>
-                    <SportName>{league.sport}</SportName>
-                  </div>
-                  <div>
-                    <Badge variant={league.isPublic ? 'public' : 'private'}>
-                      {league.isPublic ? 'Public' : 'Private'}
-                    </Badge>
-                    <Badge
-                      variant={league.isCompetitive ? 'competitive' : 'casual'}
-                    >
-                      {league.isCompetitive ? 'Competitive' : 'Casual'}
-                    </Badge>
-                  </div>
-                </FlexContainer>
-              </LeagueItem>
-            ))
-          ) : (
-            <EmptyStateContainer>
-              <EmptyStateMessage>
-                No managed leagues to display
-              </EmptyStateMessage>
-              <CreateLeagueButton onClick={() => navigate('/league')}>
-                Create a League
-              </CreateLeagueButton>
-            </EmptyStateContainer>
-          )}
-        </ListContainer>
-      </ScrollableContent>
+      <ContentWrapper>
+        <ScrollableContent>
+          <ListContainer>
+            {error ? (
+              <StyledErrorMessage>{error}</StyledErrorMessage>
+            ) : loading ? (
+              <StyledLoadingContainer>
+                <StyledSpinner />
+              </StyledLoadingContainer>
+            ) : leagues.length > 0 ? (
+              leagues.map((league) => (
+                <LeagueItem
+                  key={league.id}
+                  onClick={() => navigate(`/manage-leagues/${league.id}`)}
+                >
+                  <FlexContainer>
+                    <div>
+                      <LeagueName>{league.name}</LeagueName>
+                      <SportName>{league.sport}</SportName>
+                    </div>
+                    <div>
+                      <Badge variant={league.isPublic ? 'public' : 'private'}>
+                        {league.isPublic ? 'Public' : 'Private'}
+                      </Badge>
+                      <Badge
+                        variant={
+                          league.isCompetitive ? 'competitive' : 'casual'
+                        }
+                      >
+                        {league.isCompetitive ? 'Competitive' : 'Casual'}
+                      </Badge>
+                    </div>
+                  </FlexContainer>
+                </LeagueItem>
+              ))
+            ) : (
+              <EmptyStateContainer>
+                <EmptyStateMessage>
+                  No managed leagues to display
+                </EmptyStateMessage>
+              </EmptyStateContainer>
+            )}
+          </ListContainer>
+        </ScrollableContent>
+
+        <FixedButtonContainer>
+          <StyledButton onClick={() => navigate('/league')}>
+            <Plus size={18} />
+            Create League
+          </StyledButton>
+        </FixedButtonContainer>
+      </ContentWrapper>
     </PageContainer>
   );
 };
 
 export default MyManagedLeagues;
 
-// Styled Components
+const HeaderContent = styled.div`
+  text-align: center;
+`;
+
+const ListContainer = styled.div`
+  padding: 0 15px 80px;
+`;
+
+const FixedButtonContainer = styled.div`
+  position: fixed;
+  bottom: 20px;
+  left: 50%;
+  transform: translateX(-50%);
+  width: calc(100% - 40px);
+  max-width: 760px;
+  z-index: 1000;
+  display: flex;
+  justify-content: center;
+
+  @media (max-width: 768px) {
+    bottom: 80px; // Add space for mobile navbar
+  }
+`;
+
+const ScrollableContent = styled.div`
+  flex: 1;
+  overflow-y: auto;
+  padding: 0 20px 80px;
+
+  @media (max-width: 768px) {
+    padding-bottom: 140px; // Extra padding for mobile
+  }
+`;
+
 const PageContainer = styled.div`
   height: 100vh;
   display: flex;
   flex-direction: column;
   max-width: 800px;
   margin: 0 auto;
-  padding-top: 60px;
+  padding-top: 120px; // Reduced from 60px to account for navbar
+  position: relative;
 `;
 
 const FixedHeader = styled.div`
   position: fixed;
-  top: 60px; /* Position below the navbar */
+  top: 60px; // Position below navbar
   left: 50%;
   transform: translateX(-50%);
   width: 100%;
   max-width: 800px;
   background-color: white;
-  z-index: 900; /* Lower than navbar's z-index (1000) */
+  z-index: 900;
   padding: 20px;
   border-bottom: 1px solid #e0e0e0;
+  box-sizing: border-box;
 `;
 
-const HeaderContent = styled.div`
-  text-align: center;
+const ContentWrapper = styled.div`
+  display: flex;
+  flex-direction: column;
+  height: calc(100vh - 190px);
+  margin-top: 0; // Remove previous margin-top
+`;
+
+const StyledButton = styled.button`
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  padding: 12px 24px;
+  background-color: #1a73e8;
+  color: white;
+  border: none;
+  border-radius: 4px;
+  font-size: 16px;
+  cursor: pointer;
+  transition: all 0.2s ease;
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
+  width: auto;
+  min-width: 200px;
+
+  &:hover {
+    background-color: #1557b0;
+  }
 `;
 
 const BackButtonContainer = styled.div`
@@ -152,17 +220,6 @@ const BackButton = styled.button`
   &:hover {
     background-color: #f5f5f5;
   }
-`;
-
-const ScrollableContent = styled.div`
-  margin-top: 130px;
-  flex: 1;
-  overflow-y: auto;
-  padding: 0 20px 20px 20px;
-`;
-
-const ListContainer = styled.div`
-  padding: 0 15px;
 `;
 
 const StyledHeading = styled.h1`
@@ -240,19 +297,4 @@ const EmptyStateMessage = styled.p`
   font-size: 16px;
   color: #666;
   margin-bottom: 20px;
-`;
-
-const CreateLeagueButton = styled.button`
-  background-color: #1a73e8;
-  color: white;
-  border: none;
-  border-radius: 4px;
-  padding: 10px 20px;
-  font-size: 16px;
-  cursor: pointer;
-  transition: background-color 0.2s;
-
-  &:hover {
-    background-color: #1557b0;
-  }
 `;

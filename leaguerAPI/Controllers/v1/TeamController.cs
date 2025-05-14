@@ -72,32 +72,6 @@ namespace leaguerAPI.Controllers
             return Ok(response.Data);
         }
 
-        [HttpPost("request")]
-        public async Task<IActionResult> RequestTeamCreation([FromBody] TeamRequestDTO teamCreateDTO)
-        {
-            if (teamCreateDTO == null)
-            {
-                return BadRequest(Response<TeamDTO>.FailureResult("Team data is required."));
-            }
-            var response = await _teamService.RequestTeamCreation(teamCreateDTO, User.GetObjectId());
-            if (!response.Success)
-            {
-                return BadRequest(response.ErrorMessage);
-            }
-            return Ok(response.Data);
-        }
-
-        [HttpPost("accept/{teamId}")]
-        public async Task<IActionResult> AcceptTeamRequest(Guid teamId)
-        {
-            var response = await _teamService.AcceptTeamRequest(teamId, User.GetObjectId());
-            if (!response.Success)
-            {
-                return BadRequest(response.ErrorMessage);
-            }
-            return Ok(response.Data);
-        }
-
         [HttpGet("my-teams")]
         public async Task<IActionResult> GetMyTeams()
         {
@@ -173,6 +147,22 @@ namespace leaguerAPI.Controllers
                 return BadRequest(response);
             }
             return Ok(response.Data);
+        }
+
+        [HttpGet("search")]
+        public async Task<IActionResult> SearchTeams(
+        [FromQuery] string q,
+        [FromQuery] int page = 1,
+        [FromQuery] int pageSize = 10)
+        {
+            var result = await _teamService.SearchAsync(q, page, pageSize);
+
+            if (!result.Success)
+            {
+                return BadRequest(result.ErrorMessage);
+            }
+
+            return Ok(result.Data);
         }
     }
 }

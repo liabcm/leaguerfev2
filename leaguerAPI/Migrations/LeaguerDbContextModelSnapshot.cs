@@ -141,11 +141,20 @@ namespace leaguerAPI.Migrations
                     b.Property<Guid>("EventId")
                         .HasColumnType("uuid");
 
+                    b.Property<int>("Status")
+                        .HasColumnType("integer");
+
                     b.HasKey("UserId", "EventId");
 
                     b.HasIndex("EventId");
 
-                    b.ToTable("EventUsers");
+                    b.HasIndex("Status")
+                        .HasDatabaseName("IX_EventUsers_Status");
+
+                    b.ToTable("EventUsers", null, t =>
+                        {
+                            t.HasCheckConstraint("CK_EventUsers_Status", "\"Status\" BETWEEN 0 AND 2");
+                        });
                 });
 
             modelBuilder.Entity("leaguerAPI.Models.League", b =>
@@ -205,11 +214,6 @@ namespace leaguerAPI.Migrations
                     b.Property<Guid>("LeagueId")
                         .HasColumnType("uuid");
 
-                    b.Property<bool>("IsDeleted")
-                        .ValueGeneratedOnAdd()
-                        .HasColumnType("boolean")
-                        .HasDefaultValue(false);
-
                     b.Property<bool>("IsManager")
                         .ValueGeneratedOnAdd()
                         .HasColumnType("boolean")
@@ -219,9 +223,6 @@ namespace leaguerAPI.Migrations
                         .HasColumnType("integer");
 
                     b.HasKey("UserId", "LeagueId");
-
-                    b.HasIndex("IsDeleted")
-                        .HasDatabaseName("IX_LeagueUsers_IsDeleted");
 
                     b.HasIndex("LeagueId");
 
@@ -295,14 +296,6 @@ namespace leaguerAPI.Migrations
                         .ValueGeneratedOnAdd()
                         .HasColumnType("uuid");
 
-                    b.Property<bool>("IsPending")
-                        .ValueGeneratedOnAdd()
-                        .HasColumnType("boolean")
-                        .HasDefaultValue(false);
-
-                    b.Property<Guid?>("LeagueId")
-                        .HasColumnType("uuid");
-
                     b.Property<int>("Losses")
                         .ValueGeneratedOnAdd()
                         .HasColumnType("integer")
@@ -320,8 +313,6 @@ namespace leaguerAPI.Migrations
 
                     b.HasKey("Id");
 
-                    b.HasIndex("LeagueId");
-
                     b.ToTable("Teams");
                 });
 
@@ -332,6 +323,11 @@ namespace leaguerAPI.Migrations
 
                     b.Property<Guid>("LeagueId")
                         .HasColumnType("uuid");
+
+                    b.Property<bool>("IsPending")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("boolean")
+                        .HasDefaultValue(false);
 
                     b.Property<int>("Losses")
                         .HasColumnType("integer");
@@ -354,9 +350,6 @@ namespace leaguerAPI.Migrations
                     b.Property<Guid>("UserId")
                         .HasColumnType("uuid");
 
-                    b.Property<bool>("IsDeleted")
-                        .HasColumnType("boolean");
-
                     b.Property<bool>("IsManager")
                         .HasColumnType("boolean");
 
@@ -364,9 +357,6 @@ namespace leaguerAPI.Migrations
                         .HasColumnType("integer");
 
                     b.HasKey("TeamId", "UserId");
-
-                    b.HasIndex("IsDeleted")
-                        .HasDatabaseName("IX_TeamUsers_IsDeleted");
 
                     b.HasIndex("Status")
                         .HasDatabaseName("IX_TeamUsers_Status");
@@ -532,13 +522,6 @@ namespace leaguerAPI.Migrations
                     b.Navigation("Event");
                 });
 
-            modelBuilder.Entity("leaguerAPI.Models.Team", b =>
-                {
-                    b.HasOne("leaguerAPI.Models.League", null)
-                        .WithMany("Teams")
-                        .HasForeignKey("LeagueId");
-                });
-
             modelBuilder.Entity("leaguerAPI.Models.TeamLeague", b =>
                 {
                     b.HasOne("leaguerAPI.Models.League", "League")
@@ -596,8 +579,6 @@ namespace leaguerAPI.Migrations
                     b.Navigation("LeagueUsers");
 
                     b.Navigation("TeamLeagues");
-
-                    b.Navigation("Teams");
                 });
 
             modelBuilder.Entity("leaguerAPI.Models.Team", b =>

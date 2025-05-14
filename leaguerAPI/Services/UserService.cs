@@ -140,7 +140,7 @@ namespace leaguerAPI.Services
                 return Response<bool>.FailureResult("Invite not found");
             }
 
-            record.IsDeleted = true;
+            _context.Remove(record);
             await _context.SaveChangesAsync();
             return Response<bool>.SuccessResult(true);
         }
@@ -253,6 +253,52 @@ namespace leaguerAPI.Services
             catch (Exception ex)
             {
                 return Response<List<TeamUserDTO>>.FailureResult($"Failed to retrieve team user invites: {ex.Message}");
+            }
+        }
+
+        public async Task<Response<PagedResult<UserDTO>>> SearchUsersForEventInviteAsync(Guid eventId, string searchTerm, int page, int pageSize)
+        {
+            if (string.IsNullOrWhiteSpace(searchTerm))
+            {
+                return Response<PagedResult<UserDTO>>.FailureResult("Search term is required");
+            }
+            if (page < 1)
+            {
+                return Response<PagedResult<UserDTO>>.FailureResult("Page must be greater than 0");
+            }
+            if (pageSize < 1 || pageSize > 50)
+            {
+                return Response<PagedResult<UserDTO>>.FailureResult("Page size must be between 1 and 50");
+            }
+
+            try
+            {
+                var query = _context.Users.AsNoTracking()
+                                    .Where(u => (u.Name.Contains(searchTerm) || u.Email.Contains(searchTerm))
+                                    && !_context.EventUsers.Any(eu => eu.UserId == u.Id && eu.EventId == eventId))
+                                    .Select(u => new UserDTO(u));
+
+                var items = await query
+                    .Skip((page - 1) * pageSize)
+                    .Take(pageSize)
+                    .ToListAsync();
+
+                var totalCount = await query.CountAsync();
+
+                var result = new PagedResult<UserDTO>
+                {
+                    Items = items,
+                    TotalCount = totalCount,
+                    PageNumber = page,
+                    PageSize = pageSize
+                };
+
+                return Response<PagedResult<UserDTO>>.SuccessResult(result);
+            }
+            catch (Exception ex)
+            {
+                // Consider logging the exception here
+                return Response<PagedResult<UserDTO>>.FailureResult($"Error searching users: {ex.Message}");
             }
         }
     }

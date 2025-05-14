@@ -6,7 +6,7 @@ import { User } from './User';
 export interface Event {
   id: string;
   location: string;
-  leagueId: string;
+  leagueId?: string;
   eventTime: string;
   createdBy: string;
   users?: EventUser[];
@@ -18,6 +18,11 @@ export interface Event {
   isTeamEvent: boolean;
   eventType: EventType;
   joinType: EventJoinType;
+  sport: string;
+  memberInvites: EventUser[];
+  memberRequests: EventUser[];
+  teamInvites: EventTeam[];
+  teamRequests: EventTeam[];
 }
 
 export enum EventType {

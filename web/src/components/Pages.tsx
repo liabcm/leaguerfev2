@@ -7,7 +7,10 @@ import { useLeagueApi } from '../api/useLeagueApi';
 // Components
 import EventCard from './Events/EventCard';
 import EventForm from './Events/EventForm';
+import EventManager from './Events/EventManager';
 import EventResultCard from './Events/EventResultCard';
+import { EventWizard } from './Events/EventWizard';
+import MyManagedEvents from './Events/MyManagedEvents';
 import UpcomingEvents from './Events/UpcomingEvents';
 import GetStarted from './GetStarted';
 import InvitesPage from './InvitesPage';
@@ -58,7 +61,7 @@ function Pages() {
         <Route path='/profile' element={<Profile />} />
         <Route path='league/:id' element={<LeagueCard />} />
         <Route path='manage-leagues/:id' element={<ManageLeagues />} />
-        <Route path='event-create/:leagueId' element={<EventForm />} />
+        <Route path='event-create/:leagueId?' element={<EventForm />} />
         <Route path='event/:id' element={<EventCard />} />
         <Route path='my-leagues' element={<MyLeagues />} />
         <Route path='sport' element={<SportForm />} />
@@ -72,6 +75,9 @@ function Pages() {
         <Route path='/my-teams' element={<MyTeams />} />
         <Route path='/event-result/:id' element={<EventResultCard />} />
         <Route path='/my-managed-leagues' element={<MyManagedLeagues />} />
+        <Route path='/my-managed-events' element={<MyManagedEvents />} />
+        <Route path='/create-event' element={<EventWizard />} />
+        <Route path='/manage-events/:id' element={<EventManager />} />
       </Route>
     </Routes>
   );

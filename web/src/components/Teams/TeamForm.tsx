@@ -53,7 +53,6 @@ const TeamForm = () => {
             ...t.teamUsers,
             ...t.teamInvites,
             ...t.teamRequests,
-            ...t.teamCreateRequests,
           ]);
         setAvailableLeagueMembers(
           leagueData.leagueMembers.filter((m) => {
@@ -74,7 +73,8 @@ const TeamForm = () => {
           })
         );
       } catch (err) {
-        setError('Failed to fetch league.');
+        console.log(err);
+        setError('Failed to fetch team.');
       } finally {
         setLoadingLeague(false);
       }

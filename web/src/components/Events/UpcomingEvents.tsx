@@ -9,7 +9,7 @@ import { TabButton, Tabs } from '../League/SharedLeagueStyles';
 import { StyledSpinner } from '../SharedStyles';
 
 const UpcomingEvents: React.FC = () => {
-  const [activeTab, setActiveTab] = useState<'my' | 'area'>('my');
+  const [activeTab, setActiveTab] = useState<'my' | 'area'>('area');
   const [myEvents, setMyEvents] = useState<Event[]>([]);
   const [nearbyEvents, setNearbyEvents] = useState<Event[]>([]);
   const [loading, setLoading] = useState<boolean>(true);
@@ -36,10 +36,10 @@ const UpcomingEvents: React.FC = () => {
         setTotalCount(response.totalCount);
       } else {
         console.log('u gotta do something');
-        //response = await getEventsNearMe({ page: currentPage, pageSize });
-        //setNearbyEvents(response.items);
-        //setTotalPages(response.totalPages);
-        //setTotalCount(response.totalCount);
+        response = await getEventsNearMe({ page: currentPage, pageSize });
+        setNearbyEvents(response.items);
+        setTotalPages(response.totalPages);
+        setTotalCount(response.totalCount);
         setNearbyEvents([]);
       }
     } catch (error) {
@@ -112,16 +112,16 @@ const UpcomingEvents: React.FC = () => {
     <Container>
       <Tabs>
         <TabButton
+          $active={activeTab === 'area'}
+          onClick={() => handleTabChange('area')}
+        >
+          Joinable Events
+        </TabButton>
+        <TabButton
           $active={activeTab === 'my'}
           onClick={() => handleTabChange('my')}
         >
           My Upcoming Events
-        </TabButton>
-        <TabButton
-          $active={activeTab === 'area'}
-          onClick={() => handleTabChange('area')}
-        >
-          In My Area
         </TabButton>
       </Tabs>
 
@@ -154,9 +154,16 @@ const UpcomingEvents: React.FC = () => {
               ))
             ) : (
               <EmptyState>
-                No{' '}
-                {activeTab === 'my' ? 'upcoming events' : 'events in your area'}{' '}
-                found.
+                {activeTab === 'my' ? (
+                  'no upcoming events...'
+                ) : (
+                  <>
+                    no events found...
+                    <button onClick={() => navigate('event')}>
+                      Create Event
+                    </button>
+                  </>
+                )}
               </EmptyState>
             )}
           </EventList>

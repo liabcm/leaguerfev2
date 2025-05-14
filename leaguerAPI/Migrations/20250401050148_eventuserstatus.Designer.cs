@@ -13,8 +13,8 @@ using leaguerAPI.Database;
 namespace leaguerAPI.Migrations
 {
     [DbContext(typeof(LeaguerDbContext))]
-    [Migration("20250319185858_matchesandtypes")]
-    partial class matchesandtypes
+    [Migration("20250401050148_eventuserstatus")]
+    partial class eventuserstatus
     {
         /// <inheritdoc />
         protected override void BuildTargetModel(ModelBuilder modelBuilder)
@@ -144,11 +144,20 @@ namespace leaguerAPI.Migrations
                     b.Property<Guid>("EventId")
                         .HasColumnType("uuid");
 
+                    b.Property<int>("Status")
+                        .HasColumnType("integer");
+
                     b.HasKey("UserId", "EventId");
 
                     b.HasIndex("EventId");
 
-                    b.ToTable("EventUsers");
+                    b.HasIndex("Status")
+                        .HasDatabaseName("IX_EventUsers_Status");
+
+                    b.ToTable("EventUsers", null, t =>
+                        {
+                            t.HasCheckConstraint("CK_EventUsers_Status", "\"Status\" BETWEEN 0 AND 2");
+                        });
                 });
 
             modelBuilder.Entity("leaguerAPI.Models.League", b =>
@@ -208,7 +217,7 @@ namespace leaguerAPI.Migrations
                     b.Property<Guid>("LeagueId")
                         .HasColumnType("uuid");
 
-                    b.Property<bool>("IsDeleted")
+                    b.Property<bool>("IsManager")
                         .ValueGeneratedOnAdd()
                         .HasColumnType("boolean")
                         .HasDefaultValue(false);
@@ -217,9 +226,6 @@ namespace leaguerAPI.Migrations
                         .HasColumnType("integer");
 
                     b.HasKey("UserId", "LeagueId");
-
-                    b.HasIndex("IsDeleted")
-                        .HasDatabaseName("IX_LeagueUsers_IsDeleted");
 
                     b.HasIndex("LeagueId");
 
@@ -260,7 +266,7 @@ namespace leaguerAPI.Migrations
 
                     b.HasIndex("EventId");
 
-                    b.ToTable("Match");
+                    b.ToTable("Matches");
                 });
 
             modelBuilder.Entity("leaguerAPI.Models.Sport", b =>
@@ -293,14 +299,6 @@ namespace leaguerAPI.Migrations
                         .ValueGeneratedOnAdd()
                         .HasColumnType("uuid");
 
-                    b.Property<bool>("IsPending")
-                        .ValueGeneratedOnAdd()
-                        .HasColumnType("boolean")
-                        .HasDefaultValue(false);
-
-                    b.Property<Guid>("LeagueId")
-                        .HasColumnType("uuid");
-
                     b.Property<int>("Losses")
                         .ValueGeneratedOnAdd()
                         .HasColumnType("integer")
@@ -318,9 +316,33 @@ namespace leaguerAPI.Migrations
 
                     b.HasKey("Id");
 
+                    b.ToTable("Teams");
+                });
+
+            modelBuilder.Entity("leaguerAPI.Models.TeamLeague", b =>
+                {
+                    b.Property<Guid>("TeamId")
+                        .HasColumnType("uuid");
+
+                    b.Property<Guid>("LeagueId")
+                        .HasColumnType("uuid");
+
+                    b.Property<bool>("IsPending")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("boolean")
+                        .HasDefaultValue(false);
+
+                    b.Property<int>("Losses")
+                        .HasColumnType("integer");
+
+                    b.Property<int>("Wins")
+                        .HasColumnType("integer");
+
+                    b.HasKey("TeamId", "LeagueId");
+
                     b.HasIndex("LeagueId");
 
-                    b.ToTable("Teams");
+                    b.ToTable("TeamLeagues");
                 });
 
             modelBuilder.Entity("leaguerAPI.Models.TeamUser", b =>
@@ -331,16 +353,13 @@ namespace leaguerAPI.Migrations
                     b.Property<Guid>("UserId")
                         .HasColumnType("uuid");
 
-                    b.Property<bool>("IsDeleted")
+                    b.Property<bool>("IsManager")
                         .HasColumnType("boolean");
 
                     b.Property<int>("Status")
                         .HasColumnType("integer");
 
                     b.HasKey("TeamId", "UserId");
-
-                    b.HasIndex("IsDeleted")
-                        .HasDatabaseName("IX_TeamUsers_IsDeleted");
 
                     b.HasIndex("Status")
                         .HasDatabaseName("IX_TeamUsers_Status");
@@ -506,15 +525,23 @@ namespace leaguerAPI.Migrations
                     b.Navigation("Event");
                 });
 
-            modelBuilder.Entity("leaguerAPI.Models.Team", b =>
+            modelBuilder.Entity("leaguerAPI.Models.TeamLeague", b =>
                 {
                     b.HasOne("leaguerAPI.Models.League", "League")
-                        .WithMany("Teams")
+                        .WithMany("TeamLeagues")
                         .HasForeignKey("LeagueId")
                         .OnDelete(DeleteBehavior.Restrict)
                         .IsRequired();
 
+                    b.HasOne("leaguerAPI.Models.Team", "Team")
+                        .WithMany("TeamLeagues")
+                        .HasForeignKey("TeamId")
+                        .OnDelete(DeleteBehavior.Restrict)
+                        .IsRequired();
+
                     b.Navigation("League");
+
+                    b.Navigation("Team");
                 });
 
             modelBuilder.Entity("leaguerAPI.Models.TeamUser", b =>
@@ -554,12 +581,14 @@ namespace leaguerAPI.Migrations
 
                     b.Navigation("LeagueUsers");
 
-                    b.Navigation("Teams");
+                    b.Navigation("TeamLeagues");
                 });
 
             modelBuilder.Entity("leaguerAPI.Models.Team", b =>
                 {
                     b.Navigation("EventTeams");
+
+                    b.Navigation("TeamLeagues");
 
                     b.Navigation("TeamUsers");
                 });

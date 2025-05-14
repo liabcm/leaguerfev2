@@ -41,7 +41,7 @@ const LeagueMembersSection = ({
               userId: member.userId,
               parentId: member.leagueId,
               parentName: member.leagueName,
-              name: member.name,
+              name: member.email,
             }}
             isManaged={isManaged}
             onRemove={onRemove}

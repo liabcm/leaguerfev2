@@ -17,7 +17,7 @@ export const Header = styled.div`
 `;
 
 export const Title = styled.h2`
-  font-size: 1.5rem;
+  font-size: 2rem;
   font-weight: 600;
 `;
 

@@ -67,6 +67,7 @@ namespace leaguerAPI.Services
                         .ThenInclude(lu => lu.User)
                     .Include(l => l.TeamLeagues)
                         .ThenInclude(tl => tl.Team)
+                        .ThenInclude(t => t.TeamUsers)
                 .AsSplitQuery()
                 .FirstOrDefaultAsync(l => l.Id == id);
 
@@ -136,13 +137,7 @@ namespace leaguerAPI.Services
         {
             Response<bool> response = new Response<bool>();
             var leagueUser = await _context.LeagueUsers.IgnoreQueryFilters().FirstOrDefaultAsync(lu => lu.UserId == userId && lu.LeagueId == leagueId);
-            if (leagueUser != null && leagueUser.IsDeleted)
-            {
-                leagueUser.IsDeleted = false;
-                await _context.SaveChangesAsync();
-                return response;
-            }
-            else if (leagueUser != null && !leagueUser.IsDeleted)
+            if (leagueUser != null)
             {
                 response.ErrorMessage = "User already joined league";
                 return response;
@@ -171,7 +166,7 @@ namespace leaguerAPI.Services
             }
 
             var leagueUser = await _context.LeagueUsers.IgnoreQueryFilters().Include(lu => lu.League).FirstOrDefaultAsync(lu => lu.UserId == userId && lu.LeagueId == leagueId);
-            if (leagueUser == null || leagueUser.IsDeleted)
+            if (leagueUser == null)
             {
                 return Response<bool>.FailureResult("User not in league");
             }
@@ -196,17 +191,21 @@ namespace leaguerAPI.Services
                     }
                     else if (teamUser != null && teamUser.IsManager)
                     {
-                        var leagueUsers = await _context.LeagueUsers.Where(lu => teamLeague.Team.TeamUsers.Any(tu => tu.UserId == lu.UserId) && lu.LeagueId == leagueId).ToListAsync();
+                        var teamUserIds = teamLeague.Team.TeamUsers.Select(tu => tu.UserId).ToList();
+
+                        var leagueUsers = await _context.LeagueUsers
+                            .Where(lu => teamUserIds.Contains(lu.UserId) && lu.LeagueId == leagueId)
+                            .ToListAsync();
                         _context.RemoveRange(leagueUsers);
                         _context.Remove(teamLeague);
-                        await _context.SaveChangesAsync();
                     }
+                }
+                else
+                {
+                    _context.Remove(leagueUser);
                 }
 
             }
-
-            leagueUser.IsDeleted = true;
-
             await _context.SaveChangesAsync();
             return Response<bool>.SuccessResult(true);
         }
@@ -263,8 +262,7 @@ namespace leaguerAPI.Services
                     .Include(lu => lu.League)//remove this at some point when you implement add new manager
                     .AnyAsync(lu => lu.LeagueId == leagueId
                         && lu.UserId == currentUserId
-                        && (lu.IsManager || lu.League.CreatedBy == currentUserId)
-                        && !lu.IsDeleted);
+                        && (lu.IsManager || lu.League.CreatedBy == currentUserId));
 
                 if (!isManager)
                 {
@@ -291,13 +289,7 @@ namespace leaguerAPI.Services
 
             if (existingRecord != null)
             {
-                if (existingRecord.IsDeleted)
-                {
-                    // Reactivate the record by updating the status
-                    existingRecord.Status = isInvite ? LeagueUserStatus.Invited : LeagueUserStatus.Requested;
-                    existingRecord.IsDeleted = false;
-                }
-                else if (existingRecord.Status == LeagueUserStatus.Member)
+                if (existingRecord.Status == LeagueUserStatus.Member)
                 {
                     return Response<bool>.FailureResult("User is already a member of this league");
                 }

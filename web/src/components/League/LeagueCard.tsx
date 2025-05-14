@@ -34,13 +34,8 @@ const LeagueCard = () => {
   const [requested, setRequested] = useState(false);
   const [invited, setInvited] = useState(false);
   const [showLeaveModal, setShowLeaveModal] = useState(false);
-  const {
-    getLeagueById,
-    inviteUserToLeague,
-    leaveLeague,
-    acceptInvite,
-    sendTeamRequest,
-  } = useLeagueApi();
+  const { getLeagueById, inviteUserToLeague, leaveLeague, acceptInvite } =
+    useLeagueApi();
   const user = accounts[0];
 
   const [activeTab, setActiveTab] = useState<'details' | 'events'>('details');
@@ -166,15 +161,6 @@ const LeagueCard = () => {
     }
   };
 
-  const handleTeamRequest = async (teamName: string) => {
-    if (!teamName || !league) return;
-    try {
-      await sendTeamRequest(teamName, league.id);
-    } catch (err) {
-      console.error(err);
-    }
-  };
-
   if (loading) return <StyledSpinner />;
   if (error || !league)
     return <ErrorMessage message={error || 'League not found'} />;
@@ -238,12 +224,7 @@ const LeagueCard = () => {
 
         {activeTab === 'details' &&
           (league.isTeamLeague ? (
-            <LeagueTeamsSection
-              league={league}
-              isManaged={false}
-              onRequestSend={handleTeamRequest}
-              joined={joined}
-            />
+            <LeagueTeamsSection league={league} isManaged={false} />
           ) : (
             <LeagueMembersSection league={league} isManaged={false} />
           ))}
